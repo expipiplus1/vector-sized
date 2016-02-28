@@ -11,3 +11,4 @@ This package is fairly similar to the
 difference is that fixed-vector uses Peano naturals to represent the size tag
 on the vectors and this package uses typelits.
 
+The initial code for this package was written by @bgamari in a [PR for vulkan](https://github.com/expipiplus1/vulkan/pull/1)
