@@ -32,6 +32,10 @@ module Data.Vector.Generic.Sized
     -- * Folding
   , foldl'
   , foldl1'
+    -- * Zipping
+  , zipWith
+    -- * Conversion
+  , convert
   ) where
 
 import qualified Data.Vector.Generic as VG
@@ -42,7 +46,8 @@ import Control.DeepSeq
 import Foreign.Storable
 import Foreign.Ptr (castPtr)
 import Prelude hiding (replicate, head, last,
-                       tail, init, map, length, drop, take)
+                       tail, init, map, length, drop, take,
+                       zipWith)
 
 newtype Vector v (n :: Nat) a = Vector (v a)
   deriving (Show, Eq, Ord, Foldable, NFData)
@@ -173,3 +178,15 @@ foldl1' :: forall a v (n :: Nat). (VG.Vector v a)
         => (a -> a -> a) -> Vector v (n+1) a -> a
 foldl1' f (Vector v) = VG.foldl1' f v
 {-# INLINE foldl1' #-}
+
+-- | /O(min(m,n))/ Zip two vectors with the given function.
+zipWith :: forall a b c v (n :: Nat). (VG.Vector v a, VG.Vector v b, VG.Vector v c)
+        => (a -> b -> c) -> Vector v n a -> Vector v n b -> Vector v n c
+zipWith f (Vector a) (Vector b) = Vector $ VG.zipWith f a b
+{-# INLINE zipWith #-}
+
+-- | /O(n)/ Convert different vector types
+convert :: forall v w (n :: Nat) a. (VG.Vector v a, VG.Vector w a)
+        => Vector v n a -> Vector w n a
+convert (Vector a) = Vector $ VG.convert a
+{-# INLINE convert #-}
