@@ -34,6 +34,8 @@ module Data.Vector.Generic.Sized
   , foldl1'
     -- * Zipping
   , zipWith
+    -- * Conversion
+  , convert
   ) where
 
 import qualified Data.Vector.Generic as VG
@@ -182,3 +184,9 @@ zipWith :: forall a b c v (n :: Nat). (VG.Vector v a, VG.Vector v b, VG.Vector v
         => (a -> b -> c) -> Vector v n a -> Vector v n b -> Vector v n c
 zipWith f (Vector a) (Vector b) = Vector $ VG.zipWith f a b
 {-# INLINE zipWith #-}
+
+-- | /O(n)/ Convert different vector types
+convert :: forall v w (n :: Nat) a. (VG.Vector v a, VG.Vector w a)
+        => Vector v n a -> Vector w n a
+convert (Vector a) = Vector $ VG.convert a
+{-# INLINE convert #-}
