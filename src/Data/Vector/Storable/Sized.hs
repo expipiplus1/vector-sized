@@ -27,6 +27,8 @@ module Data.Vector.Storable.Sized
     -- * Folding
   , foldl'
   , foldl1'
+    -- * Zipping
+  , zipWith
   ) where
 
 import qualified Data.Vector.Generic.Sized as VGS
@@ -35,7 +37,8 @@ import GHC.TypeLits
 import Data.Proxy
 import Foreign.Storable
 import Prelude hiding (replicate, head, last,
-                       tail, init, map, length, drop, take)
+                       tail, init, map, length, drop, take,
+                       zipWith)
 
 type Vector = VGS.Vector VS.Vector
 
@@ -134,3 +137,9 @@ foldl1' :: forall a (n :: Nat). Storable a
         => (a -> a -> a) -> Vector (n+1) a -> a
 foldl1' = VGS.foldl1'
 {-# INLINE foldl1' #-}
+
+-- | /O(min(m,n))/ Zip two vectors with the given function.
+zipWith :: forall a b c (n :: Nat). (Storable a, Storable b, Storable c)
+        => (a -> b -> c) -> Vector n a -> Vector n b -> Vector n c
+zipWith = VGS.zipWith
+{-# INLINE zipWith #-}
