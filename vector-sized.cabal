@@ -16,7 +16,8 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Data.Vector.Generic.Sized
+  exposed-modules:     Data.Vector.Sized
+                     , Data.Vector.Generic.Sized
                      , Data.Vector.Storable.Sized
   build-depends:       base >= 4.7 && < 5
                      , vector >= 0.11 && < 0.12
