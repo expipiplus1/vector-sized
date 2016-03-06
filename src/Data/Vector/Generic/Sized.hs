@@ -36,6 +36,8 @@ module Data.Vector.Generic.Sized
   , splitAt
   , splitAt'
     -- * Construction
+    -- ** Conversion from Data.Vector
+  , fromVector
     -- ** Initialization
   , empty
   , singleton
@@ -64,16 +66,70 @@ module Data.Vector.Generic.Sized
   , (++)
     -- ** Restricting memory usage
   , force
-
-
-
-    -- * Construction
-  , fromVector
-    -- * Monadic Construction
-    -- * Mapping
+    -- * Modifying vectors
+    -- ** Bulk updates
+  , (//)
+  , update
+  , update_
+  , unsafeUpd
+  , unsafeUpdate
+  , unsafeUpdate_
+    -- ** Accumulations
+  , accum
+  , accumulate
+  , accumulate_
+  , unsafeAccum
+  , unsafeAccumulate
+  , unsafeAccumulate_
+    -- ** Permutations
+  , reverse
+  , backpermute
+  , unsafeBackpermute
+    -- * Elementwise operations
+    -- ** Indexing
+  , indexed
+    -- ** Mapping
   , map
-    -- * Monadic Mapping
+  , imap
+  , concatMap
+    -- ** Monadic mapping
+  , mapM
+  , imapM
+  , mapM_
   , imapM_
+  , forM
+  , forM_
+    -- ** Zipping
+  , zipWith
+  , zipWith3
+  , zipWith4
+  , zipWith5
+  , zipWith6
+  , izipWith
+  , izipWith3
+  , izipWith4
+  , izipWith5
+  , izipWith6
+  , zip
+  , zip3
+  , zip4
+  , zip5
+  , zip6
+    -- ** Monadic zipping
+  , zipWithM
+  , izipWithM
+  , zipWithM_
+  , izipWithM_
+    -- ** Unzipping
+  , unzip
+  , unzip3
+  , unzip4
+  , unzip5
+  , unzip6
+
+
+
+
     -- * Folding
   , foldl'
   , foldl1'
@@ -86,8 +142,10 @@ import Data.Proxy
 import Control.DeepSeq (NFData)
 import Foreign.Storable
 import Foreign.Ptr (castPtr)
-import Prelude hiding (replicate, head, last, tail, init, map, length, drop,
-                       take, splitAt, (++))
+import Prelude
+       hiding (replicate, head, last, tail, init, map, length, drop, take,
+               splitAt, (++), reverse, map, concatMap, mapM, mapM_, forM, zipWith,
+               zipWith3, zip, zip3, unzip, unzip3)
 
 newtype Vector v (n :: Nat) a = Vector (v a)
   deriving (Show, Eq, Ord, Foldable, NFData)
@@ -420,9 +478,9 @@ enumFromStepN' a a' _ = enumFromStepN a a'
 
 --
 -- ** Concatenation
--- 
+--
 
--- | /O(n)/ Prepend an element. 
+-- | /O(n)/ Prepend an element.
 cons :: forall v n a. VG.Vector v a
      => a -> Vector v n a -> Vector v (n+1) a
 cons x (Vector xs) = Vector (VG.cons x xs)
@@ -459,6 +517,502 @@ force (Vector v) = Vector (VG.force v)
 {-# inline force #-}
 
 
+--------------------------------------------------------------------------------
+-- * Modifying vectors
+--------------------------------------------------------------------------------
+
+--
+-- ** Bulk updates
+--
+
+-- | /O(m+n)/ For each pair @(i,a)@ from the list, replace the vector
+-- element at position @i@ by @a@.
+--
+-- > <5,9,2,7> // [(2,1),(0,3),(2,8)] = <3,9,8,7>
+--
+(//) :: (VG.Vector v a)
+     => Vector v m a -- ^ initial vector (of length @m@)
+     -> [(Int, a)]   -- ^ list of index/value pairs (of length @n@)
+     -> Vector v m a
+Vector v // us = Vector (v VG.// us)
+{-# inline (//) #-}
+
+-- | /O(m+n)/ For each pair @(i,a)@ from the vector of index/value pairs,
+-- replace the vector element at position @i@ by @a@.
+--
+-- > update <5,9,2,7> <(2,1),(0,3),(2,8)> = <3,9,8,7>
+--
+update :: (VG.Vector v a, VG.Vector v (Int, a))
+        => Vector v m a        -- ^ initial vector (of length @m@)
+        -> Vector v n (Int, a) -- ^ vector of index/value pairs (of length @n@)
+        -> Vector v m a
+update (Vector v) (Vector w) = Vector (VG.update v w)
+{-# inline update #-}
+
+-- | /O(m+n)/ For each index @i@ from the index vector and the
+-- corresponding value @a@ from the value vector, replace the element of the
+-- initial vector at position @i@ by @a@.
+--
+-- > update_ <5,9,2,7>  <2,0,2> <1,3,8> = <3,9,8,7>
+--
+-- This function is useful for instances of 'Vector' that cannot store pairs.
+-- Otherwise, 'update' is probably more convenient.
+--
+-- @
+-- update_ xs is ys = 'update' xs ('zip' is ys)
+-- @
+update_ :: (VG.Vector v a, VG.Vector v Int)
+        => Vector v m a   -- ^ initial vector (of length @m@)
+        -> Vector v n Int -- ^ index vector (of length @n@)
+        -> Vector v n a   -- ^ value vector (of length @n@)
+        -> Vector v m a
+update_ (Vector v) (Vector is) (Vector w) = Vector (VG.update_ v is w)
+{-# inline update_ #-}
+
+-- | Same as ('//') but without bounds checking.
+unsafeUpd :: (VG.Vector v a)
+          => Vector v m a -- ^ initial vector (of length @m@)
+          -> [(Int, a)]   -- ^ list of index/value pairs (of length @n@)
+          -> Vector v m a
+unsafeUpd (Vector v) us = Vector (VG.unsafeUpd v us)
+{-# inline unsafeUpd #-}
+
+-- | Same as 'update' but without bounds checking.
+unsafeUpdate :: (VG.Vector v a, VG.Vector v (Int, a))
+             => Vector v m a        -- ^ initial vector (of length @m@)
+             -> Vector v n (Int, a) -- ^ vector of index/value pairs (of length @n@)
+             -> Vector v m a
+unsafeUpdate (Vector v) (Vector w) = Vector (VG.unsafeUpdate v w)
+{-# inline unsafeUpdate #-}
+
+-- | Same as 'update_' but without bounds checking.
+unsafeUpdate_ :: (VG.Vector v a, VG.Vector v Int)
+              => Vector v m a   -- ^ initial vector (of length @m@)
+              -> Vector v n Int -- ^ index vector (of length @n@)
+              -> Vector v n a   -- ^ value vector (of length @n@)
+              -> Vector v m a
+unsafeUpdate_ (Vector v) (Vector is) (Vector w) =
+  Vector (VG.unsafeUpdate_ v is w)
+{-# inline unsafeUpdate_ #-}
+
+--
+-- ** Accumulations
+--
+
+-- | /O(m+n)/ For each pair @(i,b)@ from the list, replace the vector element
+-- @a@ at position @i@ by @f a b@.
+--
+-- > accum (+) <5,9,2> [(2,4),(1,6),(0,3),(1,7)] = <5+3, 9+6+7, 2+4>
+accum :: VG.Vector v a
+      => (a -> b -> a) -- ^ accumulating function @f@
+      -> Vector v m a  -- ^ initial vector (of length @m@)
+      -> [(Int,b)]     -- ^ list of index/value pairs (of length @n@)
+      -> Vector v m a
+accum f (Vector v) us = Vector (VG.accum f v us)
+{-# inline accum #-}
+
+-- | /O(m+n)/ For each pair @(i,b)@ from the vector of pairs, replace the vector
+-- element @a@ at position @i@ by @f a b@.
+--
+-- > accumulate (+) <5,9,2> <(2,4),(1,6),(0,3),(1,7)> = <5+3, 9+6+7, 2+4>
+accumulate :: (VG.Vector v a, VG.Vector v (Int, b))
+           => (a -> b -> a)      -- ^ accumulating function @f@
+           -> Vector v m a       -- ^ initial vector (of length @m@)
+           -> Vector v n (Int,b) -- ^ vector of index/value pairs (of length @n@)
+           -> Vector v m a
+accumulate f (Vector v) (Vector us) = Vector (VG.accumulate f v us)
+{-# inline accumulate #-}
+
+-- | /O(m+n)/ For each index @i@ from the index vector and the
+-- corresponding value @b@ from the the value vector,
+-- replace the element of the initial vector at
+-- position @i@ by @f a b@.
+--
+-- > accumulate_ (+) <5,9,2> <2,1,0,1> <4,6,3,7> = <5+3, 9+6+7, 2+4>
+--
+-- This function is useful for instances of 'Vector' that cannot store pairs.
+-- Otherwise, 'accumulate' is probably more convenient:
+--
+-- @
+-- accumulate_ f as is bs = 'accumulate' f as ('zip' is bs)
+-- @
+accumulate_ :: (VG.Vector v a, VG.Vector v Int, VG.Vector v b)
+            => (a -> b -> a)  -- ^ accumulating function @f@
+            -> Vector v m a   -- ^ initial vector (of length @m@)
+            -> Vector v n Int -- ^ index vector (of length @n@)
+            -> Vector v n b   -- ^ value vector (of length @n@)
+            -> Vector v m a
+accumulate_ f (Vector v) (Vector is) (Vector xs) = Vector (VG.accumulate_ f v is xs)
+{-# inline accumulate_ #-}
+
+-- | Same as 'accum' but without bounds checking.
+unsafeAccum :: VG.Vector v a
+            => (a -> b -> a) -- ^ accumulating function @f@
+            -> Vector v m a  -- ^ initial vector (of length @m@)
+            -> [(Int,b)]     -- ^ list of index/value pairs (of length @n@)
+            -> Vector v m a
+unsafeAccum f (Vector v) us = Vector (VG.unsafeAccum f v us)
+{-# inline unsafeAccum #-}
+
+-- | Same as 'accumulate' but without bounds checking.
+unsafeAccumulate :: (VG.Vector v a, VG.Vector v (Int, b))
+                 => (a -> b -> a)      -- ^ accumulating function @f@
+                 -> Vector v m a       -- ^ initial vector (of length @m@)
+                 -> Vector v n (Int,b) -- ^ vector of index/value pairs (of length @n@)
+                 -> Vector v m a
+unsafeAccumulate f (Vector v) (Vector us) = Vector (VG.unsafeAccumulate f v us)
+{-# inline unsafeAccumulate #-}
+
+-- | Same as 'accumulate_' but without bounds checking.
+unsafeAccumulate_ :: (VG.Vector v a, VG.Vector v Int, VG.Vector v b)
+            => (a -> b -> a)  -- ^ accumulating function @f@
+            -> Vector v m a   -- ^ initial vector (of length @m@)
+            -> Vector v n Int -- ^ index vector (of length @n@)
+            -> Vector v n b   -- ^ value vector (of length @n@)
+            -> Vector v m a
+unsafeAccumulate_ f (Vector v) (Vector is) (Vector xs) = Vector (VG.unsafeAccumulate_ f v is xs)
+{-# inline unsafeAccumulate_ #-}
+
+--
+-- ** Permutations
+--
+
+-- | /O(n)/ Reverse a vector
+reverse :: (VG.Vector v a) => Vector v n a -> Vector v n a
+reverse (Vector v) = Vector (VG.reverse v)
+{-# inline reverse #-}
+
+-- | /O(n)/ Yield the vector obtained by replacing each element @i@ of the
+-- index vector by @xs'!'i@. This is equivalent to @'map' (xs'!') is@ but is
+-- often much more efficient.
+--
+-- > backpermute <a,b,c,d> <0,3,2,3,1,0> = <a,d,c,d,b,a>
+backpermute :: (VG.Vector v a, VG.Vector v Int)
+            => Vector v m a   -- ^ @xs@ value vector
+            -> Vector v n Int -- ^ @is@ index vector (of length @n@)
+            -> Vector v n a
+backpermute (Vector v) (Vector is) = Vector (VG.backpermute v is)
+{-# inline backpermute #-}
+
+-- | Same as 'backpermute' but without bounds checking.
+unsafeBackpermute :: (VG.Vector v a, VG.Vector v Int)
+                  => Vector v m a   -- ^ @xs@ value vector
+                  -> Vector v n Int -- ^ @is@ index vector (of length @n@)
+                  -> Vector v n a
+unsafeBackpermute (Vector v) (Vector is) = Vector (VG.unsafeBackpermute v is)
+{-# inline unsafeBackpermute #-}
+
+--------------------------------------------------------------------------------
+-- * Elementwise Operations
+--------------------------------------------------------------------------------
+
+--
+-- ** Indexing 
+--
+
+-- | /O(n)/ Pair each element in a vector with its index
+indexed :: (VG.Vector v a, VG.Vector v (Int,a)) 
+        => Vector v n a -> Vector v n (Int,a)
+indexed (Vector v) = Vector (VG.indexed v)
+{-# inline indexed #-}
+
+--
+-- ** Mapping
+--
+
+-- | /O(n)/ Map a function over a vector
+map :: (VG.Vector v a, VG.Vector v b) 
+    => (a -> b) -> Vector v n a -> Vector v n b
+map f (Vector v) = Vector (VG.map f v)
+{-# inline map #-}
+
+-- | /O(n)/ Apply a function to every element of a vector and its index
+imap :: (VG.Vector v a, VG.Vector v b) 
+     => (Int -> a -> b) -> Vector v n a -> Vector v n b
+imap f (Vector v) = Vector (VG.imap f v)
+{-# inline imap #-}
+
+-- | /O(n*m)/ Map a function over a vector and concatenate the results. The
+-- function is required to always return the same length vector.
+concatMap :: (VG.Vector v a, VG.Vector v b) 
+          => (a -> Vector v m b) -> Vector v n a -> Vector v (n*m) b
+concatMap f (Vector v) = Vector (VG.concatMap (toVector . f) v)
+{-# inline concatMap #-}
+
+--
+-- ** Monadic mapping
+--
+
+-- | /O(n)/ Apply the monadic action to all elements of the vector, yielding a
+-- vector of results
+mapM :: (Monad m, VG.Vector v a, VG.Vector v b) 
+      => (a -> m b) -> Vector v n a -> m (Vector v n b)
+mapM f (Vector v) = Vector <$> VG.mapM f v
+{-# inline mapM #-}
+
+-- | /O(n)/ Apply the monadic action to every element of a vector and its
+-- index, yielding a vector of results
+imapM :: (Monad m, VG.Vector v a, VG.Vector v b)
+      => (Int -> a -> m b) -> Vector v n a -> m (Vector v n b)
+imapM f (Vector v) = Vector <$> (VG.imapM f v)
+{-# inline imapM #-}
+
+-- | /O(n)/ Apply the monadic action to all elements of a vector and ignore the
+-- results
+mapM_ :: (Monad m, VG.Vector v a) => (a -> m b) -> Vector v n a -> m ()
+mapM_ f (Vector v) = VG.mapM_ f v
+{-# inline mapM_ #-}
+
+-- | /O(n)/ Apply the monadic action to every element of a vector and its
+-- index, ignoring the results
+imapM_ :: (Monad m, VG.Vector v a) => (Int -> a -> m b) -> Vector v n a -> m ()
+imapM_ f (Vector v) = VG.imapM_ f v
+{-# inline imapM_ #-}
+
+-- | /O(n)/ Apply the monadic action to all elements of the vector, yielding a
+-- vector of results. Equvalent to @flip 'mapM'@.
+forM :: (Monad m, VG.Vector v a, VG.Vector v b) 
+     => Vector v n a -> (a -> m b) -> m (Vector v n b)
+forM (Vector v) f = Vector <$> VG.forM v f
+{-# inline forM #-}
+
+-- | /O(n)/ Apply the monadic action to all elements of a vector and ignore the
+-- results. Equivalent to @flip 'mapM_'@.
+forM_ :: (Monad m, VG.Vector v a) => Vector v n a -> (a -> m b) -> m ()
+forM_ (Vector v) f = VG.forM_ v f
+{-# inline forM_ #-}
+
+--
+-- ** Zipping
+--
+
+-- | /O(n)/ Zip two vectors of the same length with the given function.
+zipWith :: (VG.Vector v a, VG.Vector v b, VG.Vector v c)
+        => (a -> b -> c) -> Vector v n a -> Vector v n b -> Vector v n c
+zipWith f (Vector as) (Vector bs) = Vector (VG.zipWith f as bs)
+{-# inline zipWith #-}
+
+-- | Zip three vectors with the given function.
+zipWith3 :: (VG.Vector v a, VG.Vector v b, VG.Vector v c, VG.Vector v d)
+         => (a -> b -> c -> d) -> Vector v n a -> Vector v n b -> Vector v n c -> Vector v n d
+zipWith3 f (Vector as) (Vector bs) (Vector cs) = Vector (VG.zipWith3 f as bs cs)
+{-# inline zipWith3 #-}
+
+zipWith4 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v e)
+         => (a -> b -> c -> d -> e)
+         -> Vector v n a
+         -> Vector v n b
+         -> Vector v n c
+         -> Vector v n d
+         -> Vector v n e
+zipWith4 f (Vector as) (Vector bs) (Vector cs) (Vector ds) 
+  = Vector (VG.zipWith4 f as bs cs ds)
+{-# inline zipWith4 #-}
+
+zipWith5 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v e,VG.Vector v f)
+         => (a -> b -> c -> d -> e -> f)
+         -> Vector v n a
+         -> Vector v n b
+         -> Vector v n c
+         -> Vector v n d
+         -> Vector v n e
+         -> Vector v n f
+zipWith5 f (Vector as) (Vector bs) (Vector cs) (Vector ds) (Vector es) 
+  = Vector (VG.zipWith5 f as bs cs ds es)
+{-# inline zipWith5 #-}
+
+zipWith6 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v e,VG.Vector v f,VG.Vector v g)
+         => (a -> b -> c -> d -> e -> f -> g)
+         -> Vector v n a
+         -> Vector v n b
+         -> Vector v n c
+         -> Vector v n d
+         -> Vector v n e
+         -> Vector v n f
+         -> Vector v n g
+zipWith6 f (Vector as) (Vector bs) (Vector cs) (Vector ds) (Vector es) (Vector fs) 
+  = Vector (VG.zipWith6 f as bs cs ds es fs)
+{-# inline zipWith6 #-}
+
+-- | /O(n)/ Zip two vectors of the same length with a function that also takes
+-- the elements' indices).
+izipWith :: (VG.Vector v a,VG.Vector v b,VG.Vector v c)
+         => (Int -> a -> b -> c)
+         -> Vector v n a
+         -> Vector v n b
+         -> Vector v n c
+izipWith f (Vector xs) (Vector ys)
+  = Vector (VG.izipWith f xs ys)
+{-# inline izipWith #-}
+
+izipWith3 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d)
+          => (Int -> a -> b -> c -> d)
+          -> Vector v n a
+          -> Vector v n b
+          -> Vector v n c
+          -> Vector v n d
+izipWith3 f (Vector as) (Vector bs) (Vector cs)
+  = Vector (VG.izipWith3 f as bs cs)
+{-# inline izipWith3 #-}
+
+izipWith4 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v e)
+          => (Int -> a -> b -> c -> d -> e)
+          -> Vector v n a
+          -> Vector v n b
+          -> Vector v n c
+          -> Vector v n d
+          -> Vector v n e
+izipWith4 f (Vector as) (Vector bs) (Vector cs) (Vector ds)
+  = Vector (VG.izipWith4 f as bs cs ds)
+{-# inline izipWith4 #-}
+
+izipWith5 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v e,VG.Vector v f)
+          => (Int -> a -> b -> c -> d -> e -> f)
+          -> Vector v n a
+          -> Vector v n b
+          -> Vector v n c
+          -> Vector v n d
+          -> Vector v n e
+          -> Vector v n f
+izipWith5 f (Vector as) (Vector bs) (Vector cs) (Vector ds) (Vector es)
+  = Vector (VG.izipWith5 f as bs cs ds es)
+{-# inline izipWith5 #-}
+
+izipWith6 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v e,VG.Vector v f,VG.Vector v g)
+          => (Int -> a -> b -> c -> d -> e -> f -> g)
+          -> Vector v n a
+          -> Vector v n b
+          -> Vector v n c
+          -> Vector v n d
+          -> Vector v n e
+          -> Vector v n f
+          -> Vector v n g
+izipWith6 f (Vector as) (Vector bs) (Vector cs) (Vector ds) (Vector es) (Vector fs)
+  = Vector (VG.izipWith6 f as bs cs ds es fs)
+{-# inline izipWith6 #-}
+
+-- | /O(n)/ Zip two vectors of the same length
+zip :: (VG.Vector v a, VG.Vector v b, VG.Vector v (a,b)) 
+    => Vector v n a -> Vector v n b -> Vector v n (a, b)
+zip = zipWith (,)
+{-# inline zip #-}
+
+zip3 :: (VG.Vector v a, VG.Vector v b, VG.Vector v c, VG.Vector v (a, b, c))
+     => Vector v n a -> Vector v n b -> Vector v n c -> Vector v n (a, b, c)
+zip3 = zipWith3 (,,)
+{-# inline zip3 #-}
+
+zip4 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v (a,b,c,d))
+     => Vector v n a
+     -> Vector v n b
+     -> Vector v n c
+     -> Vector v n d
+     -> Vector v n (a,b,c,d)
+zip4 = zipWith4 (,,,)
+{-# inline zip4 #-}
+
+zip5 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v e,VG.Vector v (a,b,c,d,e))
+     => Vector v n a
+     -> Vector v n b
+     -> Vector v n c
+     -> Vector v n d
+     -> Vector v n e
+     -> Vector v n (a,b,c,d,e)
+zip5 = zipWith5 (,,,,)
+{-# inline zip5 #-}
+
+zip6 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v e,VG.Vector v f,VG.Vector v (a,b,c,d,e,f))
+     => Vector v n a
+     -> Vector v n b
+     -> Vector v n c
+     -> Vector v n d
+     -> Vector v n e
+     -> Vector v n f
+     -> Vector v n (a,b,c,d,e,f)
+zip6 = zipWith6 (,,,,,)
+{-# inline zip6 #-}
+
+--
+-- ** Monadic zipping
+--
+
+-- | /O(n)/ Zip the two vectors of the same length with the monadic action and
+-- yield a vector of results
+zipWithM :: (Monad m, VG.Vector v a, VG.Vector v b, VG.Vector v c)
+         => (a -> b -> m c) -> Vector v n a -> Vector v n b -> m (Vector v n c)
+zipWithM f (Vector as) (Vector bs) = Vector <$> VG.zipWithM f as bs
+{-# inline zipWithM #-}
+
+-- | /O(n)/ Zip the two vectors with a monadic action that also takes the
+-- element index and yield a vector of results
+izipWithM :: (Monad m, VG.Vector v a, VG.Vector v b, VG.Vector v c)
+         => (Int -> a -> b -> m c) -> Vector v n a -> Vector v n b -> m (Vector v n c)
+izipWithM m (Vector as) (Vector bs) = Vector <$> VG.izipWithM m as bs
+{-# inline izipWithM #-}
+
+-- | /O(n)/ Zip the two vectors with the monadic action and ignore the results
+zipWithM_ :: (Monad m, VG.Vector v a, VG.Vector v b)
+          => (a -> b -> m c) -> Vector v n a -> Vector v n b -> m ()
+zipWithM_ f (Vector as) (Vector bs) = VG.zipWithM_ f as bs
+{-# inline zipWithM_ #-}
+
+-- | /O(n)/ Zip the two vectors with a monadic action that also takes
+-- the element index and ignore the results
+izipWithM_ :: (Monad m, VG.Vector v a, VG.Vector v b)
+           => (Int -> a -> b -> m c) -> Vector v n a -> Vector v n b -> m ()
+izipWithM_ m (Vector as) (Vector bs) = VG.izipWithM_ m as bs
+{-# inline izipWithM_ #-}
+
+-- Unzipping
+-- ---------
+
+-- | /O(min(m,n))/ Unzip a vector of pairs.
+unzip :: (VG.Vector v a, VG.Vector v b, VG.Vector v (a,b)) 
+      => Vector v n (a, b) -> (Vector v n a, Vector v n b)
+unzip xs = (map fst xs, map snd xs)
+{-# inline unzip #-}
+
+unzip3 :: (VG.Vector v a, VG.Vector v b, VG.Vector v c, VG.Vector v (a, b, c))
+       => Vector v n (a, b, c) -> (Vector v n a, Vector v n b, Vector v n c)
+unzip3 xs = (map (\(a, _, _) -> a) xs,
+             map (\(_, b, _) -> b) xs,
+             map (\(_, _, c) -> c) xs)
+{-# inline unzip3 #-}
+
+unzip4 :: (VG.Vector v a, VG.Vector v b, VG.Vector v c, VG.Vector v d,
+           VG.Vector v (a, b, c, d))
+       => Vector v n (a, b, c, d) -> (Vector v n a, Vector v n b, Vector v n c, Vector v n d)
+unzip4 xs = (map (\(a, _, _, _) -> a) xs,
+             map (\(_, b, _, _) -> b) xs,
+             map (\(_, _, c, _) -> c) xs,
+             map (\(_, _, _, d) -> d) xs)
+{-# inline unzip4 #-}
+
+unzip5 :: (VG.Vector v a, VG.Vector v b, VG.Vector v c, VG.Vector v d, VG.Vector v e,
+           VG.Vector v (a, b, c, d, e))
+       => Vector v n (a, b, c, d, e) -> (Vector v n a, Vector v n b, Vector v n c, Vector v n d, Vector v n e)
+unzip5 xs = (map (\(a, _, _, _, _) -> a) xs,
+             map (\(_, b, _, _, _) -> b) xs,
+             map (\(_, _, c, _, _) -> c) xs,
+             map (\(_, _, _, d, _) -> d) xs,
+             map (\(_, _, _, _, e) -> e) xs)
+{-# inline unzip5 #-}
+
+unzip6 :: (VG.Vector v a, VG.Vector v b, VG.Vector v c, VG.Vector v d, VG.Vector v e,
+           VG.Vector v f, VG.Vector v (a, b, c, d, e, f))
+       => Vector v n (a, b, c, d, e, f) -> (Vector v n a, Vector v n b, Vector v n c, Vector v n d, Vector v n e, Vector v n f)
+unzip6 xs = (map (\(a, _, _, _, _, _) -> a) xs,
+             map (\(_, b, _, _, _, _) -> b) xs,
+             map (\(_, _, c, _, _, _) -> c) xs,
+             map (\(_, _, _, d, _, _) -> d) xs,
+             map (\(_, _, _, _, e, _) -> e) xs,
+             map (\(_, _, _, _, _, f) -> f) xs)
+{-# inline unzip6 #-}
+
+
+--------------------------------------------------------------------------------
+
+
 -- | Convert a 'Data.Vector.Generic.Vector' into a
 -- 'Data.Vector.Generic.Sized.Vector' if it has the correct size, otherwise
 -- return Nothing.
@@ -470,25 +1024,15 @@ fromVector v
   where n' = natVal (Proxy :: Proxy n)
 {-# INLINE fromVector #-}
 
+toVector :: Vector v n a -> v a
+toVector (Vector v) = v
+
 -- | Apply a function on unsized vectors to a sized vector. The function must
 -- preserve the size of the vector, this is not checked.
 withVectorUnsafe :: forall a b v (n :: Nat). (VG.Vector v a, VG.Vector v b)
                  => (v a -> v b) -> Vector v n a -> Vector v n b
 withVectorUnsafe f (Vector v) = Vector (f v)
 {-# INLINE withVectorUnsafe #-}
-
--- | /O(n)/ Map a function over the vector.
-map :: forall a b v (n :: Nat). (VG.Vector v a, VG.Vector v b)
-    => (a -> b) -> Vector v n a -> Vector v n b
-map f = withVectorUnsafe (VG.map f)
-{-# INLINE map #-}
-
--- | /O(n)/ Apply the monadic action to every element of a vector and its
--- index, ignoring the results.
-imapM_ :: forall a v n b m. (VG.Vector v a, Monad m)
-       => (Int -> a -> m b) -> Vector v n a -> m ()
-imapM_ f (Vector v) = VG.imapM_ f v
-{-# INLINE imapM_ #-}
 
 -- | /O(n)/ Left fold with a strict accumulator.
 foldl' :: forall a b v (n :: Nat). VG.Vector v b
