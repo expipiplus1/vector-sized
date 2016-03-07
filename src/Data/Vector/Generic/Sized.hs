@@ -6,6 +6,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
+{-|
+This module reexports the functionality in 'Data.Vector.Generic' which maps well
+to explicity sized vectors.
+
+Functions returning a vector determine the size from the type context unless
+they have a @'@ suffix in which case they take an explicit 'Proxy' argument.
+
+Functions where the resultant vector size is not know until compile time are
+not exported.
+-}
+
 module Data.Vector.Generic.Sized
  ( Vector
    -- * Accessors
@@ -126,6 +137,13 @@ module Data.Vector.Generic.Sized
   , unzip4
   , unzip5
   , unzip6
+    -- * Working with predicates
+    -- ** Searching
+  , elem
+  , notElem
+  , find
+  , findIndex
+  , elemIndex
 
 
 
@@ -145,7 +163,7 @@ import Foreign.Ptr (castPtr)
 import Prelude
        hiding (replicate, head, last, tail, init, map, length, drop, take,
                splitAt, (++), reverse, map, concatMap, mapM, mapM_, forM, zipWith,
-               zipWith3, zip, zip3, unzip, unzip3)
+               zipWith3, zip, zip3, unzip, unzip3, elem, notElem)
 
 newtype Vector v (n :: Nat) a = Vector (v a)
   deriving (Show, Eq, Ord, Foldable, NFData)
@@ -707,11 +725,11 @@ unsafeBackpermute (Vector v) (Vector is) = Vector (VG.unsafeBackpermute v is)
 --------------------------------------------------------------------------------
 
 --
--- ** Indexing 
+-- ** Indexing
 --
 
 -- | /O(n)/ Pair each element in a vector with its index
-indexed :: (VG.Vector v a, VG.Vector v (Int,a)) 
+indexed :: (VG.Vector v a, VG.Vector v (Int,a))
         => Vector v n a -> Vector v n (Int,a)
 indexed (Vector v) = Vector (VG.indexed v)
 {-# inline indexed #-}
@@ -721,20 +739,20 @@ indexed (Vector v) = Vector (VG.indexed v)
 --
 
 -- | /O(n)/ Map a function over a vector
-map :: (VG.Vector v a, VG.Vector v b) 
+map :: (VG.Vector v a, VG.Vector v b)
     => (a -> b) -> Vector v n a -> Vector v n b
 map f (Vector v) = Vector (VG.map f v)
 {-# inline map #-}
 
 -- | /O(n)/ Apply a function to every element of a vector and its index
-imap :: (VG.Vector v a, VG.Vector v b) 
+imap :: (VG.Vector v a, VG.Vector v b)
      => (Int -> a -> b) -> Vector v n a -> Vector v n b
 imap f (Vector v) = Vector (VG.imap f v)
 {-# inline imap #-}
 
 -- | /O(n*m)/ Map a function over a vector and concatenate the results. The
 -- function is required to always return the same length vector.
-concatMap :: (VG.Vector v a, VG.Vector v b) 
+concatMap :: (VG.Vector v a, VG.Vector v b)
           => (a -> Vector v m b) -> Vector v n a -> Vector v (n*m) b
 concatMap f (Vector v) = Vector (VG.concatMap (toVector . f) v)
 {-# inline concatMap #-}
@@ -745,7 +763,7 @@ concatMap f (Vector v) = Vector (VG.concatMap (toVector . f) v)
 
 -- | /O(n)/ Apply the monadic action to all elements of the vector, yielding a
 -- vector of results
-mapM :: (Monad m, VG.Vector v a, VG.Vector v b) 
+mapM :: (Monad m, VG.Vector v a, VG.Vector v b)
       => (a -> m b) -> Vector v n a -> m (Vector v n b)
 mapM f (Vector v) = Vector <$> VG.mapM f v
 {-# inline mapM #-}
@@ -771,7 +789,7 @@ imapM_ f (Vector v) = VG.imapM_ f v
 
 -- | /O(n)/ Apply the monadic action to all elements of the vector, yielding a
 -- vector of results. Equvalent to @flip 'mapM'@.
-forM :: (Monad m, VG.Vector v a, VG.Vector v b) 
+forM :: (Monad m, VG.Vector v a, VG.Vector v b)
      => Vector v n a -> (a -> m b) -> m (Vector v n b)
 forM (Vector v) f = Vector <$> VG.forM v f
 {-# inline forM #-}
@@ -805,7 +823,7 @@ zipWith4 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v
          -> Vector v n c
          -> Vector v n d
          -> Vector v n e
-zipWith4 f (Vector as) (Vector bs) (Vector cs) (Vector ds) 
+zipWith4 f (Vector as) (Vector bs) (Vector cs) (Vector ds)
   = Vector (VG.zipWith4 f as bs cs ds)
 {-# inline zipWith4 #-}
 
@@ -817,7 +835,7 @@ zipWith5 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v
          -> Vector v n d
          -> Vector v n e
          -> Vector v n f
-zipWith5 f (Vector as) (Vector bs) (Vector cs) (Vector ds) (Vector es) 
+zipWith5 f (Vector as) (Vector bs) (Vector cs) (Vector ds) (Vector es)
   = Vector (VG.zipWith5 f as bs cs ds es)
 {-# inline zipWith5 #-}
 
@@ -830,7 +848,7 @@ zipWith6 :: (VG.Vector v a,VG.Vector v b,VG.Vector v c,VG.Vector v d,VG.Vector v
          -> Vector v n e
          -> Vector v n f
          -> Vector v n g
-zipWith6 f (Vector as) (Vector bs) (Vector cs) (Vector ds) (Vector es) (Vector fs) 
+zipWith6 f (Vector as) (Vector bs) (Vector cs) (Vector ds) (Vector es) (Vector fs)
   = Vector (VG.zipWith6 f as bs cs ds es fs)
 {-# inline zipWith6 #-}
 
@@ -892,7 +910,7 @@ izipWith6 f (Vector as) (Vector bs) (Vector cs) (Vector ds) (Vector es) (Vector 
 {-# inline izipWith6 #-}
 
 -- | /O(n)/ Zip two vectors of the same length
-zip :: (VG.Vector v a, VG.Vector v b, VG.Vector v (a,b)) 
+zip :: (VG.Vector v a, VG.Vector v b, VG.Vector v (a,b))
     => Vector v n a -> Vector v n b -> Vector v n (a, b)
 zip = zipWith (,)
 {-# inline zip #-}
@@ -967,7 +985,7 @@ izipWithM_ m (Vector as) (Vector bs) = VG.izipWithM_ m as bs
 -- ---------
 
 -- | /O(min(m,n))/ Unzip a vector of pairs.
-unzip :: (VG.Vector v a, VG.Vector v b, VG.Vector v (a,b)) 
+unzip :: (VG.Vector v a, VG.Vector v b, VG.Vector v (a,b))
       => Vector v n (a, b) -> (Vector v n a, Vector v n b)
 unzip xs = (map fst xs, map snd xs)
 {-# inline unzip #-}
@@ -1008,6 +1026,46 @@ unzip6 xs = (map (\(a, _, _, _, _, _) -> a) xs,
              map (\(_, _, _, _, e, _) -> e) xs,
              map (\(_, _, _, _, _, f) -> f) xs)
 {-# inline unzip6 #-}
+
+--------------------------------------------------------------------------------
+-- * Working with predicates
+--------------------------------------------------------------------------------
+
+--
+-- ** Searching
+--
+
+
+infix 4 `elem`
+-- | /O(n)/ Check if the vector contains an element
+elem :: (VG.Vector v a, Eq a) => a -> Vector v n a -> Bool
+elem x (Vector v) = VG.elem x v
+{-# inline elem #-}
+
+infix 4 `notElem`
+-- | /O(n)/ Check if the vector does not contain an element (inverse of 'elem')
+notElem :: (VG.Vector v a, Eq a) => a -> Vector v n a -> Bool
+notElem x (Vector v) = VG.notElem x v
+{-# inline notElem #-}
+
+-- | /O(n)/ Yield 'Just' the first element matching the predicate or 'Nothing'
+-- if no such element exists.
+find :: VG.Vector v a => (a -> Bool) -> Vector v n a -> Maybe a
+find f (Vector v) = VG.find f v
+{-# inline find #-}
+
+-- | /O(n)/ Yield 'Just' the index of the first element matching the predicate
+-- or 'Nothing' if no such element exists.
+findIndex :: VG.Vector v a => (a -> Bool) -> Vector v n a -> Maybe Int
+findIndex f (Vector v) = VG.findIndex f v
+{-# inline findIndex #-}
+
+-- | /O(n)/ Yield 'Just' the index of the first occurence of the given element or
+-- 'Nothing' if the vector does not contain the element. This is a specialised
+-- version of 'findIndex'.
+elemIndex :: (VG.Vector v a, Eq a) => a -> Vector v n a -> Maybe Int
+elemIndex x (Vector v) = VG.elemIndex x v
+{-# inline elemIndex #-}
 
 
 --------------------------------------------------------------------------------
