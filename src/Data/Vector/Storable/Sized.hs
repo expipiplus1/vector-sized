@@ -235,6 +235,8 @@ import Prelude hiding ( length, null,
                         mapM, mapM_, sequence, sequence_,
                         showsPrec )
 
+-- | 'Data.Vector.Generic.Sized.Vector' specialized to use
+-- 'Data.Vector.Storable'
 type Vector = V.Vector VS.Vector
 
 -- | /O(1)/ Yield the length of the vector as an 'Int'.
