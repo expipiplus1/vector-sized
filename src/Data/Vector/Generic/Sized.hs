@@ -223,7 +223,6 @@ import Data.Proxy
 import Control.DeepSeq (NFData)
 import Foreign.Storable
 import Foreign.Ptr (castPtr)
-import qualified Prelude as P
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
                         head, last,
