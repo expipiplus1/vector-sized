@@ -219,10 +219,7 @@ import qualified Data.Vector.Generic.Sized as V
 import qualified Data.Vector.Storable as VS
 import GHC.TypeLits
 import Data.Proxy
-import Control.DeepSeq (NFData)
 import Foreign.Storable
-import Foreign.Ptr (castPtr)
-import qualified Prelude as P
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
                         head, last,
