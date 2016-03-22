@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -239,7 +240,7 @@ import Prelude hiding ( length, null,
                         showsPrec )
 
 newtype Vector v (n :: Nat) a = Vector (v a)
-  deriving (Show, Eq, Ord, Foldable, NFData)
+  deriving (Show, Eq, Ord, Functor, Foldable, Traversable, NFData)
 
 instance (KnownNat n, Storable a, VG.Vector v a)
       => Storable (Vector v n a) where
