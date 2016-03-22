@@ -219,6 +219,7 @@ module Data.Vector.Generic.Sized
   ) where
 
 import qualified Data.Vector.Generic as VG
+import qualified Data.Vector as Unboxed
 import GHC.TypeLits
 import Data.Proxy
 import Control.DeepSeq (NFData)
@@ -248,6 +249,14 @@ instance (KnownNat n, Storable a, VG.Vector v a)
   alignment _ = alignment (undefined :: a)
   peek ptr = generateM (peekElemOff (castPtr ptr))
   poke ptr = imapM_ (pokeElemOff (castPtr ptr))
+
+-- | The 'Applicative' instance for sized vectors does not have the same
+-- behaviour as the 'Applicative' instance for the unsized vectors found in the
+-- 'vectors' package. The instance defined here has the same behaviour as the
+-- 'Control.Applicative.ZipList' instance.
+instance KnownNat n => Applicative (Vector Unboxed.Vector n) where
+  pure = replicate
+  (<*>) = zipWith ($)
 
 -- | /O(1)/ Yield the length of the vector as an 'Int'.
 length :: forall v n a. (KnownNat n)
