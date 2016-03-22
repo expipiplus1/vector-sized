@@ -47,8 +47,6 @@ module Data.Vector.Generic.Sized
   , splitAt
   , splitAt'
     -- * Construction
-    -- ** Conversion from Data.Vector
-  , fromVector
     -- ** Initialization
   , empty
   , singleton
@@ -205,7 +203,18 @@ module Data.Vector.Generic.Sized
   , scanr'
   , scanr1
   , scanr1'
-
+    -- * Conversions
+    -- ** Lists
+  , toList
+  , fromList
+  , fromListN
+  , fromListN'
+    -- ** Other Vector types
+  , convert
+    -- ** Unsized Vectors
+  , toSized
+  , fromSized
+  , withVectorUnsafe
   ) where
 
 import qualified Data.Vector.Generic as VG
@@ -820,7 +829,7 @@ imap f (Vector v) = Vector (VG.imap f v)
 -- function is required to always return the same length vector.
 concatMap :: (VG.Vector v a, VG.Vector v b)
           => (a -> Vector v m b) -> Vector v n a -> Vector v (n*m) b
-concatMap f (Vector v) = Vector (VG.concatMap (toVector . f) v)
+concatMap f (Vector v) = Vector (VG.concatMap (fromSized . f) v)
 {-# inline concatMap #-}
 
 --
@@ -863,7 +872,7 @@ forM (Vector v) f = Vector <$> VG.forM v f
 -- | /O(n)/ Apply the monadic action to all elements of a vector and ignore the
 -- results. Equivalent to @flip 'mapM_'@.
 forM_ :: (Monad m, VG.Vector v a) => Vector v n a -> (a -> m b) -> m ()
-forM_ (Vector v) f = VG.forM_ v f
+forM_ (Vector v) = VG.forM_ v
 {-# inline forM_ #-}
 
 --
@@ -1139,219 +1148,219 @@ elemIndex x (Vector v) = VG.elemIndex x v
 
 -- | /O(n)/ Left fold
 foldl :: VG.Vector v b => (a -> b -> a) -> a -> Vector v n b -> a
-foldl f z = VG.foldl f z . toVector
+foldl f z = VG.foldl f z . fromSized
 {-# inline foldl #-}
 
 -- | /O(n)/ Left fold on non-empty vectors
 foldl1 :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> a
-foldl1 f = VG.foldl1 f . toVector
+foldl1 f = VG.foldl1 f . fromSized
 {-# inline foldl1 #-}
 
 -- | /O(n)/ Left fold with strict accumulator
 foldl' :: VG.Vector v b => (a -> b -> a) -> a -> Vector v n b -> a
-foldl' f z = VG.foldl' f z . toVector
+foldl' f z = VG.foldl' f z . fromSized
 {-# inline foldl' #-}
 
 -- | /O(n)/ Left fold on non-empty vectors with strict accumulator
 foldl1' :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> a
-foldl1' f = VG.foldl1' f . toVector
+foldl1' f = VG.foldl1' f . fromSized
 {-# inline foldl1' #-}
 
 -- | /O(n)/ Right fold
 foldr :: VG.Vector v a => (a -> b -> b) -> b -> Vector v n a -> b
-foldr f z = VG.foldr f z . toVector
+foldr f z = VG.foldr f z . fromSized
 {-# inline foldr #-}
 
 -- | /O(n)/ Right fold on non-empty vectors
 foldr1 :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> a
-foldr1 f = VG.foldr1 f . toVector
+foldr1 f = VG.foldr1 f . fromSized
 {-# inline foldr1 #-}
 
 -- | /O(n)/ Right fold with a strict accumulator
 foldr' :: VG.Vector v a => (a -> b -> b) -> b -> Vector v n a -> b
-foldr' f z = VG.foldr' f z . toVector
+foldr' f z = VG.foldr' f z . fromSized
 {-# inline foldr' #-}
 
 -- | /O(n)/ Right fold on non-empty vectors with strict accumulator
 foldr1' :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> a
-foldr1' f = VG.foldr1' f . toVector
+foldr1' f = VG.foldr1' f . fromSized
 {-# inline foldr1' #-}
 
 -- | /O(n)/ Left fold (function applied to each element and its index)
 ifoldl :: VG.Vector v b => (a -> Int -> b -> a) -> a -> Vector v n b -> a
-ifoldl f z = VG.ifoldl f z . toVector
+ifoldl f z = VG.ifoldl f z . fromSized
 {-# inline ifoldl #-}
 
 -- | /O(n)/ Left fold with strict accumulator (function applied to each element
 -- and its index)
 ifoldl' :: VG.Vector v b => (a -> Int -> b -> a) -> a -> Vector v n b -> a
-ifoldl' f z = VG.ifoldl' f z . toVector
+ifoldl' f z = VG.ifoldl' f z . fromSized
 {-# inline ifoldl' #-}
 
 -- | /O(n)/ Right fold (function applied to each element and its index)
 ifoldr :: VG.Vector v a => (Int -> a -> b -> b) -> b -> Vector v n a -> b
-ifoldr f z = VG.ifoldr f z . toVector
+ifoldr f z = VG.ifoldr f z . fromSized
 {-# inline ifoldr #-}
 
 -- | /O(n)/ Right fold with strict accumulator (function applied to each
 -- element and its index)
 ifoldr' :: VG.Vector v a => (Int -> a -> b -> b) -> b -> Vector v n a -> b
-ifoldr' f z = VG.ifoldr' f z . toVector
+ifoldr' f z = VG.ifoldr' f z . fromSized
 {-# inline ifoldr' #-}
 
 -- ** Specialised folds
 
 -- | /O(n)/ Check if all elements satisfy the predicate.
 all :: VG.Vector v a => (a -> Bool) -> Vector v n a -> Bool
-all f = VG.all f . toVector
+all f = VG.all f . fromSized
 {-# inline all #-}
 
 -- | /O(n)/ Check if any element satisfies the predicate.
 any :: VG.Vector v a => (a -> Bool) -> Vector v n a -> Bool
-any f = VG.any f . toVector
+any f = VG.any f . fromSized
 {-# inline any #-}
 
 -- | /O(n)/ Check if all elements are 'True'
 and :: VG.Vector v Bool => Vector v n Bool -> Bool
-and = VG.and . toVector
+and = VG.and . fromSized
 {-# inline and #-}
 
 -- | /O(n)/ Check if any element is 'True'
 or :: VG.Vector v Bool => Vector v n Bool -> Bool
-or = VG.or . toVector
+or = VG.or . fromSized
 {-# inline or #-}
 
 -- | /O(n)/ Compute the sum of the elements
 sum :: (VG.Vector v a, Num a) => Vector v n a -> a
-sum = VG.sum . toVector
+sum = VG.sum . fromSized
 {-# inline sum #-}
 
 -- | /O(n)/ Compute the produce of the elements
 product :: (VG.Vector v a, Num a) => Vector v n a -> a
-product = VG.product . toVector
+product = VG.product . fromSized
 {-# inline product #-}
 
 -- | /O(n)/ Yield the maximum element of the non-empty vector.
 maximum :: (VG.Vector v a, Ord a, KnownNat n) => Vector v (n+1) a -> a
-maximum = VG.maximum . toVector
+maximum = VG.maximum . fromSized
 {-# inline maximum #-}
 
 -- | /O(n)/ Yield the maximum element of the non-empty vector according to the
 -- given comparison function.
 maximumBy :: (VG.Vector v a, KnownNat n)
           => (a -> a -> Ordering) -> Vector v (n+1) a -> a
-maximumBy cmpr = VG.maximumBy cmpr . toVector
+maximumBy cmpr = VG.maximumBy cmpr . fromSized
 {-# inline maximumBy #-}
 
 -- | /O(n)/ Yield the minimum element of the non-empty vector.
 minimum :: (VG.Vector v a, Ord a, KnownNat n) => Vector v (n+1) a -> a
-minimum = VG.minimum . toVector
+minimum = VG.minimum . fromSized
 {-# inline minimum #-}
 
 -- | /O(n)/ Yield the minimum element of the non-empty vector according to the
 -- given comparison function.
 minimumBy :: (VG.Vector v a, KnownNat n)
           => (a -> a -> Ordering) -> Vector v (n+1) a -> a
-minimumBy cmpr = VG.minimumBy cmpr . toVector
+minimumBy cmpr = VG.minimumBy cmpr . fromSized
 {-# inline minimumBy #-}
 
 -- | /O(n)/ Yield the index of the maximum element of the non-empty vector.
 maxIndex :: (VG.Vector v a, Ord a, KnownNat n) => Vector v (n+1) a -> Int
-maxIndex = VG.maxIndex . toVector
+maxIndex = VG.maxIndex . fromSized
 {-# inline maxIndex #-}
 
 -- | /O(n)/ Yield the index of the maximum element of the non-empty vector
 -- according to the given comparison function.
 maxIndexBy :: (VG.Vector v a, KnownNat n)
            => (a -> a -> Ordering) -> Vector v (n+1) a -> Int
-maxIndexBy cmpr = VG.maxIndexBy cmpr . toVector
+maxIndexBy cmpr = VG.maxIndexBy cmpr . fromSized
 {-# inline maxIndexBy #-}
 
 -- | /O(n)/ Yield the index of the minimum element of the non-empty vector.
 minIndex :: (VG.Vector v a, Ord a, KnownNat n) => Vector v (n+1) a -> Int
-minIndex = VG.minIndex . toVector
+minIndex = VG.minIndex . fromSized
 {-# inline minIndex #-}
 
 -- | /O(n)/ Yield the index of the minimum element of the non-empty vector
 -- according to the given comparison function.
 minIndexBy :: (VG.Vector v a, KnownNat n)
            => (a -> a -> Ordering) -> Vector v (n+1) a -> Int
-minIndexBy cmpr = VG.minIndexBy cmpr . toVector
+minIndexBy cmpr = VG.minIndexBy cmpr . fromSized
 {-# inline minIndexBy #-}
 
 -- ** Monadic folds
 
 -- | /O(n)/ Monadic fold
 foldM :: (Monad m, VG.Vector v b) => (a -> b -> m a) -> a -> Vector v n b -> m a
-foldM m z = VG.foldM m z . toVector
+foldM m z = VG.foldM m z . fromSized
 {-# inline foldM #-}
 
 -- | /O(n)/ Monadic fold (action applied to each element and its index)
 ifoldM :: (Monad m, VG.Vector v b) => (a -> Int -> b -> m a) -> a -> Vector v n b -> m a
-ifoldM m z = VG.ifoldM m z . toVector
+ifoldM m z = VG.ifoldM m z . fromSized
 {-# inline ifoldM #-}
 
 -- | /O(n)/ Monadic fold over non-empty vectors
 fold1M :: (Monad m, VG.Vector v a, KnownNat n)
        => (a -> a -> m a) -> Vector v (n+1) a -> m a
-fold1M m = VG.fold1M m . toVector
+fold1M m = VG.fold1M m . fromSized
 {-# inline fold1M #-}
 
 -- | /O(n)/ Monadic fold with strict accumulator
 foldM' :: (Monad m, VG.Vector v b) => (a -> b -> m a) -> a -> Vector v n b -> m a
-foldM' m z = VG.foldM' m z . toVector
+foldM' m z = VG.foldM' m z . fromSized
 {-# inline foldM' #-}
 
 -- | /O(n)/ Monadic fold with strict accumulator (action applied to each
 -- element and its index)
 ifoldM' :: (Monad m, VG.Vector v b)
         => (a -> Int -> b -> m a) -> a -> Vector v n b -> m a
-ifoldM' m z = VG.ifoldM' m z . toVector
+ifoldM' m z = VG.ifoldM' m z . fromSized
 {-# inline ifoldM' #-}
 
 -- | /O(n)/ Monadic fold over non-empty vectors with strict accumulator
 fold1M' :: (Monad m, VG.Vector v a, KnownNat n)
         => (a -> a -> m a) -> Vector v (n+1) a -> m a
-fold1M' m = VG.fold1M' m . toVector
+fold1M' m = VG.fold1M' m . fromSized
 {-# inline fold1M' #-}
 
 -- | /O(n)/ Monadic fold that discards the result
 foldM_ :: (Monad m, VG.Vector v b)
        => (a -> b -> m a) -> a -> Vector v n b -> m ()
-foldM_ m z = VG.foldM_ m z . toVector
+foldM_ m z = VG.foldM_ m z . fromSized
 {-# inline foldM_ #-}
 
 -- | /O(n)/ Monadic fold that discards the result (action applied to
 -- each element and its index)
 ifoldM_ :: (Monad m, VG.Vector v b)
         => (a -> Int -> b -> m a) -> a -> Vector v n b -> m ()
-ifoldM_ m z = VG.ifoldM_ m z . toVector
+ifoldM_ m z = VG.ifoldM_ m z . fromSized
 {-# inline ifoldM_ #-}
 
 -- | /O(n)/ Monadic fold over non-empty vectors that discards the result
 fold1M_ :: (Monad m, VG.Vector v a, KnownNat n)
         => (a -> a -> m a) -> Vector v (n+1) a -> m ()
-fold1M_ m = VG.fold1M_ m . toVector
+fold1M_ m = VG.fold1M_ m . fromSized
 {-# inline fold1M_ #-}
 
 -- | /O(n)/ Monadic fold with strict accumulator that discards the result
 foldM'_ :: (Monad m, VG.Vector v b)
         => (a -> b -> m a) -> a -> Vector v n b -> m ()
-foldM'_ m z = VG.foldM'_ m z . toVector
+foldM'_ m z = VG.foldM'_ m z . fromSized
 {-# inline foldM'_ #-}
 
 -- | /O(n)/ Monadic fold with strict accumulator that discards the result
 -- (action applied to each element and its index)
 ifoldM'_ :: (Monad m, VG.Vector v b)
          => (a -> Int -> b -> m a) -> a -> Vector v n b -> m ()
-ifoldM'_ m z = VG.ifoldM'_ m z . toVector
+ifoldM'_ m z = VG.ifoldM'_ m z . fromSized
 {-# inline ifoldM'_ #-}
 
 -- | /O(n)/ Monad fold over non-empty vectors with strict accumulator
 -- that discards the result
 fold1M'_ :: (Monad m, VG.Vector v a, KnownNat n)
          => (a -> a -> m a) -> Vector v (n+1) a -> m ()
-fold1M'_ m = VG.fold1M'_ m . toVector
+fold1M'_ m = VG.fold1M'_ m . fromSized
 {-# inline fold1M'_ #-}
 
 -- ** Monadic sequencing
@@ -1483,25 +1492,64 @@ scanr1' :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> V
 scanr1' f = withVectorUnsafe (VG.scanr1' f )
 {-# inline scanr1' #-}
 
---------------------------------------------------------------------------------
+
+-- * Conversions
+
+-- ** Lists
+
+-- | /O(n)/ Convert a vector to a list
+toList :: VG.Vector v a => Vector v n a -> [a]
+toList = VG.toList . fromSized
+{-# inline toList #-}
+
+-- | /O(n)/ Convert a list to a vector
+fromList :: (VG.Vector v a, KnownNat n) => [a] -> Maybe (Vector v n a)
+fromList = toSized . VG.fromList 
+{-# inline fromList #-}
+
+-- | /O(n)/ Convert the first @n@ elements of a list to a vector. The length of
+-- the resultant vector is inferred from the type.
+fromListN :: forall v n a. (VG.Vector v a, KnownNat n) 
+          => [a] -> Maybe (Vector v n a)
+fromListN = toSized . VG.fromListN i
+  where i = fromInteger (natVal (Proxy :: Proxy n))
+{-# inline fromListN #-}
+
+-- | /O(n)/ Convert the first @n@ elements of a list to a vector. The length of
+-- the resultant vector is given explicitly as a 'Proxy' argument.
+fromListN' :: forall v n a. (VG.Vector v a, KnownNat n) 
+           => Proxy n -> [a] -> Maybe (Vector v n a)
+fromListN' _ = fromListN
+{-# inline fromListN' #-}
+
+-- ** Different Vector types
+
+-- | /O(n)/ Convert different vector types
+convert :: (VG.Vector v a, VG.Vector w a) => Vector v n a -> Vector w n a
+convert = withVectorUnsafe VG.convert
+{-# inline convert #-}
+
+-- ** Unsized vectors
 
 -- | Convert a 'Data.Vector.Generic.Vector' into a
 -- 'Data.Vector.Generic.Sized.Vector' if it has the correct size, otherwise
 -- return Nothing.
-fromVector :: forall a v (n :: Nat). (KnownNat n, VG.Vector v a)
-           => v a -> Maybe (Vector v n a)
-fromVector v
+toSized :: forall v n a. (VG.Vector v a, KnownNat n)
+        => v a -> Maybe (Vector v n a)
+toSized v
   | n' == fromIntegral (VG.length v) = Just (Vector v)
   | otherwise                        = Nothing
   where n' = natVal (Proxy :: Proxy n)
-{-# INLINE fromVector #-}
+{-# inline toSized #-}
 
-toVector :: Vector v n a -> v a
-toVector (Vector v) = v
+fromSized :: Vector v n a -> v a
+fromSized (Vector v) = v
+{-# inline fromSized #-}
 
 -- | Apply a function on unsized vectors to a sized vector. The function must
 -- preserve the size of the vector, this is not checked.
-withVectorUnsafe :: forall a b v (n :: Nat). (VG.Vector v a, VG.Vector v b)
-                 => (v a -> v b) -> Vector v n a -> Vector v n b
+withVectorUnsafe :: forall a b v w (n :: Nat). (VG.Vector v a, VG.Vector w b)
+                 => (v a -> w b) -> Vector v n a -> Vector w n b
 withVectorUnsafe f (Vector v) = Vector (f v)
-{-# INLINE withVectorUnsafe #-}
+{-# inline withVectorUnsafe #-}
+
