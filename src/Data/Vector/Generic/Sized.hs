@@ -240,9 +240,11 @@ import Prelude hiding ( length, null,
                         mapM, mapM_, sequence, sequence_,
                         showsPrec )
 
+-- | A wrapper to tag vectors with a type level length.
 newtype Vector v (n :: Nat) a = Vector (v a)
   deriving (Show, Eq, Ord, Functor, Foldable, Traversable, NFData)
 
+-- | Any sized vector containing storable elements is itself storable.
 instance (KnownNat n, Storable a, VG.Vector v a)
       => Storable (Vector v n a) where
   sizeOf _ = sizeOf (undefined :: a) * fromInteger (natVal (Proxy :: Proxy n))
