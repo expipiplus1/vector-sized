@@ -144,13 +144,50 @@ module Data.Vector.Generic.Sized
   , find
   , findIndex
   , elemIndex
-
-
-
-
     -- * Folding
+  , foldl
+  , foldl1
   , foldl'
   , foldl1'
+  , foldr
+  , foldr1
+  , foldr'
+  , foldr1'
+  , ifoldl
+  , ifoldl'
+  , ifoldr
+  , ifoldr'
+    -- ** Specialised folds
+  , all
+  , any
+  , and
+  , or
+  , sum
+  , product
+  , maximum
+  , maximumBy
+  , minimum
+  , minimumBy
+  , maxIndex
+  , maxIndexBy
+  , minIndex
+  , minIndexBy
+    -- ** Monadic folds
+  , foldM
+  , ifoldM
+  , fold1M
+  , foldM'
+  , ifoldM'
+  , fold1M'
+  , foldM_
+  , ifoldM_
+  , fold1M_
+  , foldM'_
+  , ifoldM'_
+  , fold1M'_
+    -- ** Monadic sequencing
+  , sequence
+  , sequence_
   ) where
 
 import qualified Data.Vector.Generic as VG
@@ -160,17 +197,28 @@ import Data.Proxy
 import Control.DeepSeq (NFData)
 import Foreign.Storable
 import Foreign.Ptr (castPtr)
-import Prelude
-       hiding (replicate, head, last, tail, init, map, length, drop, take,
-               splitAt, (++), reverse, map, concatMap, mapM, mapM_, forM, zipWith,
-               zipWith3, zip, zip3, unzip, unzip3, elem, notElem)
+import qualified Prelude as P
+import Prelude hiding ( length, null,
+                        replicate, (++), concat,
+                        head, last,
+                        init, tail, take, drop, splitAt, reverse,
+                        map, concat, concatMap,
+                        zipWith, zipWith3, zip, zip3, unzip, unzip3,
+                        filter, takeWhile, dropWhile, span, break,
+                        elem, notElem,
+                        foldl, foldl1, foldr, foldr1,
+                        all, any, and, or, sum, product, maximum, minimum,
+                        scanl, scanl1, scanr, scanr1,
+                        enumFromTo, enumFromThenTo,
+                        mapM, mapM_, sequence, sequence_,
+                        showsPrec )
 
 newtype Vector v (n :: Nat) a = Vector (v a)
   deriving (Show, Eq, Ord, Foldable, NFData)
 
 instance (KnownNat n, Storable a)
       => Storable (Vector VS.Vector n a) where
-  sizeOf _ = sizeOf (undefined :: a) * fromIntegral (natVal (Proxy :: Proxy n))
+  sizeOf _ = sizeOf (undefined :: a) * fromInteger (natVal (Proxy :: Proxy n))
   alignment _ = alignment (undefined :: a)
   peek ptr = generateM (peekElemOff (castPtr ptr))
   poke ptr = imapM_ (pokeElemOff (castPtr ptr))
@@ -1067,6 +1115,239 @@ elemIndex :: (VG.Vector v a, Eq a) => a -> Vector v n a -> Maybe Int
 elemIndex x (Vector v) = VG.elemIndex x v
 {-# inline elemIndex #-}
 
+--------------------------------------------------------------------------------
+-- * Folding
+--------------------------------------------------------------------------------
+
+-- | /O(n)/ Left fold
+foldl :: VG.Vector v b => (a -> b -> a) -> a -> Vector v n b -> a
+foldl f z = VG.foldl f z . toVector
+{-# inline foldl #-}
+
+-- | /O(n)/ Left fold on non-empty vectors
+foldl1 :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> a
+foldl1 f = VG.foldl1 f . toVector
+{-# inline foldl1 #-}
+
+-- | /O(n)/ Left fold with strict accumulator
+foldl' :: VG.Vector v b => (a -> b -> a) -> a -> Vector v n b -> a
+foldl' f z = VG.foldl' f z . toVector
+{-# inline foldl' #-}
+
+-- | /O(n)/ Left fold on non-empty vectors with strict accumulator
+foldl1' :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> a
+foldl1' f = VG.foldl1' f . toVector
+{-# inline foldl1' #-}
+
+-- | /O(n)/ Right fold
+foldr :: VG.Vector v a => (a -> b -> b) -> b -> Vector v n a -> b
+foldr f z = VG.foldr f z . toVector
+{-# inline foldr #-}
+
+-- | /O(n)/ Right fold on non-empty vectors
+foldr1 :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> a
+foldr1 f = VG.foldr1 f . toVector
+{-# inline foldr1 #-}
+
+-- | /O(n)/ Right fold with a strict accumulator
+foldr' :: VG.Vector v a => (a -> b -> b) -> b -> Vector v n a -> b
+foldr' f z = VG.foldr' f z . toVector
+{-# inline foldr' #-}
+
+-- | /O(n)/ Right fold on non-empty vectors with strict accumulator
+foldr1' :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> a
+foldr1' f = VG.foldr1' f . toVector
+{-# inline foldr1' #-}
+
+-- | /O(n)/ Left fold (function applied to each element and its index)
+ifoldl :: VG.Vector v b => (a -> Int -> b -> a) -> a -> Vector v n b -> a
+ifoldl f z = VG.ifoldl f z . toVector
+{-# inline ifoldl #-}
+
+-- | /O(n)/ Left fold with strict accumulator (function applied to each element
+-- and its index)
+ifoldl' :: VG.Vector v b => (a -> Int -> b -> a) -> a -> Vector v n b -> a
+ifoldl' f z = VG.ifoldl' f z . toVector
+{-# inline ifoldl' #-}
+
+-- | /O(n)/ Right fold (function applied to each element and its index)
+ifoldr :: VG.Vector v a => (Int -> a -> b -> b) -> b -> Vector v n a -> b
+ifoldr f z = VG.ifoldr f z . toVector
+{-# inline ifoldr #-}
+
+-- | /O(n)/ Right fold with strict accumulator (function applied to each
+-- element and its index)
+ifoldr' :: VG.Vector v a => (Int -> a -> b -> b) -> b -> Vector v n a -> b
+ifoldr' f z = VG.ifoldr' f z . toVector
+{-# inline ifoldr' #-}
+
+-- ** Specialised folds
+
+-- | /O(n)/ Check if all elements satisfy the predicate.
+all :: VG.Vector v a => (a -> Bool) -> Vector v n a -> Bool
+all f = VG.all f . toVector
+{-# inline all #-}
+
+-- | /O(n)/ Check if any element satisfies the predicate.
+any :: VG.Vector v a => (a -> Bool) -> Vector v n a -> Bool
+any f = VG.any f . toVector
+{-# inline any #-}
+
+-- | /O(n)/ Check if all elements are 'True'
+and :: VG.Vector v Bool => Vector v n Bool -> Bool
+and = VG.and . toVector
+{-# inline and #-}
+
+-- | /O(n)/ Check if any element is 'True'
+or :: VG.Vector v Bool => Vector v n Bool -> Bool
+or = VG.or . toVector
+{-# inline or #-}
+
+-- | /O(n)/ Compute the sum of the elements
+sum :: (VG.Vector v a, Num a) => Vector v n a -> a
+sum = VG.sum . toVector
+{-# inline sum #-}
+
+-- | /O(n)/ Compute the produce of the elements
+product :: (VG.Vector v a, Num a) => Vector v n a -> a
+product = VG.product . toVector
+{-# inline product #-}
+
+-- | /O(n)/ Yield the maximum element of the non-empty vector.
+maximum :: (VG.Vector v a, Ord a, KnownNat n) => Vector v (n+1) a -> a
+maximum = VG.maximum . toVector
+{-# inline maximum #-}
+
+-- | /O(n)/ Yield the maximum element of the non-empty vector according to the
+-- given comparison function.
+maximumBy :: (VG.Vector v a, KnownNat n)
+          => (a -> a -> Ordering) -> Vector v (n+1) a -> a
+maximumBy cmpr = VG.maximumBy cmpr . toVector
+{-# inline maximumBy #-}
+
+-- | /O(n)/ Yield the minimum element of the non-empty vector.
+minimum :: (VG.Vector v a, Ord a, KnownNat n) => Vector v (n+1) a -> a
+minimum = VG.minimum . toVector
+{-# inline minimum #-}
+
+-- | /O(n)/ Yield the minimum element of the non-empty vector according to the
+-- given comparison function.
+minimumBy :: (VG.Vector v a, KnownNat n)
+          => (a -> a -> Ordering) -> Vector v (n+1) a -> a
+minimumBy cmpr = VG.minimumBy cmpr . toVector
+{-# inline minimumBy #-}
+
+-- | /O(n)/ Yield the index of the maximum element of the non-empty vector.
+maxIndex :: (VG.Vector v a, Ord a, KnownNat n) => Vector v (n+1) a -> Int
+maxIndex = VG.maxIndex . toVector
+{-# inline maxIndex #-}
+
+-- | /O(n)/ Yield the index of the maximum element of the non-empty vector
+-- according to the given comparison function.
+maxIndexBy :: (VG.Vector v a, KnownNat n)
+           => (a -> a -> Ordering) -> Vector v (n+1) a -> Int
+maxIndexBy cmpr = VG.maxIndexBy cmpr . toVector
+{-# inline maxIndexBy #-}
+
+-- | /O(n)/ Yield the index of the minimum element of the non-empty vector.
+minIndex :: (VG.Vector v a, Ord a, KnownNat n) => Vector v (n+1) a -> Int
+minIndex = VG.minIndex . toVector
+{-# inline minIndex #-}
+
+-- | /O(n)/ Yield the index of the minimum element of the non-empty vector
+-- according to the given comparison function.
+minIndexBy :: (VG.Vector v a, KnownNat n)
+           => (a -> a -> Ordering) -> Vector v (n+1) a -> Int
+minIndexBy cmpr = VG.minIndexBy cmpr . toVector
+{-# inline minIndexBy #-}
+
+-- ** Monadic folds
+
+-- | /O(n)/ Monadic fold
+foldM :: (Monad m, VG.Vector v b) => (a -> b -> m a) -> a -> Vector v n b -> m a
+foldM m z = VG.foldM m z . toVector
+{-# inline foldM #-}
+
+-- | /O(n)/ Monadic fold (action applied to each element and its index)
+ifoldM :: (Monad m, VG.Vector v b) => (a -> Int -> b -> m a) -> a -> Vector v n b -> m a
+ifoldM m z = VG.ifoldM m z . toVector
+{-# inline ifoldM #-}
+
+-- | /O(n)/ Monadic fold over non-empty vectors
+fold1M :: (Monad m, VG.Vector v a, KnownNat n)
+       => (a -> a -> m a) -> Vector v (n+1) a -> m a
+fold1M m = VG.fold1M m . toVector
+{-# inline fold1M #-}
+
+-- | /O(n)/ Monadic fold with strict accumulator
+foldM' :: (Monad m, VG.Vector v b) => (a -> b -> m a) -> a -> Vector v n b -> m a
+foldM' m z = VG.foldM' m z . toVector
+{-# inline foldM' #-}
+
+-- | /O(n)/ Monadic fold with strict accumulator (action applied to each
+-- element and its index)
+ifoldM' :: (Monad m, VG.Vector v b)
+        => (a -> Int -> b -> m a) -> a -> Vector v n b -> m a
+ifoldM' m z = VG.ifoldM' m z . toVector
+{-# inline ifoldM' #-}
+
+-- | /O(n)/ Monadic fold over non-empty vectors with strict accumulator
+fold1M' :: (Monad m, VG.Vector v a, KnownNat n)
+        => (a -> a -> m a) -> Vector v (n+1) a -> m a
+fold1M' m = VG.fold1M' m . toVector
+{-# inline fold1M' #-}
+
+-- | /O(n)/ Monadic fold that discards the result
+foldM_ :: (Monad m, VG.Vector v b)
+       => (a -> b -> m a) -> a -> Vector v n b -> m ()
+foldM_ m z = VG.foldM_ m z . toVector
+{-# inline foldM_ #-}
+
+-- | /O(n)/ Monadic fold that discards the result (action applied to
+-- each element and its index)
+ifoldM_ :: (Monad m, VG.Vector v b)
+        => (a -> Int -> b -> m a) -> a -> Vector v n b -> m ()
+ifoldM_ m z = VG.ifoldM_ m z . toVector
+{-# inline ifoldM_ #-}
+
+-- | /O(n)/ Monadic fold over non-empty vectors that discards the result
+fold1M_ :: (Monad m, VG.Vector v a, KnownNat n)
+        => (a -> a -> m a) -> Vector v (n+1) a -> m ()
+fold1M_ m = VG.fold1M_ m . toVector
+{-# inline fold1M_ #-}
+
+-- | /O(n)/ Monadic fold with strict accumulator that discards the result
+foldM'_ :: (Monad m, VG.Vector v b)
+        => (a -> b -> m a) -> a -> Vector v n b -> m ()
+foldM'_ m z = VG.foldM'_ m z . toVector
+{-# inline foldM'_ #-}
+
+-- | /O(n)/ Monadic fold with strict accumulator that discards the result
+-- (action applied to each element and its index)
+ifoldM'_ :: (Monad m, VG.Vector v b)
+         => (a -> Int -> b -> m a) -> a -> Vector v n b -> m ()
+ifoldM'_ m z = VG.ifoldM'_ m z . toVector
+{-# inline ifoldM'_ #-}
+
+-- | /O(n)/ Monad fold over non-empty vectors with strict accumulator
+-- that discards the result
+fold1M'_ :: (Monad m, VG.Vector v a, KnownNat n)
+         => (a -> a -> m a) -> Vector v (n+1) a -> m ()
+fold1M'_ m = VG.fold1M'_ m . toVector
+{-# inline fold1M'_ #-}
+
+-- ** Monadic sequencing
+
+-- | Evaluate each action and collect the results
+sequence :: (Monad m, VG.Vector v a, VG.Vector v (m a))
+         => Vector v n (m a) -> m (Vector v n a)
+sequence (Vector v) = Vector <$> VG.sequence v
+{-# inline sequence #-}
+
+-- | Evaluate each action and discard the results
+sequence_ :: (Monad m, VG.Vector v (m a)) => Vector v n (m a) -> m ()
+sequence_ (Vector v) = VG.sequence_ v
+{-# inline sequence_ #-}
 
 --------------------------------------------------------------------------------
 
@@ -1091,15 +1372,3 @@ withVectorUnsafe :: forall a b v (n :: Nat). (VG.Vector v a, VG.Vector v b)
                  => (v a -> v b) -> Vector v n a -> Vector v n b
 withVectorUnsafe f (Vector v) = Vector (f v)
 {-# INLINE withVectorUnsafe #-}
-
--- | /O(n)/ Left fold with a strict accumulator.
-foldl' :: forall a b v (n :: Nat). VG.Vector v b
-       => (a -> b -> a) -> a -> Vector v n b -> a
-foldl' f z (Vector v) = VG.foldl' f z v
-{-# INLINE foldl' #-}
-
--- | /O(n)/ Left fold on a non-empty vector with a strict accumulator.
-foldl1' :: forall a v (n :: Nat). (VG.Vector v a)
-        => (a -> a -> a) -> Vector v (n+1) a -> a
-foldl1' f (Vector v) = VG.foldl1' f v
-{-# INLINE foldl1' #-}
