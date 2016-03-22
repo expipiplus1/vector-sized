@@ -218,7 +218,6 @@ module Data.Vector.Generic.Sized
   ) where
 
 import qualified Data.Vector.Generic as VG
-import qualified Data.Vector.Storable as VS
 import GHC.TypeLits
 import Data.Proxy
 import Control.DeepSeq (NFData)
@@ -243,8 +242,8 @@ import Prelude hiding ( length, null,
 newtype Vector v (n :: Nat) a = Vector (v a)
   deriving (Show, Eq, Ord, Foldable, NFData)
 
-instance (KnownNat n, Storable a)
-      => Storable (Vector VS.Vector n a) where
+instance (KnownNat n, Storable a, VG.Vector v a)
+      => Storable (Vector v n a) where
   sizeOf _ = sizeOf (undefined :: a) * fromInteger (natVal (Proxy :: Proxy n))
   alignment _ = alignment (undefined :: a)
   peek ptr = generateM (peekElemOff (castPtr ptr))
