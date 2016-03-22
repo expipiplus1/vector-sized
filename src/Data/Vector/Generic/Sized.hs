@@ -1398,13 +1398,6 @@ prescanl' f z = withVectorUnsafe (VG.prescanl' f z )
 {-# inline prescanl' #-}
 
 -- | /O(n)/ Scan
---
--- @
--- postscanl f z = withVectorUnsafe (VG.postscanl f z )
--- @
---
--- Example: @postscanl (+) 0 \<1,2,3,4\> = withVectorUnsafe (VG.postscanl (+) 0 \<1,2,3,4\> )
---
 postscanl :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n b -> Vector v n a
 postscanl f z = withVectorUnsafe (VG.postscanl f z )
 {-# inline postscanl #-}
@@ -1415,13 +1408,6 @@ postscanl' f z = withVectorUnsafe (VG.postscanl' f z )
 {-# inline postscanl' #-}
 
 -- | /O(n)/ Haskell-style scan
---
--- > scanl f z <x1,...,xn> = withVectorUnsafe (VG.scanl f z <x1,...,xn> )
--- >   where y1 = withVectorUnsafe (VG.where y1 )
--- >         yi = withVectorUnsafe (VG.yi )
---
--- Example: @scanl (+) 0 \<1,2,3,4\> = withVectorUnsafe (VG.scanl (+) 0 \<1,2,3,4\> )
---
 scanl :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n b -> Vector v n a
 scanl f z = withVectorUnsafe (VG.scanl f z )
 {-# inline scanl #-}
@@ -1432,11 +1418,6 @@ scanl' f z = withVectorUnsafe (VG.scanl' f z )
 {-# inline scanl' #-}
 
 -- | /O(n)/ Scan over a non-empty vector
---
--- > scanl f <x1,...,xn> = withVectorUnsafe (VG.scanl f <x1,...,xn> )
--- >   where y1 = withVectorUnsafe (VG.where y1 )
--- >         yi = withVectorUnsafe (VG.yi )
---
 scanl1 :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> Vector v (n+1) a
 scanl1 f = withVectorUnsafe (VG.scanl1 f )
 {-# inline scanl1 #-}
@@ -1447,11 +1428,6 @@ scanl1' f = withVectorUnsafe (VG.scanl1' f )
 {-# inline scanl1' #-}
 
 -- | /O(n)/ Right-to-left prescan
---
--- @
--- prescanr f z = withVectorUnsafe (VG.prescanr f z )
--- @
---
 prescanr :: (VG.Vector v a, VG.Vector v b) => (a -> b -> b) -> b -> Vector v n a -> Vector v n b
 prescanr f z = withVectorUnsafe (VG.prescanr f z )
 {-# inline prescanr #-}
