@@ -260,6 +260,14 @@ instance KnownNat n => Applicative (Vector Unboxed.Vector n) where
   pure = replicate
   (<*>) = zipWith ($)
 
+-- | The 'Monoid' instance for sized vectors does not have the same
+-- behaviour as the 'Monoid' instance for the unsized vectors found in the
+-- 'vectors' package. Its @mempty@ is a vector of @mempty@s and its @mappend@
+-- is @zipWith mappend@.
+instance (Monoid m, KnownNat n) => Monoid (Vector Unboxed.Vector n m) where
+  mempty = replicate mempty
+  mappend = zipWith mappend
+
 -- | /O(1)/ Yield the length of the vector as an 'Int'.
 length :: forall v n a. (KnownNat n)
        => Vector v n a -> Int
