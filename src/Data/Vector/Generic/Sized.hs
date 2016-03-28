@@ -264,7 +264,7 @@ instance KnownNat n => Applicative (Vector Unboxed.Vector n) where
 -- behaviour as the 'Monoid' instance for the unsized vectors found in the
 -- 'vectors' package. Its @mempty@ is a vector of @mempty@s and its @mappend@
 -- is @zipWith mappend@.
-instance (Monoid m, KnownNat n) => Monoid (Vector Unboxed.Vector n m) where
+instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
   mempty = replicate mempty
   mappend = zipWith mappend
 
