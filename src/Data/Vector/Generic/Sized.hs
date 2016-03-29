@@ -219,7 +219,7 @@ module Data.Vector.Generic.Sized
   ) where
 
 import qualified Data.Vector.Generic as VG
-import qualified Data.Vector as Unboxed
+import qualified Data.Vector as Boxed
 import GHC.TypeLits
 import Data.Proxy
 import Control.DeepSeq (NFData)
@@ -256,7 +256,7 @@ instance (KnownNat n, Storable a, VG.Vector v a)
 -- behaviour as the 'Applicative' instance for the unsized vectors found in the
 -- 'vectors' package. The instance defined here has the same behaviour as the
 -- 'Control.Applicative.ZipList' instance.
-instance KnownNat n => Applicative (Vector Unboxed.Vector n) where
+instance KnownNat n => Applicative (Vector Boxed.Vector n) where
   pure = replicate
   (<*>) = zipWith ($)
 
