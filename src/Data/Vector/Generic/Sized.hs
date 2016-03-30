@@ -238,7 +238,7 @@ import Prelude hiding ( length, null,
                         scanl, scanl1, scanr, scanr1,
                         enumFromTo, enumFromThenTo,
                         mapM, mapM_, sequence, sequence_,
-                        showsPrec, pi )
+                        showsPrec )
 
 -- | A wrapper to tag vectors with a type level length.
 newtype Vector v (n :: Nat) a = Vector (v a)
@@ -356,8 +356,8 @@ slice :: forall v i n a. (KnownNat i, KnownNat n, VG.Vector v a)
       => Proxy i -- ^ starting index
       -> Vector v (i+n) a
       -> Vector v n a
-slice pi (Vector v) = Vector (VG.unsafeSlice i n v)
-  where i = fromInteger (natVal pi)
+slice start (Vector v) = Vector (VG.unsafeSlice i n v)
+  where i = fromInteger (natVal start)
         n = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline slice #-}
 
@@ -368,7 +368,7 @@ slice' :: forall v i n a. (KnownNat i, KnownNat n, VG.Vector v a)
        -> Proxy n -- ^ length
        -> Vector v (i+n) a
        -> Vector v n a
-slice' pi _ = slice pi
+slice' start _ = slice start
 {-# inline slice' #-}
 
 -- | /O(1)/ Yield all but the last element of a non-empty vector without
