@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.3.2.0] - 2016-03-29
+- Add overlapping Monoid instance for zero length vectors
+
 ## [0.3.1.0] - 2016-03-29
 - Add Monoid instance
 
