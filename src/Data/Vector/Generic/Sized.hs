@@ -238,7 +238,7 @@ import Prelude hiding ( length, null,
                         scanl, scanl1, scanr, scanr1,
                         enumFromTo, enumFromThenTo,
                         mapM, mapM_, sequence, sequence_,
-                        showsPrec )
+                        showsPrec, pi )
 
 -- | A wrapper to tag vectors with a type level length.
 newtype Vector v (n :: Nat) a = Vector (v a)

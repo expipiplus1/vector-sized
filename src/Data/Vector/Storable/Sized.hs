@@ -240,85 +240,85 @@ import Prelude hiding ( length, null,
 type Vector = V.Vector VS.Vector
 
 -- | /O(1)/ Yield the length of the vector as an 'Int'.
-length :: forall v n a. (KnownNat n)
+length :: forall n a. (KnownNat n)
        => Vector n a -> Int
 length = V.length
 {-# inline length #-}
 
 -- | /O(1)/ Yield the length of the vector as a 'Proxy'.
-length' :: forall v n a. (KnownNat n)
+length' :: forall n a. (KnownNat n)
         => Vector n a -> Proxy n
 length' = V.length'
 {-# inline length' #-}
 
 -- | /O(1)/ Indexing using an Int.
-index :: forall v n a. (KnownNat n, Storable a)
+index :: forall n a. (KnownNat n, Storable a)
       => Vector n a -> Int -> a
 index = V.index
 {-# inline index #-}
 
 -- | /O(1)/ Safe indexing using a 'Proxy'.
-index' :: forall v n m a. (KnownNat n, KnownNat m, Storable a)
+index' :: forall n m a. (KnownNat n, KnownNat m, Storable a)
        => Vector (n+m) a -> Proxy n -> a
 index' = V.index'
 {-# inline index' #-}
 
 -- | /O(1)/ Indexing using an Int without bounds checking.
-unsafeIndex :: forall v n a. (KnownNat n, Storable a)
+unsafeIndex :: forall n a. (KnownNat n, Storable a)
       => Vector n a -> Int -> a
 unsafeIndex = V.unsafeIndex
 {-# inline unsafeIndex #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector.
-head :: forall v n a. (Storable a)
+head :: forall n a. (Storable a)
      => Vector (n+1) a -> a
 head = V.head
 {-# inline head #-}
 
 -- | /O(1)/ Yield the last element of a non-empty vector.
-last :: forall v n a. (Storable a)
+last :: forall n a. (Storable a)
      => Vector (n+1) a -> a
 last = V.last
 {-# inline last #-}
 
 -- | /O(1)/ Indexing in a monad. See the documentation for 'VG.indexM' for an
 -- explanation of why this is useful.
-indexM :: forall v n a m. (KnownNat n, Storable a, Monad m)
+indexM :: forall n a m. (KnownNat n, Storable a, Monad m)
       => Vector n a -> Int -> m a
 indexM = V.indexM
 {-# inline indexM #-}
 
 -- | /O(1)/ Safe indexing in a monad using a 'Proxy'. See the documentation for
 -- 'VG.indexM' for an explanation of why this is useful.
-indexM' :: forall v n k a m. (KnownNat n, KnownNat k, Storable a, Monad m)
+indexM' :: forall n k a m. (KnownNat n, KnownNat k, Storable a, Monad m)
       => Vector (n+k) a -> Proxy n -> m a
 indexM' = V.indexM'
 {-# inline indexM' #-}
 
 -- | /O(1)/ Indexing using an Int without bounds checking. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
-unsafeIndexM :: forall v n a m. (KnownNat n, Storable a, Monad m)
+unsafeIndexM :: forall n a m. (KnownNat n, Storable a, Monad m)
       => Vector n a -> Int -> m a
 unsafeIndexM = V.unsafeIndexM
 {-# inline unsafeIndexM #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector in a monad. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
-headM :: forall v n a m. (KnownNat n, Storable a, Monad m)
+headM :: forall n a m. (KnownNat n, Storable a, Monad m)
       => Vector (n+1) a -> m a
 headM = V.headM
 {-# inline headM #-}
 
 -- | /O(1)/ Yield the last element of a non-empty vector in a monad. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
-lastM :: forall v n a m. (KnownNat n, Storable a, Monad m)
+lastM :: forall n a m. (KnownNat n, Storable a, Monad m)
       => Vector (n+1) a -> m a
 lastM = V.lastM
 {-# inline lastM #-}
 
 -- | /O(1)/ Yield a slice of the vector without copying it with an inferred
 -- length argument.
-slice :: forall v i n a. (KnownNat i, KnownNat n, Storable a)
+slice :: forall i n a. (KnownNat i, KnownNat n, Storable a)
       => Proxy i -- ^ starting index
       -> Vector (i+n) a
       -> Vector n a
@@ -327,7 +327,7 @@ slice = V.slice
 
 -- | /O(1)/ Yield a slice of the vector without copying it with an explicit
 -- length argument.
-slice' :: forall v i n a. (KnownNat i, KnownNat n, Storable a)
+slice' :: forall i n a. (KnownNat i, KnownNat n, Storable a)
        => Proxy i -- ^ starting index
        -> Proxy n -- ^ length
        -> Vector (i+n) a
@@ -337,14 +337,14 @@ slice' = V.slice'
 
 -- | /O(1)/ Yield all but the last element of a non-empty vector without
 -- copying.
-init :: forall v n a. (Storable a)
+init :: forall n a. (Storable a)
      => Vector (n+1) a -> Vector n a
 init = V.init
 {-# inline init #-}
 
 -- | /O(1)/ Yield all but the first element of a non-empty vector without
 -- copying.
-tail :: forall v n a. (Storable a)
+tail :: forall n a. (Storable a)
      => Vector (n+1) a -> Vector n a
 tail = V.tail
 {-# inline tail #-}
@@ -352,7 +352,7 @@ tail = V.tail
 -- | /O(1)/ Yield the first n elements. The resultant vector always contains
 -- this many elements. The length of the resultant vector is inferred from the
 -- type.
-take :: forall v n m a. (KnownNat n, KnownNat m, Storable a)
+take :: forall n m a. (KnownNat n, KnownNat m, Storable a)
      => Vector (m+n) a -> Vector n a
 take = V.take
 {-# inline take #-}
@@ -360,7 +360,7 @@ take = V.take
 -- | /O(1)/ Yield the first n elements. The resultant vector always contains
 -- this many elements. The length of the resultant vector is given explicitly
 -- as a 'Proxy' argument.
-take' :: forall v n m a. (KnownNat n, KnownNat m, Storable a)
+take' :: forall n m a. (KnownNat n, KnownNat m, Storable a)
       => Proxy n -> Vector (m+n) a -> Vector n a
 take' = V.take'
 {-# inline take' #-}
@@ -368,7 +368,7 @@ take' = V.take'
 -- | /O(1)/ Yield all but the the first n elements. The given vector must
 -- contain at least this many elements The length of the resultant vector is
 -- inferred from the type.
-drop :: forall v n m a. (KnownNat n, KnownNat m, Storable a)
+drop :: forall n m a. (KnownNat n, KnownNat m, Storable a)
      => Vector (m+n) a -> Vector m a
 drop = V.drop
 {-# inline drop #-}
@@ -376,14 +376,14 @@ drop = V.drop
 -- | /O(1)/ Yield all but the the first n elements. The given vector must
 -- contain at least this many elements The length of the resultant vector is
 -- givel explicitly as a 'Proxy' argument.
-drop' :: forall v n m a. (KnownNat n, KnownNat m, Storable a)
+drop' :: forall n m a. (KnownNat n, KnownNat m, Storable a)
       => Proxy n -> Vector (m+n) a -> Vector m a
 drop' = V.drop'
 {-# inline drop' #-}
 
 -- | /O(1)/ Yield the first n elements paired with the remainder without copying.
 -- The lengths of the resultant vector are inferred from the type.
-splitAt :: forall v n m a. (KnownNat n, KnownNat m, Storable a)
+splitAt :: forall n m a. (KnownNat n, KnownNat m, Storable a)
         => Vector (n+m) a -> (Vector n a, Vector m a)
 splitAt = V.splitAt
 {-# inline splitAt #-}
@@ -391,7 +391,7 @@ splitAt = V.splitAt
 -- | /O(1)/ Yield the first n elements paired with the remainder without
 -- copying.  The length of the first resultant vector is passed explicitly as a
 -- 'Proxy' argument.
-splitAt' :: forall v n m a. (KnownNat n, KnownNat m, Storable a)
+splitAt' :: forall n m a. (KnownNat n, KnownNat m, Storable a)
          => Proxy n -> Vector (n+m) a -> (Vector n a, Vector m a)
 splitAt' = V.splitAt'
 {-# inline splitAt' #-}
@@ -405,55 +405,55 @@ splitAt' = V.splitAt'
 --
 
 -- | /O(1)/ Empty vector.
-empty :: forall v a. (Storable a)
+empty :: forall a. (Storable a)
       => Vector 0 a
 empty = V.empty
 {-# inline empty #-}
 
 -- | /O(1)/ Vector with exactly one element.
-singleton :: forall v a. (Storable a)
+singleton :: forall a. (Storable a)
            => a -> Vector 1 a
 singleton = V.singleton
 {-# inline singleton #-}
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.
-replicate :: forall v n a. (KnownNat n, Storable a)
+replicate :: forall n a. (KnownNat n, Storable a)
           => a -> Vector n a
 replicate = V.replicate
 {-# inline replicate #-}
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is given explicitly as a 'Proxy' argument.
-replicate' :: forall v n a. (KnownNat n, Storable a)
+replicate' :: forall n a. (KnownNat n, Storable a)
            => Proxy n -> a -> Vector n a
 replicate' = V.replicate'
 {-# inline replicate' #-}
 
 -- | /O(n)/ construct a vector of the given length by applying the function to
 -- each index where the length is inferred from the type.
-generate :: forall v n a. (KnownNat n, Storable a)
+generate :: forall n a. (KnownNat n, Storable a)
          => (Int -> a) -> Vector n a
 generate = V.generate
 {-# inline generate #-}
 
 -- | /O(n)/ construct a vector of the given length by applying the function to
 -- each index where the length is given explicitly as a 'Proxy' argument.
-generate' :: forall v n a. (KnownNat n, Storable a)
+generate' :: forall n a. (KnownNat n, Storable a)
           => Proxy n -> (Int -> a) -> Vector n a
 generate' = V.generate'
 {-# inline generate' #-}
 
 -- | /O(n)/ Apply function n times to value. Zeroth element is original value.
 -- The length is inferred from the type.
-iterateN :: forall v n a. (KnownNat n, Storable a)
+iterateN :: forall n a. (KnownNat n, Storable a)
          => (a -> a) -> a -> Vector n a
 iterateN = V.iterateN
 {-# inline iterateN #-}
 
 -- | /O(n)/ Apply function n times to value. Zeroth element is original value.
 -- The length is given explicitly as a 'Proxy' argument.
-iterateN' :: forall v n a. (KnownNat n, Storable a)
+iterateN' :: forall n a. (KnownNat n, Storable a)
           => Proxy n -> (a -> a) -> a -> Vector n a
 iterateN' = V.iterateN'
 {-# inline iterateN' #-}
@@ -464,28 +464,28 @@ iterateN' = V.iterateN'
 
 -- | /O(n)/ Execute the monadic action @n@ times and store the results in a
 -- vector where @n@ is inferred from the type.
-replicateM :: forall v n m a. (KnownNat n, Storable a, Monad m)
+replicateM :: forall n m a. (KnownNat n, Storable a, Monad m)
            => m a -> m (Vector n a)
 replicateM = V.replicateM
 {-# inline replicateM #-}
 
 -- | /O(n)/ Execute the monadic action @n@ times and store the results in a
 -- vector where @n@ is given explicitly as a 'Proxy' argument.
-replicateM' :: forall v n m a. (KnownNat n, Storable a, Monad m)
+replicateM' :: forall n m a. (KnownNat n, Storable a, Monad m)
             => Proxy n -> m a -> m (Vector n a)
 replicateM' = V.replicateM'
 {-# inline replicateM' #-}
 
 -- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
 -- each index where n is inferred from the type.
-generateM :: forall v n m a. (KnownNat n, Storable a, Monad m)
+generateM :: forall n m a. (KnownNat n, Storable a, Monad m)
           => (Int -> m a) -> m (Vector n a)
 generateM = V.generateM
 {-# inline generateM #-}
 
 -- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
 -- each index where n is given explicitly as a 'Proxy' argument.
-generateM' :: forall v n m a. (KnownNat n, Storable a, Monad m)
+generateM' :: forall n m a. (KnownNat n, Storable a, Monad m)
            => Proxy n -> (Int -> m a) -> m (Vector n a)
 generateM' = V.generateM'
 {-# inline generateM' #-}
@@ -497,7 +497,7 @@ generateM' = V.generateM'
 -- | /O(n)/ Construct a vector with exactly @n@ elements by repeatedly applying
 -- the generator function to the a seed. The length, @n@, is inferred from the
 -- type.
-unfoldrN :: forall v n a b. (KnownNat n, Storable a)
+unfoldrN :: forall n a b. (KnownNat n, Storable a)
          => (b -> (a, b)) -> b -> Vector n a
 unfoldrN = V.unfoldrN
 {-# inline unfoldrN #-}
@@ -505,7 +505,7 @@ unfoldrN = V.unfoldrN
 -- | /O(n)/ Construct a vector with exactly @n@ elements by repeatedly applying
 -- the generator function to the a seed. The length, @n@, is given explicitly
 -- as a 'Proxy' argument.
-unfoldrN' :: forall v n a b. (KnownNat n, Storable a)
+unfoldrN' :: forall n a b. (KnownNat n, Storable a)
           => Proxy n -> (b -> (a, b)) -> b -> Vector n a
 unfoldrN' = V.unfoldrN'
 {-# inline unfoldrN' #-}
@@ -516,28 +516,28 @@ unfoldrN' = V.unfoldrN'
 
 -- | /O(n)/ Yield a vector of length @n@ containing the values @x@, @x+1@
 -- etc. The length, @n@, is inferred from the type.
-enumFromN :: forall v n a. (KnownNat n, Storable a, Num a)
+enumFromN :: forall n a. (KnownNat n, Storable a, Num a)
           => a -> Vector n a
 enumFromN = V.enumFromN
 {-# inline enumFromN #-}
 
 -- | /O(n)/ Yield a vector of length @n@ containing the values @x@, @x+1@
 -- etc. The length, @n@, is given explicitly as a 'Proxy' argument.
-enumFromN' :: forall v n a. (KnownNat n, Storable a, Num a)
+enumFromN' :: forall n a. (KnownNat n, Storable a, Num a)
            => a -> Proxy n -> Vector n a
 enumFromN' = V.enumFromN'
 {-# inline enumFromN' #-}
 
 -- | /O(n)/ Yield a vector of the given length containing the values @x@, @x+y@,
 -- @x+y+y@ etc. The length, @n@, is inferred from the type.
-enumFromStepN :: forall v n a. (KnownNat n, Storable a, Num a)
+enumFromStepN :: forall n a. (KnownNat n, Storable a, Num a)
           => a -> a -> Vector n a
 enumFromStepN = V.enumFromStepN
 {-# inline enumFromStepN #-}
 
 -- | /O(n)/ Yield a vector of the given length containing the values @x@, @x+y@,
 -- @x+y+y@ etc. The length, @n@, is given explicitly as a 'Proxy' argument.
-enumFromStepN' :: forall v n a. (KnownNat n, Storable a, Num a)
+enumFromStepN' :: forall n a. (KnownNat n, Storable a, Num a)
                => a -> a -> Proxy n -> Vector n a
 enumFromStepN' = V.enumFromStepN'
 {-# inline enumFromStepN' #-}
@@ -547,19 +547,19 @@ enumFromStepN' = V.enumFromStepN'
 --
 
 -- | /O(n)/ Prepend an element.
-cons :: forall v n a. Storable a
+cons :: forall n a. Storable a
      => a -> Vector n a -> Vector (n+1) a
 cons = V.cons
 {-# inline cons #-}
 
 -- | /O(n)/ Append an element.
-snoc :: forall v n a. Storable a
+snoc :: forall n a. Storable a
      => Vector n a -> a -> Vector (n+1) a
 snoc = V.snoc
 {-# inline snoc #-}
 
 -- | /O(m+n)/ Concatenate two vectors.
-(++) :: forall v n m a. Storable a
+(++) :: forall n m a. Storable a
      => Vector n a -> Vector m a -> Vector (n+m) a
 (++) = (V.++)
 {-# inline (++) #-}
@@ -1435,14 +1435,14 @@ fromList = V.fromList
 
 -- | /O(n)/ Convert the first @n@ elements of a list to a vector. The length of
 -- the resultant vector is inferred from the type.
-fromListN :: forall v n a. (Storable a, KnownNat n) 
+fromListN :: forall n a. (Storable a, KnownNat n)
           => [a] -> Maybe (Vector n a)
 fromListN = V.fromListN
 {-# inline fromListN #-}
 
 -- | /O(n)/ Convert the first @n@ elements of a list to a vector. The length of
 -- the resultant vector is given explicitly as a 'Proxy' argument.
-fromListN' :: forall v n a. (Storable a, KnownNat n) 
+fromListN' :: forall n a. (Storable a, KnownNat n)
            => Proxy n -> [a] -> Maybe (Vector n a)
 fromListN' = V.fromListN'
 {-# inline fromListN' #-}
@@ -1452,7 +1452,7 @@ fromListN' = V.fromListN'
 -- | Convert a 'Data.Vector.Generic.Vector' into a
 -- 'Data.Vector.Generic.Sized.Vector' if it has the correct size, otherwise
 -- return Nothing.
-toSized :: forall v n a. (Storable a, KnownNat n)
+toSized :: forall n a. (Storable a, KnownNat n)
         => VS.Vector a -> Maybe (Vector n a)
 toSized = V.toSized
 {-# inline toSized #-}
@@ -1463,7 +1463,7 @@ fromSized = V.fromSized
 
 -- | Apply a function on unsized vectors to a sized vector. The function must
 -- preserve the size of the vector, this is not checked.
-withVectorUnsafe :: forall a b v w (n :: Nat). (Storable a, Storable b)
+withVectorUnsafe :: forall a b (n :: Nat). (Storable a, Storable b)
                  => (VS.Vector a -> VS.Vector b) -> Vector n a -> Vector n b
 withVectorUnsafe = V.withVectorUnsafe
 {-# inline withVectorUnsafe #-}
