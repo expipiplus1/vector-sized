@@ -267,6 +267,9 @@ instance KnownNat n => Applicative (Vector Boxed.Vector n) where
 instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
   mempty = replicate mempty
   mappend = zipWith mappend
+instance {-# OVERLAPPING #-} (VG.Vector v m) => Monoid (Vector v 0 m) where
+  mempty = empty
+  _empty1 `mappend` _empty2 = empty
 
 -- | /O(1)/ Yield the length of the vector as an 'Int'.
 length :: forall v n a. (KnownNat n)
