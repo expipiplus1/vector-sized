@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.3.3.0] - 2016-08-10
+- Add instances for Data, Typeable and Generic
+
 ## [0.3.2.0] - 2016-03-29
 - Add overlapping Monoid instance for zero length vectors
 
