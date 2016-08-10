@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
@@ -220,6 +221,7 @@ module Data.Vector.Generic.Sized
 
 import qualified Data.Vector.Generic as VG
 import qualified Data.Vector as Boxed
+import GHC.Generics (Generic)
 import GHC.TypeLits
 import Data.Proxy
 import Control.DeepSeq (NFData)
@@ -242,7 +244,7 @@ import Prelude hiding ( length, null,
 
 -- | A wrapper to tag vectors with a type level length.
 newtype Vector v (n :: Nat) a = Vector (v a)
-  deriving (Show, Eq, Ord, Functor, Foldable, Traversable, NFData)
+  deriving (Show, Eq, Ord, Functor, Foldable, Traversable, NFData, Generic)
 
 -- | Any sized vector containing storable elements is itself storable.
 instance (KnownNat n, Storable a, VG.Vector v a)
