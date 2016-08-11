@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -226,6 +227,7 @@ import GHC.TypeLits
 import Data.Proxy
 import Control.DeepSeq (NFData)
 import Foreign.Storable
+import Data.Data
 import Foreign.Ptr (castPtr)
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
@@ -244,7 +246,9 @@ import Prelude hiding ( length, null,
 
 -- | A wrapper to tag vectors with a type level length.
 newtype Vector v (n :: Nat) a = Vector (v a)
-  deriving (Show, Eq, Ord, Functor, Foldable, Traversable, NFData, Generic)
+  deriving ( Show, Eq, Ord, Functor, Foldable, Traversable, NFData, Generic
+           , Data, Typeable
+           )
 
 -- | Any sized vector containing storable elements is itself storable.
 instance (KnownNat n, Storable a, VG.Vector v a)
