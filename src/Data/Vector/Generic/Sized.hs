@@ -297,7 +297,7 @@ index (Vector v) i = v VG.! i
 
 -- | /O(1)/ Safe indexing using a 'Proxy'.
 index' :: forall v n m a. (KnownNat n, KnownNat m, VG.Vector v a)
-       => Vector v (n+m) a -> Proxy n -> a
+       => Vector v (n+m+1) a -> Proxy n -> a
 index' (Vector v) p = v `VG.unsafeIndex` i
   where i = fromInteger (natVal p)
 {-# inline index' #-}

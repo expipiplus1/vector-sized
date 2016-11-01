@@ -259,7 +259,7 @@ index = V.index
 
 -- | /O(1)/ Safe indexing using a 'Proxy'.
 index' :: forall n m a. (KnownNat n, KnownNat m, Storable a)
-       => Vector (n+m) a -> Proxy n -> a
+       => Vector (n+m+1) a -> Proxy n -> a
 index' = V.index'
 {-# inline index' #-}
 

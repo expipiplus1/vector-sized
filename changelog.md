@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.4.0.0] - 2016-11-01
+- Correct type signature on `index'`
+
 ## [0.3.3.0] - 2016-08-10
 - Add instances for Data, Typeable and Generic
 
