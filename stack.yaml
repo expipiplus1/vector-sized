@@ -1,3 +1,0 @@
-resolver: lts-5.3
-packages:
-- '.'
