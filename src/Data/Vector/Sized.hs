@@ -1402,7 +1402,7 @@ fromListN' = V.fromListN'
 -- parameter, determined at runtime.
 --
 -- See 'withSized'
-withSizedList :: [a] -> (forall n. KnownNat n => Vector n a -> r) -> r
+withSizedList :: forall a r. [a] -> (forall n. KnownNat n => Vector n a -> r) -> r
 withSizedList xs = withSized (VU.fromList xs)
 {-# inline withSizedList #-}
 
@@ -1423,10 +1423,7 @@ toSized = V.toSized
 -- Essentially converts a 'Data.Vector.Vector' into
 -- a 'Data.Vector.Sized.Vector' with the correct size parameter
 -- @n@.
-withSized
-    :: VU.Vector a
-    -> (forall n. KnownNat n => Vector n a -> r)
-    -> r
+withSized :: forall a r. VU.Vector a -> (forall n. KnownNat n => Vector n a -> r) -> r
 withSized = V.withSized
 {-# inline withSized #-}
 

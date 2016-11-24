@@ -1457,7 +1457,7 @@ fromListN' = V.fromListN'
 -- parameter, determined at runtime.
 --
 -- See 'withSized'
-withSizedList :: Storable a
+withSizedList :: forall a r. Storable a
               => [a] -> (forall n. KnownNat n => Vector n a -> r) -> r
 withSizedList xs = withSized (VS.fromList xs)
 {-# inline withSizedList #-}
@@ -1480,11 +1480,8 @@ toSized = V.toSized
 -- Essentially converts a 'Data.Vector.Storable.Vector' into
 -- a 'Data.Vector.Storable.Sized.Vector' with the correct size parameter
 -- @n@.
-withSized
-    :: Storable a
-    => VS.Vector a
-    -> (forall n. KnownNat n => Vector n a -> r)
-    -> r
+withSized :: forall a r. Storable a
+          => VS.Vector a -> (forall n. KnownNat n => Vector n a -> r) -> r
 withSized = V.withSized
 {-# inline withSized #-}
 

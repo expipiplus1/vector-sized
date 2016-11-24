@@ -1535,7 +1535,7 @@ fromListN' _ = fromListN
 -- parameter, determined at runtime.
 --
 -- See 'withSized'
-withSizedList :: VG.Vector v a
+withSizedList :: forall v a r. VG.Vector v a
               => [a] -> (forall n. KnownNat n => Vector v n a -> r) -> r
 withSizedList xs = withSized (VG.fromList xs)
 
@@ -1566,11 +1566,8 @@ toSized v
 -- Essentially converts a 'Data.Vector.Generic.Vector' into
 -- a 'Data.Vector.Generic.Sized.Vector' with the correct size parameter
 -- @n@.
-withSized
-    :: forall v a r. VG.Vector v a
-    => v a
-    -> (forall n. KnownNat n => Vector v n a -> r)
-    -> r
+withSized :: forall v a r. VG.Vector v a
+          => v a -> (forall n. KnownNat n => Vector v n a -> r) -> r
 withSized v f = case someNatVal (fromIntegral (VG.length v)) of
     Just (SomeNat (Proxy :: Proxy n)) -> f (Vector v :: Vector v n a)
     Nothing -> error "withSized: VG.length returned negative length."
