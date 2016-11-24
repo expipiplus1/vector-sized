@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.4.1.0] - 2016-11-24
+- Add `withSized` and `withSizedList`
+
 ## [0.4.0.1] - 2016-11-12
 - Raise lower bound on base to 4.9
 
