@@ -210,6 +210,7 @@ module Data.Vector.Sized
   , fromList
   , fromListN
   , fromListN'
+  , withSizedList
     -- ** Unsized Vectors
   , toSized
   , withSized
@@ -1393,6 +1394,17 @@ fromListN' :: forall n a. KnownNat n
            => Proxy n -> [a] -> Maybe (Vector n a)
 fromListN' = V.fromListN'
 {-# inline fromListN' #-}
+
+-- | /O(n)/ Takes a list and returns a continuation providing a vector with
+-- a size parameter corresponding to the length of the list.
+--
+-- Essentially converts a list into a vector with the proper size
+-- parameter, determined at runtime.
+--
+-- See 'withSized'
+withSizedList :: [a] -> (forall n. KnownNat n => Vector n a -> r) -> r
+withSizedList xs = withSized (VU.fromList xs)
+{-# inline withSizedList #-}
 
 -- ** Unsized vectors
 
