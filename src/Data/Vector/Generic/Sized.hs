@@ -8,6 +8,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE RankNTypes #-}
 
 {-|
 This module reexports the functionality in 'Data.Vector.Generic' which maps well
@@ -216,6 +217,7 @@ module Data.Vector.Generic.Sized
   , convert
     -- ** Unsized Vectors
   , toSized
+  , withSized
   , fromSized
   , withVectorUnsafe
   ) where
@@ -1545,6 +1547,22 @@ toSized v
   where n' = natVal (Proxy :: Proxy n)
 {-# inline toSized #-}
 
+-- | Takes a 'Data.Vector.Generic.Vector' and returns a continuation
+-- providing a 'Data.Vector.Generic.Sized' with a size parameter @n@ that
+-- is determined at runtime based on the length of the input vector.
+--
+-- Essentially converts a 'Data.Vector.Generic.Vector' into
+-- a 'Data.Vector.Generic.Sized.Vector' with the correct size parameter
+-- @n@.
+withSized
+    :: forall v a r. VG.Vector v a
+    => v a
+    -> (forall n. KnownNat n => Vector v n a -> r)
+    -> r
+withSized v f = case someNatVal (fromIntegral (VG.length v)) of
+    Just (SomeNat (Proxy :: Proxy n)) -> f (Vector v :: Vector v n a)
+    Nothing -> error "withSized: VG.length returned negative length."
+
 fromSized :: Vector v n a -> v a
 fromSized (Vector v) = v
 {-# inline fromSized #-}
@@ -1555,4 +1573,3 @@ withVectorUnsafe :: forall a b v w (n :: Nat). (VG.Vector v a, VG.Vector w b)
                  => (v a -> w b) -> Vector v n a -> Vector w n b
 withVectorUnsafe f (Vector v) = Vector (f v)
 {-# inline withVectorUnsafe #-}
-

@@ -5,6 +5,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE RankNTypes #-}
 
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Sized'
@@ -1456,6 +1457,22 @@ toSized :: forall n a. (Storable a, KnownNat n)
         => VS.Vector a -> Maybe (Vector n a)
 toSized = V.toSized
 {-# inline toSized #-}
+
+-- | Takes a 'Data.Vector.Storable.Vector' and returns a continuation
+-- providing a 'Data.Vector.Storable.Sized.Vector' with a size parameter
+-- @n@ that is determined at runtime based on the length of the input
+-- vector.
+--
+-- Essentially converts a 'Data.Vector.Storable.Vector' into
+-- a 'Data.Vector.Storable.Sized.Vector' with the correct size parameter
+-- @n@.
+withSized
+    :: Storable a
+    => VS.Vector a
+    -> (forall n. KnownNat n => Vector n a -> r)
+    -> r
+withSized = V.withSized
+{-# inline withSized #-}
 
 fromSized :: Vector n a -> VS.Vector a
 fromSized = V.fromSized
