@@ -212,6 +212,7 @@ module Data.Vector.Storable.Sized
   , fromListN'
     -- ** Unsized Vectors
   , toSized
+  , withSized
   , fromSized
   , withVectorUnsafe
   ) where
