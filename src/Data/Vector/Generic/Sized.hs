@@ -58,6 +58,7 @@ module Data.Vector.Generic.Sized
   , replicate'
   , generate
   , generate'
+  , generate_
   , iterateN
   , iterateN'
     -- ** Monadic initialization
@@ -65,6 +66,7 @@ module Data.Vector.Generic.Sized
   , replicateM'
   , generateM
   , generateM'
+  , generateM_
     -- ** Unfolding
   , unfoldrN
   , unfoldrN'
@@ -228,6 +230,7 @@ import qualified Data.Vector as Boxed
 import GHC.Generics (Generic)
 import GHC.TypeLits
 import Data.Finite
+import Data.Finite.Internal
 import Data.Proxy
 import Control.DeepSeq (NFData)
 import Foreign.Storable
@@ -504,6 +507,17 @@ generate' :: forall v n a. (KnownNat n, VG.Vector v a)
 generate' _ = generate
 {-# inline generate' #-}
 
+-- | /O(n)/ construct a vector of the given length by applying the function to
+-- each index where the length is inferred from the type.
+--
+-- The function can expect a @'Finite' n@, meaning that its input will
+-- always be between @0@ and @n - 1@.
+generate_ :: forall v n a. (KnownNat n, VG.Vector v a)
+          => (Finite n -> a) -> Vector v n a
+generate_ f = Vector (VG.generate i (f . Finite . fromIntegral))
+  where i = fromInteger (natVal (Proxy :: Proxy n))
+{-# inline generate_ #-}
+
 -- | /O(n)/ Apply function n times to value. Zeroth element is original value.
 -- The length is inferred from the type.
 iterateN :: forall v n a. (KnownNat n, VG.Vector v a)
@@ -552,6 +566,17 @@ generateM' :: forall v n m a. (KnownNat n, VG.Vector v a, Monad m)
            => Proxy n -> (Int -> m a) -> m (Vector v n a)
 generateM' _ = generateM
 {-# inline generateM' #-}
+
+-- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
+-- each index where n is inferred from the type.
+--
+-- The function can expect a @'Finite' n@, meaning that its input will
+-- always be between @0@ and @n - 1@.
+generateM_ :: forall v n m a. (KnownNat n, VG.Vector v a, Monad m)
+           => (Finite n -> m a) -> m (Vector v n a)
+generateM_ f = Vector <$> VG.generateM i (f . Finite . fromIntegral)
+  where i = fromInteger (natVal (Proxy :: Proxy n))
+{-# inline generateM_ #-}
 
 --
 -- ** Unfolding
