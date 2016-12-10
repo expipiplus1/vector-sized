@@ -3,6 +3,7 @@
 resolver: lts-7.10
 packages:
 - '.'
-extra-deps: []
+extra-deps:
+- finite-typelits-0.1.0.0
 flags: {}
 extra-package-dbs: []

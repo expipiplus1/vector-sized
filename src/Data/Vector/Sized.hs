@@ -221,6 +221,7 @@ module Data.Vector.Sized
 import qualified Data.Vector.Generic.Sized as V
 import qualified Data.Vector as VU
 import GHC.TypeLits
+import Data.Finite
 import Data.Proxy
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
@@ -253,23 +254,29 @@ length' :: forall n a. KnownNat n
 length' = V.length'
 {-# inline length' #-}
 
--- | /O(1)/ Indexing using an Int.
+-- | /O(1)/ Safe indexing using a 'Finite'.
 index :: forall n a. KnownNat n
-      => Vector n a -> Int -> a
+      => Vector n a -> Finite n -> a
 index = V.index
 {-# inline index #-}
 
 -- | /O(1)/ Safe indexing using a 'Proxy'.
+--
+-- __Deprecated__: Use 'index'.
 index' :: forall n m a. (KnownNat n, KnownNat m)
        => Vector (n+m+1) a -> Proxy n -> a
 index' = V.index'
 {-# inline index' #-}
 
 -- | /O(1)/ Indexing using an Int without bounds checking.
+--
+-- __Deprecated__: Use 'index'.
 unsafeIndex :: forall n a. KnownNat n
       => Vector n a -> Int -> a
 unsafeIndex = V.unsafeIndex
 {-# inline unsafeIndex #-}
+
+{-# deprecated index', unsafeIndex "Use index instead" #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector.
 head :: forall n a. Vector (n+1) a -> a
@@ -281,15 +288,17 @@ last :: forall n a. Vector (n+1) a -> a
 last = V.last
 {-# inline last #-}
 
--- | /O(1)/ Indexing in a monad. See the documentation for 'VG.indexM' for an
--- explanation of why this is useful.
+-- | /O(1)/ Safe indexing in a monad. See the documentation for 'VG.indexM' for
+-- an explanation of why this is useful.
 indexM :: forall n a m. (KnownNat n, Monad m)
-      => Vector n a -> Int -> m a
+      => Vector n a -> Finite n -> m a
 indexM = V.indexM
 {-# inline indexM #-}
 
 -- | /O(1)/ Safe indexing in a monad using a 'Proxy'. See the documentation for
 -- 'VG.indexM' for an explanation of why this is useful.
+--
+-- __Deprecated__: Use 'indexM'.
 indexM' :: forall n k a m. (KnownNat n, KnownNat k, Monad m)
       => Vector (n+k) a -> Proxy n -> m a
 indexM' = V.indexM'
@@ -297,10 +306,14 @@ indexM' = V.indexM'
 
 -- | /O(1)/ Indexing using an Int without bounds checking. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
+--
+-- __Deprecated__: Use 'indexM'.
 unsafeIndexM :: forall n a m. (KnownNat n, Monad m)
       => Vector n a -> Int -> m a
 unsafeIndexM = V.unsafeIndexM
 {-# inline unsafeIndexM #-}
+
+{-# deprecated indexM', unsafeIndexM "Use indexM instead" #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector in a monad. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
