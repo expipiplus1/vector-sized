@@ -300,8 +300,6 @@ index (Vector v) i = v `VG.unsafeIndex` fromIntegral i
 {-# inline index #-}
 
 -- | /O(1)/ Safe indexing using a 'Proxy'.
---
--- __Deprecated__: Use 'index'.
 index' :: forall v n m a. (KnownNat n, KnownNat m, VG.Vector v a)
        => Vector v (n+m+1) a -> Proxy n -> a
 index' (Vector v) p = v `VG.unsafeIndex` i
@@ -316,7 +314,7 @@ unsafeIndex :: forall v n a. (KnownNat n, VG.Vector v a)
 unsafeIndex (Vector v) i = v `VG.unsafeIndex` i
 {-# inline unsafeIndex #-}
 
-{-# deprecated index', unsafeIndex "Use index instead" #-}
+{-# deprecated unsafeIndex "Use index instead" #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector.
 head :: forall v n a. (VG.Vector v a)
@@ -339,8 +337,6 @@ indexM (Vector v) i = v `VG.indexM` fromIntegral i
 
 -- | /O(1)/ Safe indexing in a monad using a 'Proxy'. See the documentation for
 -- 'VG.indexM' for an explanation of why this is useful.
---
--- __Deprecated__: Use 'indexM'.
 indexM' :: forall v n k a m. (KnownNat n, KnownNat k, VG.Vector v a, Monad m)
       => Vector v (n+k) a -> Proxy n -> m a
 indexM' (Vector v) p = v `VG.indexM` i
@@ -356,7 +352,7 @@ unsafeIndexM :: forall v n a m. (KnownNat n, VG.Vector v a, Monad m)
 unsafeIndexM (Vector v) i = v `VG.unsafeIndexM` i
 {-# inline unsafeIndexM #-}
 
-{-# deprecated indexM', unsafeIndexM "Use indexM instead" #-}
+{-# deprecated unsafeIndexM "Use indexM instead" #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector in a monad. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
