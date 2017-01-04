@@ -58,6 +58,7 @@ module Data.Vector.Generic.Sized
   , replicate'
   , generate
   , generate'
+  , generate_
   , iterateN
   , iterateN'
     -- ** Monadic initialization
@@ -65,6 +66,7 @@ module Data.Vector.Generic.Sized
   , replicateM'
   , generateM
   , generateM'
+  , generateM_
     -- ** Unfolding
   , unfoldrN
   , unfoldrN'
@@ -227,6 +229,8 @@ import qualified Data.Vector.Generic as VG
 import qualified Data.Vector as Boxed
 import GHC.Generics (Generic)
 import GHC.TypeLits
+import Data.Finite
+import Data.Finite.Internal
 import Data.Proxy
 import Control.DeepSeq (NFData)
 import Foreign.Storable
@@ -292,10 +296,10 @@ length' :: forall v n a. (KnownNat n)
 length' _ = Proxy
 {-# inline length' #-}
 
--- | /O(1)/ Indexing using an Int.
+-- | /O(1)/ Safe indexing using a 'Finite'.
 index :: forall v n a. (KnownNat n, VG.Vector v a)
-      => Vector v n a -> Int -> a
-index (Vector v) i = v VG.! i
+      => Vector v n a -> Finite n -> a
+index (Vector v) i = v `VG.unsafeIndex` fromIntegral i
 {-# inline index #-}
 
 -- | /O(1)/ Safe indexing using a 'Proxy'.
@@ -306,10 +310,14 @@ index' (Vector v) p = v `VG.unsafeIndex` i
 {-# inline index' #-}
 
 -- | /O(1)/ Indexing using an Int without bounds checking.
+--
+-- __Deprecated__: Use 'index'.
 unsafeIndex :: forall v n a. (KnownNat n, VG.Vector v a)
       => Vector v n a -> Int -> a
 unsafeIndex (Vector v) i = v `VG.unsafeIndex` i
 {-# inline unsafeIndex #-}
+
+{-# deprecated unsafeIndex "Use index instead" #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector.
 head :: forall v n a. (VG.Vector v a)
@@ -323,11 +331,11 @@ last :: forall v n a. (VG.Vector v a)
 last (Vector v) = VG.unsafeLast v
 {-# inline last #-}
 
--- | /O(1)/ Indexing in a monad. See the documentation for 'VG.indexM' for an
--- explanation of why this is useful.
+-- | /O(1)/ Safe indexing in a monad. See the documentation for 'VG.indexM' for
+-- an explanation of why this is useful.
 indexM :: forall v n a m. (KnownNat n, VG.Vector v a, Monad m)
-      => Vector v n a -> Int -> m a
-indexM (Vector v) i = v `VG.indexM` i
+      => Vector v n a -> Finite n -> m a
+indexM (Vector v) i = v `VG.indexM` fromIntegral i
 {-# inline indexM #-}
 
 -- | /O(1)/ Safe indexing in a monad using a 'Proxy'. See the documentation for
@@ -340,10 +348,14 @@ indexM' (Vector v) p = v `VG.indexM` i
 
 -- | /O(1)/ Indexing using an Int without bounds checking. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
+--
+-- __Deprecated__: Use 'indexM'.
 unsafeIndexM :: forall v n a m. (KnownNat n, VG.Vector v a, Monad m)
       => Vector v n a -> Int -> m a
 unsafeIndexM (Vector v) i = v `VG.unsafeIndexM` i
 {-# inline unsafeIndexM #-}
+
+{-# deprecated unsafeIndexM "Use indexM instead" #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector in a monad. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
@@ -495,6 +507,17 @@ generate' :: forall v n a. (KnownNat n, VG.Vector v a)
 generate' _ = generate
 {-# inline generate' #-}
 
+-- | /O(n)/ construct a vector of the given length by applying the function to
+-- each index where the length is inferred from the type.
+--
+-- The function can expect a @'Finite' n@, meaning that its input will
+-- always be between @0@ and @n - 1@.
+generate_ :: forall v n a. (KnownNat n, VG.Vector v a)
+          => (Finite n -> a) -> Vector v n a
+generate_ f = Vector (VG.generate i (f . Finite . fromIntegral))
+  where i = fromInteger (natVal (Proxy :: Proxy n))
+{-# inline generate_ #-}
+
 -- | /O(n)/ Apply function n times to value. Zeroth element is original value.
 -- The length is inferred from the type.
 iterateN :: forall v n a. (KnownNat n, VG.Vector v a)
@@ -543,6 +566,17 @@ generateM' :: forall v n m a. (KnownNat n, VG.Vector v a, Monad m)
            => Proxy n -> (Int -> m a) -> m (Vector v n a)
 generateM' _ = generateM
 {-# inline generateM' #-}
+
+-- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
+-- each index where n is inferred from the type.
+--
+-- The function can expect a @'Finite' n@, meaning that its input will
+-- always be between @0@ and @n - 1@.
+generateM_ :: forall v n m a. (KnownNat n, VG.Vector v a, Monad m)
+           => (Finite n -> m a) -> m (Vector v n a)
+generateM_ f = Vector <$> VG.generateM i (f . Finite . fromIntegral)
+  where i = fromInteger (natVal (Proxy :: Proxy n))
+{-# inline generateM_ #-}
 
 --
 -- ** Unfolding
