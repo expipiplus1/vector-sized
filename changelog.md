@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.5.0.0] - 2017-01-04
+- Use `Finite` from `finite-typelits` for indexing.
+
 ## [0.4.1.0] - 2016-11-24
 - Add `withSized` and `withSizedList`
 

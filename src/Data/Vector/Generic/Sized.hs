@@ -310,14 +310,10 @@ index' (Vector v) p = v `VG.unsafeIndex` i
 {-# inline index' #-}
 
 -- | /O(1)/ Indexing using an Int without bounds checking.
---
--- __Deprecated__: Use 'index'.
 unsafeIndex :: forall v n a. (KnownNat n, VG.Vector v a)
       => Vector v n a -> Int -> a
 unsafeIndex (Vector v) i = v `VG.unsafeIndex` i
 {-# inline unsafeIndex #-}
-
-{-# deprecated unsafeIndex "Use index instead" #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector.
 head :: forall v n a. (VG.Vector v a)
@@ -348,14 +344,10 @@ indexM' (Vector v) p = v `VG.indexM` i
 
 -- | /O(1)/ Indexing using an Int without bounds checking. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
---
--- __Deprecated__: Use 'indexM'.
 unsafeIndexM :: forall v n a m. (KnownNat n, VG.Vector v a, Monad m)
       => Vector v n a -> Int -> m a
 unsafeIndexM (Vector v) i = v `VG.unsafeIndexM` i
 {-# inline unsafeIndexM #-}
-
-{-# deprecated unsafeIndexM "Use indexM instead" #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector in a monad. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
