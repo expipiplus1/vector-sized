@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.5.1.0] - 2017-02-01
+- Loosen upper bound on `vector`
+
 ## [0.5.0.0] - 2017-01-04
 - Use `Finite` from `finite-typelits` for indexing.
 
