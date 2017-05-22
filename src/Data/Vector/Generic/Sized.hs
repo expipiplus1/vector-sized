@@ -1608,3 +1608,37 @@ withVectorUnsafe :: forall a b v w (n :: Nat). (VG.Vector v a, VG.Vector w b)
                  => (v a -> w b) -> Vector v n a -> Vector w n b
 withVectorUnsafe f (Vector v) = Vector (f v)
 {-# inline withVectorUnsafe #-}
+
+instance (VG.Vector v a, Num a, KnownNat n) => Num (Vector v n a) where
+    (+)         = zipWith (+)
+    (-)         = zipWith (-)
+    (*)         = zipWith (*)
+    negate      = map negate
+    abs         = map abs
+    signum      = map signum
+    fromInteger = replicate . fromInteger
+
+instance (VG.Vector v a, Fractional a, KnownNat n) => Fractional (Vector v n a) where
+    (/)          = zipWith (/)
+    recip        = map recip
+    fromRational = replicate . fromRational
+
+instance (VG.Vector v a, Floating a, KnownNat n) => Floating (Vector v n a) where
+    pi      = replicate pi
+    exp     = map exp
+    log     = map log
+    sqrt    = map sqrt
+    (**)    = zipWith (**)
+    logBase = zipWith logBase
+    sin     = map sin
+    cos     = map cos
+    tan     = map tan
+    asin    = map asin
+    acos    = map acos
+    atan    = map atan
+    sinh    = map sinh
+    cosh    = map cosh
+    tanh    = map tanh
+    asinh   = map asinh
+    acosh   = map acosh
+    atanh   = map atanh
