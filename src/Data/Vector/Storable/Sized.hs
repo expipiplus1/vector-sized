@@ -264,8 +264,8 @@ index = V.index
 {-# inline index #-}
 
 -- | /O(1)/ Safe indexing using a 'Proxy'.
-index' :: forall n m a. (KnownNat n, KnownNat m, Storable a)
-       => Vector (n+m+1) a -> Proxy n -> a
+index' :: forall n m a p. (KnownNat n, KnownNat m, Storable a)
+       => Vector (n+m+1) a -> p n -> a
 index' = V.index'
 {-# inline index' #-}
 
@@ -296,8 +296,8 @@ indexM = V.indexM
 
 -- | /O(1)/ Safe indexing in a monad using a 'Proxy'. See the documentation for
 -- 'VG.indexM' for an explanation of why this is useful.
-indexM' :: forall n k a m. (KnownNat n, KnownNat k, Storable a, Monad m)
-      => Vector (n+k) a -> Proxy n -> m a
+indexM' :: forall n k a m p. (KnownNat n, KnownNat k, Storable a, Monad m)
+      => Vector (n+k) a -> p n -> m a
 indexM' = V.indexM'
 {-# inline indexM' #-}
 
@@ -324,8 +324,8 @@ lastM = V.lastM
 
 -- | /O(1)/ Yield a slice of the vector without copying it with an inferred
 -- length argument.
-slice :: forall i n a. (KnownNat i, KnownNat n, Storable a)
-      => Proxy i -- ^ starting index
+slice :: forall i n a p. (KnownNat i, KnownNat n, Storable a)
+      => p i -- ^ starting index
       -> Vector (i+n) a
       -> Vector n a
 slice = V.slice
@@ -333,9 +333,9 @@ slice = V.slice
 
 -- | /O(1)/ Yield a slice of the vector without copying it with an explicit
 -- length argument.
-slice' :: forall i n a. (KnownNat i, KnownNat n, Storable a)
-       => Proxy i -- ^ starting index
-       -> Proxy n -- ^ length
+slice' :: forall i n a p. (KnownNat i, KnownNat n, Storable a)
+       => p i -- ^ starting index
+       -> p n -- ^ length
        -> Vector (i+n) a
        -> Vector n a
 slice' = V.slice'
@@ -366,8 +366,8 @@ take = V.take
 -- | /O(1)/ Yield the first n elements. The resultant vector always contains
 -- this many elements. The length of the resultant vector is given explicitly
 -- as a 'Proxy' argument.
-take' :: forall n m a. (KnownNat n, KnownNat m, Storable a)
-      => Proxy n -> Vector (m+n) a -> Vector n a
+take' :: forall n m a p. (KnownNat n, KnownNat m, Storable a)
+      => p n -> Vector (m+n) a -> Vector n a
 take' = V.take'
 {-# inline take' #-}
 
@@ -382,8 +382,8 @@ drop = V.drop
 -- | /O(1)/ Yield all but the the first n elements. The given vector must
 -- contain at least this many elements The length of the resultant vector is
 -- givel explicitly as a 'Proxy' argument.
-drop' :: forall n m a. (KnownNat n, KnownNat m, Storable a)
-      => Proxy n -> Vector (m+n) a -> Vector m a
+drop' :: forall n m a p. (KnownNat n, KnownNat m, Storable a)
+      => p n -> Vector (m+n) a -> Vector m a
 drop' = V.drop'
 {-# inline drop' #-}
 
@@ -397,8 +397,8 @@ splitAt = V.splitAt
 -- | /O(1)/ Yield the first n elements paired with the remainder without
 -- copying.  The length of the first resultant vector is passed explicitly as a
 -- 'Proxy' argument.
-splitAt' :: forall n m a. (KnownNat n, KnownNat m, Storable a)
-         => Proxy n -> Vector (n+m) a -> (Vector n a, Vector m a)
+splitAt' :: forall n m a p. (KnownNat n, KnownNat m, Storable a)
+         => p n -> Vector (n+m) a -> (Vector n a, Vector m a)
 splitAt' = V.splitAt'
 {-# inline splitAt' #-}
 
@@ -431,8 +431,8 @@ replicate = V.replicate
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is given explicitly as a 'Proxy' argument.
-replicate' :: forall n a. (KnownNat n, Storable a)
-           => Proxy n -> a -> Vector n a
+replicate' :: forall n a p. (KnownNat n, Storable a)
+           => p n -> a -> Vector n a
 replicate' = V.replicate'
 {-# inline replicate' #-}
 
@@ -445,8 +445,8 @@ generate = V.generate
 
 -- | /O(n)/ construct a vector of the given length by applying the function to
 -- each index where the length is given explicitly as a 'Proxy' argument.
-generate' :: forall n a. (KnownNat n, Storable a)
-          => Proxy n -> (Int -> a) -> Vector n a
+generate' :: forall n a p. (KnownNat n, Storable a)
+          => p n -> (Int -> a) -> Vector n a
 generate' = V.generate'
 {-# inline generate' #-}
 
@@ -469,8 +469,8 @@ iterateN = V.iterateN
 
 -- | /O(n)/ Apply function n times to value. Zeroth element is original value.
 -- The length is given explicitly as a 'Proxy' argument.
-iterateN' :: forall n a. (KnownNat n, Storable a)
-          => Proxy n -> (a -> a) -> a -> Vector n a
+iterateN' :: forall n a p. (KnownNat n, Storable a)
+          => p n -> (a -> a) -> a -> Vector n a
 iterateN' = V.iterateN'
 {-# inline iterateN' #-}
 
@@ -487,8 +487,8 @@ replicateM = V.replicateM
 
 -- | /O(n)/ Execute the monadic action @n@ times and store the results in a
 -- vector where @n@ is given explicitly as a 'Proxy' argument.
-replicateM' :: forall n m a. (KnownNat n, Storable a, Monad m)
-            => Proxy n -> m a -> m (Vector n a)
+replicateM' :: forall n m a p. (KnownNat n, Storable a, Monad m)
+            => p n -> m a -> m (Vector n a)
 replicateM' = V.replicateM'
 {-# inline replicateM' #-}
 
@@ -501,8 +501,8 @@ generateM = V.generateM
 
 -- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
 -- each index where n is given explicitly as a 'Proxy' argument.
-generateM' :: forall n m a. (KnownNat n, Storable a, Monad m)
-           => Proxy n -> (Int -> m a) -> m (Vector n a)
+generateM' :: forall n m a p. (KnownNat n, Storable a, Monad m)
+           => p n -> (Int -> m a) -> m (Vector n a)
 generateM' = V.generateM'
 {-# inline generateM' #-}
 
@@ -531,8 +531,8 @@ unfoldrN = V.unfoldrN
 -- | /O(n)/ Construct a vector with exactly @n@ elements by repeatedly applying
 -- the generator function to the a seed. The length, @n@, is given explicitly
 -- as a 'Proxy' argument.
-unfoldrN' :: forall n a b. (KnownNat n, Storable a)
-          => Proxy n -> (b -> (a, b)) -> b -> Vector n a
+unfoldrN' :: forall n a b p. (KnownNat n, Storable a)
+          => p n -> (b -> (a, b)) -> b -> Vector n a
 unfoldrN' = V.unfoldrN'
 {-# inline unfoldrN' #-}
 
@@ -549,8 +549,8 @@ enumFromN = V.enumFromN
 
 -- | /O(n)/ Yield a vector of length @n@ containing the values @x@, @x+1@
 -- etc. The length, @n@, is given explicitly as a 'Proxy' argument.
-enumFromN' :: forall n a. (KnownNat n, Storable a, Num a)
-           => a -> Proxy n -> Vector n a
+enumFromN' :: forall n a p. (KnownNat n, Storable a, Num a)
+           => a -> p n -> Vector n a
 enumFromN' = V.enumFromN'
 {-# inline enumFromN' #-}
 
@@ -563,8 +563,8 @@ enumFromStepN = V.enumFromStepN
 
 -- | /O(n)/ Yield a vector of the given length containing the values @x@, @x+y@,
 -- @x+y+y@ etc. The length, @n@, is given explicitly as a 'Proxy' argument.
-enumFromStepN' :: forall n a. (KnownNat n, Storable a, Num a)
-               => a -> a -> Proxy n -> Vector n a
+enumFromStepN' :: forall n a p. (KnownNat n, Storable a, Num a)
+               => a -> a -> p n -> Vector n a
 enumFromStepN' = V.enumFromStepN'
 {-# inline enumFromStepN' #-}
 
@@ -1468,8 +1468,8 @@ fromListN = V.fromListN
 
 -- | /O(n)/ Convert the first @n@ elements of a list to a vector. The length of
 -- the resultant vector is given explicitly as a 'Proxy' argument.
-fromListN' :: forall n a. (Storable a, KnownNat n)
-           => Proxy n -> [a] -> Maybe (Vector n a)
+fromListN' :: forall n a p. (Storable a, KnownNat n)
+           => p n -> [a] -> Maybe (Vector n a)
 fromListN' = V.fromListN'
 {-# inline fromListN' #-}
 
