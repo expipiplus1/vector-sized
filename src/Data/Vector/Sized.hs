@@ -814,7 +814,7 @@ map = V.map
 {-# inline map #-}
 
 -- | /O(n)/ Apply a function to every element of a vector and its index
-imap :: (Int -> a -> b) -> Vector n a -> Vector n b
+imap :: (Finite n -> a -> b) -> Vector n a -> Vector n b
 imap = V.imap
 {-# inline imap #-}
 
@@ -836,7 +836,7 @@ mapM = V.mapM
 
 -- | /O(n)/ Apply the monadic action to every element of a vector and its
 -- index, yielding a vector of results
-imapM :: Monad m => (Int -> a -> m b) -> Vector n a -> m (Vector n b)
+imapM :: Monad m => (Finite n -> a -> m b) -> Vector n a -> m (Vector n b)
 imapM = V.imapM
 {-# inline imapM #-}
 
@@ -848,7 +848,7 @@ mapM_ = V.mapM_
 
 -- | /O(n)/ Apply the monadic action to every element of a vector and its
 -- index, ignoring the results
-imapM_ :: Monad m => (Int -> a -> m b) -> Vector n a -> m ()
+imapM_ :: Monad m => (Finite n -> a -> m b) -> Vector n a -> m ()
 imapM_ = V.imapM_
 {-# inline imapM_ #-}
 
@@ -910,14 +910,14 @@ zipWith6 = V.zipWith6
 
 -- | /O(n)/ Zip two vectors of the same length with a function that also takes
 -- the elements' indices).
-izipWith :: (Int -> a -> b -> c)
+izipWith :: (Finite n -> a -> b -> c)
          -> Vector n a
          -> Vector n b
          -> Vector n c
 izipWith = V.izipWith
 {-# inline izipWith #-}
 
-izipWith3 :: (Int -> a -> b -> c -> d)
+izipWith3 :: (Finite n -> a -> b -> c -> d)
           -> Vector n a
           -> Vector n b
           -> Vector n c
@@ -925,7 +925,7 @@ izipWith3 :: (Int -> a -> b -> c -> d)
 izipWith3 = V.izipWith3
 {-# inline izipWith3 #-}
 
-izipWith4 :: (Int -> a -> b -> c -> d -> e)
+izipWith4 :: (Finite n -> a -> b -> c -> d -> e)
           -> Vector n a
           -> Vector n b
           -> Vector n c
@@ -934,7 +934,7 @@ izipWith4 :: (Int -> a -> b -> c -> d -> e)
 izipWith4 = V.izipWith4
 {-# inline izipWith4 #-}
 
-izipWith5 :: (Int -> a -> b -> c -> d -> e -> f)
+izipWith5 :: (Finite n -> a -> b -> c -> d -> e -> f)
           -> Vector n a
           -> Vector n b
           -> Vector n c
@@ -944,7 +944,7 @@ izipWith5 :: (Int -> a -> b -> c -> d -> e -> f)
 izipWith5 = V.izipWith5
 {-# inline izipWith5 #-}
 
-izipWith6 :: (Int -> a -> b -> c -> d -> e -> f -> g)
+izipWith6 :: (Finite n -> a -> b -> c -> d -> e -> f -> g)
           -> Vector n a
           -> Vector n b
           -> Vector n c
@@ -1005,7 +1005,7 @@ zipWithM = V.zipWithM
 -- | /O(n)/ Zip the two vectors with a monadic action that also takes the
 -- element index and yield a vector of results
 izipWithM :: Monad m
-         => (Int -> a -> b -> m c) -> Vector n a -> Vector n b -> m (Vector n c)
+         => (Finite n -> a -> b -> m c) -> Vector n a -> Vector n b -> m (Vector n c)
 izipWithM = V.izipWithM
 {-# inline izipWithM #-}
 
@@ -1018,7 +1018,7 @@ zipWithM_ = V.zipWithM_
 -- | /O(n)/ Zip the two vectors with a monadic action that also takes
 -- the element index and ignore the results
 izipWithM_ :: Monad m
-           => (Int -> a -> b -> m c) -> Vector n a -> Vector n b -> m ()
+           => (Finite n -> a -> b -> m c) -> Vector n a -> Vector n b -> m ()
 izipWithM_ = V.izipWithM_
 {-# inline izipWithM_ #-}
 
@@ -1075,14 +1075,14 @@ find = V.find
 
 -- | /O(n)/ Yield 'Just' the index of the first element matching the predicate
 -- or 'Nothing' if no such element exists.
-findIndex :: (a -> Bool) -> Vector n a -> Maybe Int
+findIndex :: (a -> Bool) -> Vector n a -> Maybe (Finite n)
 findIndex = V.findIndex
 {-# inline findIndex #-}
 
 -- | /O(n)/ Yield 'Just' the index of the first occurence of the given element or
 -- 'Nothing' if the vector does not contain the element. This is a specialised
 -- version of 'findIndex'.
-elemIndex :: (Eq a) => a -> Vector n a -> Maybe Int
+elemIndex :: (Eq a) => a -> Vector n a -> Maybe (Finite n)
 elemIndex = V.elemIndex
 {-# inline elemIndex #-}
 
@@ -1131,24 +1131,24 @@ foldr1' = V.foldr1'
 {-# inline foldr1' #-}
 
 -- | /O(n)/ Left fold (function applied to each element and its index)
-ifoldl :: (a -> Int -> b -> a) -> a -> Vector n b -> a
+ifoldl :: (a -> Finite n -> b -> a) -> a -> Vector n b -> a
 ifoldl = V.ifoldl
 {-# inline ifoldl #-}
 
 -- | /O(n)/ Left fold with strict accumulator (function applied to each element
 -- and its index)
-ifoldl' :: (a -> Int -> b -> a) -> a -> Vector n b -> a
+ifoldl' :: (a -> Finite n -> b -> a) -> a -> Vector n b -> a
 ifoldl' = V.ifoldl'
 {-# inline ifoldl' #-}
 
 -- | /O(n)/ Right fold (function applied to each element and its index)
-ifoldr :: (Int -> a -> b -> b) -> b -> Vector n a -> b
+ifoldr :: (Finite n -> a -> b -> b) -> b -> Vector n a -> b
 ifoldr = V.ifoldr
 {-# inline ifoldr #-}
 
 -- | /O(n)/ Right fold with strict accumulator (function applied to each
 -- element and its index)
-ifoldr' :: (Int -> a -> b -> b) -> b -> Vector n a -> b
+ifoldr' :: (Finite n -> a -> b -> b) -> b -> Vector n a -> b
 ifoldr' = V.ifoldr'
 {-# inline ifoldr' #-}
 
@@ -1209,26 +1209,26 @@ minimumBy = V.minimumBy
 {-# inline minimumBy #-}
 
 -- | /O(n)/ Yield the index of the maximum element of the non-empty vector.
-maxIndex :: (Ord a, KnownNat n) => Vector (n+1) a -> Int
+maxIndex :: (Ord a, KnownNat n) => Vector (n+1) a -> Finite (n + 1)
 maxIndex = V.maxIndex
 {-# inline maxIndex #-}
 
 -- | /O(n)/ Yield the index of the maximum element of the non-empty vector
 -- according to the given comparison function.
 maxIndexBy :: KnownNat n
-           => (a -> a -> Ordering) -> Vector (n+1) a -> Int
+           => (a -> a -> Ordering) -> Vector (n+1) a -> Finite (n + 1)
 maxIndexBy = V.maxIndexBy
 {-# inline maxIndexBy #-}
 
 -- | /O(n)/ Yield the index of the minimum element of the non-empty vector.
-minIndex :: (Ord a, KnownNat n) => Vector (n+1) a -> Int
+minIndex :: (Ord a, KnownNat n) => Vector (n+1) a -> Finite (n + 1)
 minIndex = V.minIndex
 {-# inline minIndex #-}
 
 -- | /O(n)/ Yield the index of the minimum element of the non-empty vector
 -- according to the given comparison function.
 minIndexBy :: KnownNat n
-           => (a -> a -> Ordering) -> Vector (n+1) a -> Int
+           => (a -> a -> Ordering) -> Vector (n+1) a -> Finite (n + 1)
 minIndexBy = V.minIndexBy
 {-# inline minIndexBy #-}
 
@@ -1240,7 +1240,7 @@ foldM = V.foldM
 {-# inline foldM #-}
 
 -- | /O(n)/ Monadic fold (action applied to each element and its index)
-ifoldM :: Monad m => (a -> Int -> b -> m a) -> a -> Vector n b -> m a
+ifoldM :: Monad m => (a -> Finite n -> b -> m a) -> a -> Vector n b -> m a
 ifoldM = V.ifoldM
 {-# inline ifoldM #-}
 
@@ -1258,7 +1258,7 @@ foldM' = V.foldM'
 -- | /O(n)/ Monadic fold with strict accumulator (action applied to each
 -- element and its index)
 ifoldM' :: Monad m
-        => (a -> Int -> b -> m a) -> a -> Vector n b -> m a
+        => (a -> Finite n -> b -> m a) -> a -> Vector n b -> m a
 ifoldM' = V.ifoldM'
 {-# inline ifoldM' #-}
 
@@ -1277,7 +1277,7 @@ foldM_ = V.foldM_
 -- | /O(n)/ Monadic fold that discards the result (action applied to
 -- each element and its index)
 ifoldM_ :: Monad m
-        => (a -> Int -> b -> m a) -> a -> Vector n b -> m ()
+        => (a -> Finite n -> b -> m a) -> a -> Vector n b -> m ()
 ifoldM_ = V.ifoldM_
 {-# inline ifoldM_ #-}
 
@@ -1296,7 +1296,7 @@ foldM'_ = V.foldM'_
 -- | /O(n)/ Monadic fold with strict accumulator that discards the result
 -- (action applied to each element and its index)
 ifoldM'_ :: Monad m
-         => (a -> Int -> b -> m a) -> a -> Vector n b -> m ()
+         => (a -> Finite n -> b -> m a) -> a -> Vector n b -> m ()
 ifoldM'_ = V.ifoldM'_
 {-# inline ifoldM'_ #-}
 
