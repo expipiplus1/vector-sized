@@ -58,7 +58,6 @@ module Data.Vector.Generic.Sized
   , replicate'
   , generate
   , generate'
-  , generate_
   , iterateN
   , iterateN'
     -- ** Monadic initialization
@@ -66,7 +65,6 @@ module Data.Vector.Generic.Sized
   , replicateM'
   , generateM
   , generateM'
-  , generateM_
     -- ** Unfolding
   , unfoldrN
   , unfoldrN'
@@ -266,7 +264,7 @@ instance (KnownNat n, Storable a, VG.Vector v a)
       => Storable (Vector v n a) where
   sizeOf _ = sizeOf (undefined :: a) * fromInteger (natVal (Proxy :: Proxy n))
   alignment _ = alignment (undefined :: a)
-  peek ptr = generateM (peekElemOff (castPtr ptr))
+  peek ptr = generateM (peekElemOff (castPtr ptr) . fromIntegral)
   poke ptr = imapM_ (pokeElemOff (castPtr ptr) . fromIntegral)
 
 -- | The 'Applicative' instance for sized vectors does not have the same
@@ -510,28 +508,17 @@ replicate' _ = replicate
 -- | /O(n)/ construct a vector of the given length by applying the function to
 -- each index where the length is inferred from the type.
 generate :: forall v n a. (KnownNat n, VG.Vector v a)
-         => (Int -> a) -> Vector v n a
-generate f = Vector (VG.generate i f)
+         => (Finite n -> a) -> Vector v n a
+generate f = Vector (VG.generate i (f . Finite . fromIntegral))
   where i = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline generate #-}
 
 -- | /O(n)/ construct a vector of the given length by applying the function to
 -- each index where the length is given explicitly as a 'Proxy' argument.
 generate' :: forall v n a p. (KnownNat n, VG.Vector v a)
-          => p n -> (Int -> a) -> Vector v n a
+          => p n -> (Finite n -> a) -> Vector v n a
 generate' _ = generate
 {-# inline generate' #-}
-
--- | /O(n)/ construct a vector of the given length by applying the function to
--- each index where the length is inferred from the type.
---
--- The function can expect a @'Finite' n@, meaning that its input will
--- always be between @0@ and @n - 1@.
-generate_ :: forall v n a. (KnownNat n, VG.Vector v a)
-          => (Finite n -> a) -> Vector v n a
-generate_ f = Vector (VG.generate i (f . Finite . fromIntegral))
-  where i = fromInteger (natVal (Proxy :: Proxy n))
-{-# inline generate_ #-}
 
 -- | /O(n)/ Apply function n times to value. Zeroth element is original value.
 -- The length is inferred from the type.
@@ -570,28 +557,17 @@ replicateM' _ = replicateM
 -- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
 -- each index where n is inferred from the type.
 generateM :: forall v n m a. (KnownNat n, VG.Vector v a, Monad m)
-          => (Int -> m a) -> m (Vector v n a)
-generateM f = Vector <$> VG.generateM i f
+          => (Finite n -> m a) -> m (Vector v n a)
+generateM f = Vector <$> VG.generateM i (f . Finite . fromIntegral)
   where i = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline generateM #-}
 
 -- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
 -- each index where n is given explicitly as a 'Proxy' argument.
 generateM' :: forall v n m a p. (KnownNat n, VG.Vector v a, Monad m)
-           => p n -> (Int -> m a) -> m (Vector v n a)
+           => p n -> (Finite n -> m a) -> m (Vector v n a)
 generateM' _ = generateM
 {-# inline generateM' #-}
-
--- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
--- each index where n is inferred from the type.
---
--- The function can expect a @'Finite' n@, meaning that its input will
--- always be between @0@ and @n - 1@.
-generateM_ :: forall v n m a. (KnownNat n, VG.Vector v a, Monad m)
-           => (Finite n -> m a) -> m (Vector v n a)
-generateM_ f = Vector <$> VG.generateM i (f . Finite . fromIntegral)
-  where i = fromInteger (natVal (Proxy :: Proxy n))
-{-# inline generateM_ #-}
 
 --
 -- ** Unfolding
