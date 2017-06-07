@@ -321,19 +321,19 @@ lastM = V.lastM
 
 -- | /O(1)/ Yield a slice of the vector without copying it with an inferred
 -- length argument.
-slice :: forall i n a p. (KnownNat i, KnownNat n)
+slice :: forall i n m a p. (KnownNat i, KnownNat n, KnownNat m)
       => p i -- ^ starting index
-      -> Vector (i+n) a
+      -> Vector (i+n+m) a
       -> Vector n a
 slice = V.slice
 {-# inline slice #-}
 
 -- | /O(1)/ Yield a slice of the vector without copying it with an explicit
 -- length argument.
-slice' :: forall i n a p. (KnownNat i, KnownNat n)
+slice' :: forall i n m a p. (KnownNat i, KnownNat n, KnownNat m)
        => p i -- ^ starting index
        -> p n -- ^ length
-       -> Vector (i+n) a
+       -> Vector (i+n+m) a
        -> Vector n a
 slice' = V.slice'
 {-# inline slice' #-}
