@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.6.0.0] - 2017-06-07
+- Make ordering of additions in types be more consistent
+- Make slice more general
+
 ## [0.5.1.0] - 2017-02-01
 - Loosen upper bound on `vector`
 
