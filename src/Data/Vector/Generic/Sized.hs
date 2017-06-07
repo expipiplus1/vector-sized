@@ -365,9 +365,9 @@ lastM (Vector v) = VG.unsafeLastM v
 
 -- | /O(1)/ Yield a slice of the vector without copying it with an inferred
 -- length argument.
-slice :: forall v i n a p. (KnownNat i, KnownNat n, VG.Vector v a)
+slice :: forall v i n m a p. (KnownNat i, KnownNat n, KnownNat m, VG.Vector v a)
       => p i -- ^ starting index
-      -> Vector v (i+n) a
+      -> Vector v (i+n+m) a
       -> Vector v n a
 slice start (Vector v) = Vector (VG.unsafeSlice i n v)
   where i = fromInteger (natVal start)
@@ -376,10 +376,11 @@ slice start (Vector v) = Vector (VG.unsafeSlice i n v)
 
 -- | /O(1)/ Yield a slice of the vector without copying it with an explicit
 -- length argument.
-slice' :: forall v i n a p. (KnownNat i, KnownNat n, VG.Vector v a)
+slice' :: forall v i n m a p
+        . (KnownNat i, KnownNat n, KnownNat m, VG.Vector v a)
        => p i -- ^ starting index
        -> p n -- ^ length
-       -> Vector v (i+n) a
+       -> Vector v (i+n+m) a
        -> Vector v n a
 slice' start _ = slice start
 {-# inline slice' #-}
