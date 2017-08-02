@@ -1163,50 +1163,50 @@ product = V.product
 {-# inline product #-}
 
 -- | /O(n)/ Yield the maximum element of the non-empty vector.
-maximum :: (Ord a, KnownNat n) => Vector (1+n) a -> a
+maximum :: (Ord a, KnownNat n) => Vector (n+1) a -> a
 maximum = V.maximum
 {-# inline maximum #-}
 
 -- | /O(n)/ Yield the maximum element of the non-empty vector according to the
 -- given comparison function.
 maximumBy :: KnownNat n
-          => (a -> a -> Ordering) -> Vector (1+n) a -> a
+          => (a -> a -> Ordering) -> Vector (n+1) a -> a
 maximumBy = V.maximumBy
 {-# inline maximumBy #-}
 
 -- | /O(n)/ Yield the minimum element of the non-empty vector.
-minimum :: (Ord a, KnownNat n) => Vector (1+n) a -> a
+minimum :: (Ord a, KnownNat n) => Vector (n+1) a -> a
 minimum = V.minimum
 {-# inline minimum #-}
 
 -- | /O(n)/ Yield the minimum element of the non-empty vector according to the
 -- given comparison function.
 minimumBy :: KnownNat n
-          => (a -> a -> Ordering) -> Vector (1+n) a -> a
+          => (a -> a -> Ordering) -> Vector (n+1) a -> a
 minimumBy = V.minimumBy
 {-# inline minimumBy #-}
 
 -- | /O(n)/ Yield the index of the maximum element of the non-empty vector.
-maxIndex :: (Ord a, KnownNat n) => Vector (1+n) a -> Int
+maxIndex :: (Ord a, KnownNat n) => Vector (n+1) a -> Int
 maxIndex = V.maxIndex
 {-# inline maxIndex #-}
 
 -- | /O(n)/ Yield the index of the maximum element of the non-empty vector
 -- according to the given comparison function.
 maxIndexBy :: KnownNat n
-           => (a -> a -> Ordering) -> Vector (1+n) a -> Int
+           => (a -> a -> Ordering) -> Vector (n+1) a -> Int
 maxIndexBy = V.maxIndexBy
 {-# inline maxIndexBy #-}
 
 -- | /O(n)/ Yield the index of the minimum element of the non-empty vector.
-minIndex :: (Ord a, KnownNat n) => Vector (1+n) a -> Int
+minIndex :: (Ord a, KnownNat n) => Vector (n+1) a -> Int
 minIndex = V.minIndex
 {-# inline minIndex #-}
 
 -- | /O(n)/ Yield the index of the minimum element of the non-empty vector
 -- according to the given comparison function.
 minIndexBy :: KnownNat n
-           => (a -> a -> Ordering) -> Vector (1+n) a -> Int
+           => (a -> a -> Ordering) -> Vector (n+1) a -> Int
 minIndexBy = V.minIndexBy
 {-# inline minIndexBy #-}
 
@@ -1242,7 +1242,7 @@ ifoldM' = V.ifoldM'
 
 -- | /O(n)/ Monadic fold over non-empty vectors with strict accumulator
 fold1M' :: (Monad m, KnownNat n)
-        => (a -> a -> m a) -> Vector (1+n) a -> m a
+        => (a -> a -> m a) -> Vector (n+1) a -> m a
 fold1M' = V.fold1M'
 {-# inline fold1M' #-}
 
@@ -1261,7 +1261,7 @@ ifoldM_ = V.ifoldM_
 
 -- | /O(n)/ Monadic fold over non-empty vectors that discards the result
 fold1M_ :: (Monad m, KnownNat n)
-        => (a -> a -> m a) -> Vector (1+n) a -> m ()
+        => (a -> a -> m a) -> Vector (n+1) a -> m ()
 fold1M_ = V.fold1M_
 {-# inline fold1M_ #-}
 
@@ -1281,7 +1281,7 @@ ifoldM'_ = V.ifoldM'_
 -- | /O(n)/ Monad fold over non-empty vectors with strict accumulator
 -- that discards the result
 fold1M'_ :: (Monad m, KnownNat n)
-         => (a -> a -> m a) -> Vector (1+n) a -> m ()
+         => (a -> a -> m a) -> Vector (n+1) a -> m ()
 fold1M'_ = V.fold1M'_
 {-# inline fold1M'_ #-}
 
@@ -1339,12 +1339,12 @@ scanl' = V.scanl'
 {-# inline scanl' #-}
 
 -- | /O(n)/ Scan over a non-empty vector
-scanl1 :: KnownNat n => (a -> a -> a) -> Vector (1+n) a -> Vector (1+n) a
+scanl1 :: KnownNat n => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
 scanl1 = V.scanl1
 {-# inline scanl1 #-}
 
 -- | /O(n)/ Scan over a non-empty vector with a strict accumulator
-scanl1' :: KnownNat n => (a -> a -> a) -> Vector (1+n) a -> Vector (1+n) a
+scanl1' :: KnownNat n => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
 scanl1' = V.scanl1'
 {-# inline scanl1' #-}
 
