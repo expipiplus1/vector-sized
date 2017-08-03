@@ -317,7 +317,7 @@ unsafeIndex (Vector v) i = v `VG.unsafeIndex` i
 
 -- | /O(1)/ Yield the first element of a non-empty vector.
 head :: forall v n a. (VG.Vector v a)
-     => Vector v (n+1) a -> a
+     => Vector v (1+n) a -> a
 head (Vector v) = VG.unsafeHead v
 {-# inline head #-}
 
@@ -352,7 +352,7 @@ unsafeIndexM (Vector v) i = v `VG.unsafeIndexM` i
 -- | /O(1)/ Yield the first element of a non-empty vector in a monad. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
 headM :: forall v n a m. (KnownNat n, VG.Vector v a, Monad m)
-      => Vector v (n+1) a -> m a
+      => Vector v (1+n) a -> m a
 headM (Vector v) = VG.unsafeHeadM v
 {-# inline headM #-}
 
@@ -395,7 +395,7 @@ init (Vector v) = Vector (VG.unsafeInit v)
 -- | /O(1)/ Yield all but the first element of a non-empty vector without
 -- copying.
 tail :: forall v n a. (VG.Vector v a)
-     => Vector v (n+1) a -> Vector v n a
+     => Vector v (1+n) a -> Vector v n a
 tail (Vector v) = Vector (VG.unsafeTail v)
 {-# inline tail #-}
 
@@ -403,7 +403,7 @@ tail (Vector v) = Vector (VG.unsafeTail v)
 -- this many elements. The length of the resultant vector is inferred from the
 -- type.
 take :: forall v n m a. (KnownNat n, KnownNat m, VG.Vector v a)
-     => Vector v (m+n) a -> Vector v n a
+     => Vector v (n+m) a -> Vector v n a
 take (Vector v) = Vector (VG.unsafeTake i v)
   where i = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline take #-}
@@ -412,7 +412,7 @@ take (Vector v) = Vector (VG.unsafeTake i v)
 -- this many elements. The length of the resultant vector is given explicitly
 -- as a 'Proxy' argument.
 take' :: forall v n m a p. (KnownNat n, KnownNat m, VG.Vector v a)
-      => p n -> Vector v (m+n) a -> Vector v n a
+      => p n -> Vector v (n+m) a -> Vector v n a
 take' _ = take
 {-# inline take' #-}
 
@@ -420,7 +420,7 @@ take' _ = take
 -- contain at least this many elements The length of the resultant vector is
 -- inferred from the type.
 drop :: forall v n m a. (KnownNat n, KnownNat m, VG.Vector v a)
-     => Vector v (m+n) a -> Vector v m a
+     => Vector v (n+m) a -> Vector v m a
 drop (Vector v) = Vector (VG.unsafeDrop i v)
   where i = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline drop #-}
@@ -429,7 +429,7 @@ drop (Vector v) = Vector (VG.unsafeDrop i v)
 -- contain at least this many elements The length of the resultant vector is
 -- givel explicitly as a 'Proxy' argument.
 drop' :: forall v n m a p. (KnownNat n, KnownNat m, VG.Vector v a)
-      => p n -> Vector v (m+n) a -> Vector v m a
+      => p n -> Vector v (n+m) a -> Vector v m a
 drop' _ = drop
 {-# inline drop' #-}
 
@@ -594,7 +594,7 @@ unfoldrN' _ = unfoldrN
 
 --
 -- ** Enumeration
--- 
+--
 
 -- | /O(n)/ Yield a vector of length @n@ containing the values @x@, @x+1@
 -- etc. The length, @n@, is inferred from the type.
@@ -632,7 +632,7 @@ enumFromStepN' a a' _ = enumFromStepN a a'
 
 -- | /O(n)/ Prepend an element.
 cons :: forall v n a. VG.Vector v a
-     => a -> Vector v n a -> Vector v (n+1) a
+     => a -> Vector v n a -> Vector v (1+n) a
 cons x (Vector xs) = Vector (VG.cons x xs)
 {-# inline cons #-}
 
@@ -1209,7 +1209,7 @@ foldl f z = VG.foldl f z . fromSized
 {-# inline foldl #-}
 
 -- | /O(n)/ Left fold on non-empty vectors
-foldl1 :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> a
+foldl1 :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (1+n) a -> a
 foldl1 f = VG.foldl1 f . fromSized
 {-# inline foldl1 #-}
 
@@ -1219,7 +1219,7 @@ foldl' f z = VG.foldl' f z . fromSized
 {-# inline foldl' #-}
 
 -- | /O(n)/ Left fold on non-empty vectors with strict accumulator
-foldl1' :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (n+1) a -> a
+foldl1' :: (VG.Vector v a, KnownNat n) => (a -> a -> a) -> Vector v (1+n) a -> a
 foldl1' f = VG.foldl1' f . fromSized
 {-# inline foldl1' #-}
 
@@ -1359,7 +1359,7 @@ ifoldM m z = VG.ifoldM m z . fromSized
 
 -- | /O(n)/ Monadic fold over non-empty vectors
 fold1M :: (Monad m, VG.Vector v a, KnownNat n)
-       => (a -> a -> m a) -> Vector v (n+1) a -> m a
+       => (a -> a -> m a) -> Vector v (1+n) a -> m a
 fold1M m = VG.fold1M m . fromSized
 {-# inline fold1M #-}
 
@@ -1537,12 +1537,12 @@ toList = VG.toList . fromSized
 
 -- | /O(n)/ Convert a list to a vector
 fromList :: (VG.Vector v a, KnownNat n) => [a] -> Maybe (Vector v n a)
-fromList = toSized . VG.fromList 
+fromList = toSized . VG.fromList
 {-# inline fromList #-}
 
 -- | /O(n)/ Convert the first @n@ elements of a list to a vector. The length of
 -- the resultant vector is inferred from the type.
-fromListN :: forall v n a. (VG.Vector v a, KnownNat n) 
+fromListN :: forall v n a. (VG.Vector v a, KnownNat n)
           => [a] -> Maybe (Vector v n a)
 fromListN = toSized . VG.fromListN i
   where i = fromInteger (natVal (Proxy :: Proxy n))
@@ -1550,7 +1550,7 @@ fromListN = toSized . VG.fromListN i
 
 -- | /O(n)/ Convert the first @n@ elements of a list to a vector. The length of
 -- the resultant vector is given explicitly as a 'Proxy' argument.
-fromListN' :: forall v n a p. (VG.Vector v a, KnownNat n) 
+fromListN' :: forall v n a p. (VG.Vector v a, KnownNat n)
            => p n -> [a] -> Maybe (Vector v n a)
 fromListN' _ = fromListN
 {-# inline fromListN' #-}

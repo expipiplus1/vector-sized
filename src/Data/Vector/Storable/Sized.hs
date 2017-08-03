@@ -1,11 +1,10 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE KindSignatures      #-}
+{-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeOperators       #-}
 
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Sized'
@@ -277,7 +276,7 @@ unsafeIndex = V.unsafeIndex
 
 -- | /O(1)/ Yield the first element of a non-empty vector.
 head :: forall n a. (Storable a)
-     => Vector (n+1) a -> a
+     => Vector (1+n) a -> a
 head = V.head
 {-# inline head #-}
 
@@ -311,7 +310,7 @@ unsafeIndexM = V.unsafeIndexM
 -- | /O(1)/ Yield the first element of a non-empty vector in a monad. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
 headM :: forall n a m. (KnownNat n, Storable a, Monad m)
-      => Vector (n+1) a -> m a
+      => Vector (1+n) a -> m a
 headM = V.headM
 {-# inline headM #-}
 
@@ -351,7 +350,7 @@ init = V.init
 -- | /O(1)/ Yield all but the first element of a non-empty vector without
 -- copying.
 tail :: forall n a. (Storable a)
-     => Vector (n+1) a -> Vector n a
+     => Vector (1+n) a -> Vector n a
 tail = V.tail
 {-# inline tail #-}
 
@@ -359,7 +358,7 @@ tail = V.tail
 -- this many elements. The length of the resultant vector is inferred from the
 -- type.
 take :: forall n m a. (KnownNat n, KnownNat m, Storable a)
-     => Vector (m+n) a -> Vector n a
+     => Vector (n+m) a -> Vector n a
 take = V.take
 {-# inline take #-}
 
@@ -367,7 +366,7 @@ take = V.take
 -- this many elements. The length of the resultant vector is given explicitly
 -- as a 'Proxy' argument.
 take' :: forall n m a p. (KnownNat n, KnownNat m, Storable a)
-      => p n -> Vector (m+n) a -> Vector n a
+      => p n -> Vector (n+m) a -> Vector n a
 take' = V.take'
 {-# inline take' #-}
 
@@ -375,7 +374,7 @@ take' = V.take'
 -- contain at least this many elements The length of the resultant vector is
 -- inferred from the type.
 drop :: forall n m a. (KnownNat n, KnownNat m, Storable a)
-     => Vector (m+n) a -> Vector m a
+     => Vector (n+m) a -> Vector m a
 drop = V.drop
 {-# inline drop #-}
 
@@ -383,7 +382,7 @@ drop = V.drop
 -- contain at least this many elements The length of the resultant vector is
 -- givel explicitly as a 'Proxy' argument.
 drop' :: forall n m a p. (KnownNat n, KnownNat m, Storable a)
-      => p n -> Vector (m+n) a -> Vector m a
+      => p n -> Vector (n+m) a -> Vector m a
 drop' = V.drop'
 {-# inline drop' #-}
 
@@ -538,7 +537,7 @@ unfoldrN' = V.unfoldrN'
 
 --
 -- ** Enumeration
--- 
+--
 
 -- | /O(n)/ Yield a vector of length @n@ containing the values @x@, @x+1@
 -- etc. The length, @n@, is inferred from the type.
@@ -574,7 +573,7 @@ enumFromStepN' = V.enumFromStepN'
 
 -- | /O(n)/ Prepend an element.
 cons :: forall n a. Storable a
-     => a -> Vector n a -> Vector (n+1) a
+     => a -> Vector n a -> Vector (1+n) a
 cons = V.cons
 {-# inline cons #-}
 
@@ -896,7 +895,7 @@ zipWith4 :: (Storable a,Storable b,Storable c,Storable d,Storable e)
          -> Vector n c
          -> Vector n d
          -> Vector n e
-zipWith4 = V.zipWith4 
+zipWith4 = V.zipWith4
 {-# inline zipWith4 #-}
 
 zipWith5 :: (Storable a,Storable b,Storable c,Storable d,Storable e,Storable f)
@@ -1128,7 +1127,7 @@ foldl = V.foldl
 {-# inline foldl #-}
 
 -- | /O(n)/ Left fold on non-empty vectors
-foldl1 :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (n+1) a -> a
+foldl1 :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (1+n) a -> a
 foldl1 = V.foldl1
 {-# inline foldl1 #-}
 
@@ -1138,7 +1137,7 @@ foldl' = V.foldl'
 {-# inline foldl' #-}
 
 -- | /O(n)/ Left fold on non-empty vectors with strict accumulator
-foldl1' :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (n+1) a -> a
+foldl1' :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (1+n) a -> a
 foldl1' = V.foldl1'
 {-# inline foldl1' #-}
 
@@ -1278,7 +1277,7 @@ ifoldM = V.ifoldM
 
 -- | /O(n)/ Monadic fold over non-empty vectors
 fold1M :: (Monad m, Storable a, KnownNat n)
-       => (a -> a -> m a) -> Vector (n+1) a -> m a
+       => (a -> a -> m a) -> Vector (1+n) a -> m a
 fold1M = V.fold1M
 {-# inline fold1M #-}
 
