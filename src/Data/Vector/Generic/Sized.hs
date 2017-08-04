@@ -100,6 +100,10 @@ module Data.Vector.Generic.Sized
   , reverse
   , backpermute
   , unsafeBackpermute
+    -- * Lenses
+  , ix
+  , _head
+  , _last
     -- * Elementwise operations
     -- ** Indexing
   , indexed
@@ -326,6 +330,24 @@ last :: forall v n a. (VG.Vector v a)
      => Vector v (n+1) a -> a
 last (Vector v) = VG.unsafeLast v
 {-# inline last #-}
+
+-- | Lens to access (/O(1)/) and update (/O(n)/) an arbitrary element by its index.
+ix :: forall v n a f. (KnownNat n, VG.Vector v a, Functor f)
+   => Finite n -> (a -> f a) -> Vector v n a -> f (Vector v n a)
+ix n f vector = (\x -> vector // [(fromInteger $ getFinite n, x)]) <$> f (index vector n)
+{-# inline ix #-}
+
+-- | Lens to access (/O(1)/) and update (/O(n)/) the first element of a non-empty vector.
+_head :: forall v n a f. (KnownNat n, VG.Vector v a, Functor f)
+      => (a -> f a) -> Vector v (1+n) a -> f (Vector v (1+n) a)
+_head f vector = (\x -> cons x $ tail vector) <$> f (head vector)
+{-# inline _head #-}
+
+-- | Lens to access (/O(1)/) and update (/O(n)/) the last element of a non-empty vector.
+_last :: forall v n a f. (KnownNat n, VG.Vector v a, Functor f)
+       => (a -> f a) -> Vector v (n+1) a -> f (Vector v (n+1) a)
+_last f vector = (\x -> snoc (init vector) x) <$> f (last vector)
+{-# inline _last #-}
 
 -- | /O(1)/ Safe indexing in a monad. See the documentation for 'VG.indexM' for
 -- an explanation of why this is useful.

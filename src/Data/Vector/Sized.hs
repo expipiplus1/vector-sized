@@ -97,6 +97,10 @@ module Data.Vector.Sized
   , reverse
   , backpermute
   , unsafeBackpermute
+  -- * Lenses
+  , ix
+  , _head
+  , _last
     -- * Elementwise operations
     -- ** Indexing
   , indexed
@@ -283,6 +287,24 @@ head = V.head
 last :: forall n a. Vector (n+1) a -> a
 last = V.last
 {-# inline last #-}
+
+-- | Lens to access (/O(1)/) and update (/O(n)/) an arbitrary element by its index.
+ix :: forall n a f. (KnownNat n, Functor f)
+   => Finite n -> (a -> f a) -> Vector n a -> f (Vector n a)
+ix = V.ix
+{-# inline ix #-}
+
+-- | Lens to access (/O(1)/) and update (/O(n)/) the first element of a non-empty vector.
+_head :: forall n a f. (KnownNat n, Functor f)
+   => (a -> f a) -> Vector (1+n) a -> f (Vector (1+n) a)
+_head = V._head
+{-# inline _head #-}
+
+-- | Lens to access (/O(1)/) and update (/O(n)/) the last element of a non-empty vector.
+_last :: forall n a f. (KnownNat n, Functor f)
+      => (a -> f a) -> Vector (n+1) a -> f (Vector (n+1) a)
+_last = V._last
+{-# inline _last #-}
 
 -- | /O(1)/ Safe indexing in a monad. See the documentation for 'VG.indexM' for
 -- an explanation of why this is useful.
