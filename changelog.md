@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.6.1.0] - 2017-08-04
+- Add lenses ix, _head and _last
+
 ## [0.6.0.0] - 2017-06-07
 - Make ordering of additions in types be more consistent
 - Make slice more general
