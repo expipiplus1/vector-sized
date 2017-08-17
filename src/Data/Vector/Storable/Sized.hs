@@ -802,8 +802,8 @@ unsafeBackpermute = V.unsafeBackpermute
 --
 
 -- | /O(n)/ Pair each element in a vector with its index
-indexed :: (Storable a, Storable (Int,a))
-        => Vector n a -> Vector n (Int,a)
+indexed :: (Storable a, Storable (Int, a), Storable (Finite n, a))
+        => Vector n a -> Vector n (Finite n,a)
 indexed = V.indexed
 {-# inline indexed #-}
 

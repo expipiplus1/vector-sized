@@ -231,6 +231,7 @@ import qualified Data.Vector.Generic as VG
 import qualified Data.Vector as Boxed
 import GHC.Generics (Generic)
 import GHC.TypeLits
+import Data.Bifunctor
 import Data.Finite
 import Data.Finite.Internal
 import Data.Proxy
@@ -859,9 +860,9 @@ unsafeBackpermute (Vector v) (Vector is) = Vector (VG.unsafeBackpermute v is)
 --
 
 -- | /O(n)/ Pair each element in a vector with its index
-indexed :: (VG.Vector v a, VG.Vector v (Int,a))
-        => Vector v n a -> Vector v n (Int,a)
-indexed (Vector v) = Vector (VG.indexed v)
+indexed :: (VG.Vector v a, VG.Vector v (Int, a), VG.Vector v (Finite n,a))
+        => Vector v n a -> Vector v n (Finite n,a)
+indexed (Vector v) = Vector ((VG.map . first) (Finite . fromIntegral) $ VG.indexed v)
 {-# inline indexed #-}
 
 --
