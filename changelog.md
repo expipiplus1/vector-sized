@@ -6,6 +6,7 @@
 ## [0.6.0.0] - 2017-06-07
 - Make ordering of additions in types be more consistent
 - Make slice more general
+- `Num`, `Fractional`, and `Floating` instances for vectors
 
 ## [0.5.1.0] - 2017-02-01
 - Loosen upper bound on `vector`
