@@ -680,10 +680,10 @@ force (Vector v) = Vector (VG.force v)
 -- > <5,9,2,7> // [(2,1),(0,3),(2,8)] = <3,9,8,7>
 --
 (//) :: (VG.Vector v a)
-     => Vector v m a -- ^ initial vector (of length @m@)
-     -> [(Int, a)]   -- ^ list of index/value pairs (of length @n@)
+     => Vector v m a    -- ^ initial vector (of length @m@)
+     -> [(Finite m, a)] -- ^ list of index/value pairs (of length @n@)
      -> Vector v m a
-Vector v // us = Vector (v VG.// us)
+Vector v // us = Vector (v VG.// (fmap . first) (fromIntegral . getFinite) us)
 {-# inline (//) #-}
 
 -- | /O(m+n)/ For each pair @(i,a)@ from the vector of index/value pairs,

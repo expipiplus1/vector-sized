@@ -612,8 +612,8 @@ force = V.force
 --
 -- > <5,9,2,7> // [(2,1),(0,3),(2,8)] = <3,9,8,7>
 --
-(//) :: Vector m a -- ^ initial vector (of length @m@)
-     -> [(Int, a)]   -- ^ list of index/value pairs (of length @n@)
+(//) :: Vector m a      -- ^ initial vector (of length @m@)
+     -> [(Finite m, a)] -- ^ list of index/value pairs (of length @n@)
      -> Vector m a
 (//) = (V.//)
 {-# inline (//) #-}
