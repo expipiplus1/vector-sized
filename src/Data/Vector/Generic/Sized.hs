@@ -277,6 +277,8 @@ instance (KnownNat n, Storable a, VG.Vector v a)
 instance KnownNat n => Applicative (Vector Boxed.Vector n) where
   pure = replicate
   (<*>) = zipWith ($)
+  _ *> r = r
+  l <* _ = l
 
 -- | The 'Semigroup' instance for sized vectors does not have the same
 -- behaviour as the 'Semigroup' instance for the unsized vectors found in the
