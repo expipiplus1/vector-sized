@@ -240,6 +240,7 @@ import Control.DeepSeq (NFData)
 import Foreign.Storable
 import Data.Data
 import Foreign.Ptr (castPtr)
+import Data.Semigroup
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
                         head, last,
@@ -277,13 +278,29 @@ instance KnownNat n => Applicative (Vector Boxed.Vector n) where
   pure = replicate
   (<*>) = zipWith ($)
 
+-- | The 'Semigroup' instance for sized vectors does not have the same
+-- behaviour as the 'Semigroup' instance for the unsized vectors found in the
+-- 'vectors' package. This instance has @(<>) = zipWith (<>)@, but 'vectors'
+-- uses concatentation.
+instance (Semigroup g, VG.Vector v g) => Semigroup (Vector v n g) where
+  (<>) = zipWith (<>)
+  stimes = map . stimes
+
 -- | The 'Monoid' instance for sized vectors does not have the same
 -- behaviour as the 'Monoid' instance for the unsized vectors found in the
--- 'vectors' package. Its @mempty@ is a vector of @mempty@s and its @mappend@
--- is @zipWith mappend@.
+-- 'vectors' package. This instance has @mempty = replicate mempty@ and
+-- @mappend = zipWith mappend@, where the 'vectors' instance uses the empty
+-- vector and concatenation.
+--
+-- If 'mempty' is not necessary, using the 'Semigroup' instance over this
+-- 'Monoid' will dodge the 'KnownNat' constraint.
 instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
   mempty = replicate mempty
   mappend = zipWith mappend
+  mconcat vs = generate_ $ mconcat . flip fmap vs . flip index
+
+-- | This instance exists to relax the 'Monoid' constraint in the case of
+-- empty vectors.
 instance {-# OVERLAPPING #-} (VG.Vector v m) => Monoid (Vector v 0 m) where
   mempty = empty
   _empty1 `mappend` _empty2 = empty
