@@ -241,6 +241,9 @@ import Foreign.Storable
 import Data.Data
 import Foreign.Ptr (castPtr)
 import Data.Semigroup
+import Text.Read.Lex
+import Text.ParserCombinators.ReadPrec
+import GHC.Read
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
                         head, last,
@@ -261,6 +264,12 @@ newtype Vector v (n :: Nat) a = Vector (v a)
   deriving ( Show, Eq, Ord, Functor, Foldable, Traversable, NFData, Generic
            , Data, Typeable
            )
+
+instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
+  readPrec = parens $ prec 10 $ do
+      expectP (Ident "Vector")
+      vec <- readPrec
+      if VG.length vec == (fromInteger $ natVal (Proxy :: Proxy n)) then return $ Vector vec else pfail
 
 -- | Any sized vector containing storable elements is itself storable.
 instance (KnownNat n, Storable a, VG.Vector v a)
