@@ -286,8 +286,8 @@ instance (KnownNat n, Storable a, VG.Vector v a)
 instance KnownNat n => Applicative (Vector Boxed.Vector n) where
   pure = replicate
   (<*>) = zipWith ($)
-  _ *> r = r
-  l <* _ = l
+  (*>) = seq
+  (<*) = flip seq
 
 -- | The 'Semigroup' instance for sized vectors does not have the same
 -- behaviour as the 'Semigroup' instance for the unsized vectors found in the
@@ -314,7 +314,7 @@ instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
 -- empty vectors.
 instance {-# OVERLAPPING #-} (VG.Vector v m) => Monoid (Vector v 0 m) where
   mempty = empty
-  _empty1 `mappend` _empty2 = empty
+  l `mappend` r = l `seq` r `seq` empty
 
 -- | /O(1)/ Yield the length of the vector as an 'Int'.
 length :: forall v n a. (KnownNat n)
