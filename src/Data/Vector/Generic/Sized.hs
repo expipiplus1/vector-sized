@@ -9,6 +9,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeFamilies #-}
 
 {-|
 This module reexports the functionality in 'Data.Vector.Generic' which maps well
@@ -27,6 +28,8 @@ module Data.Vector.Generic.Sized
    -- ** Length information
   , length
   , length'
+  , knownLength
+  , knownLength'
     -- ** Indexing
   , index
   , index'
@@ -240,6 +243,8 @@ import Control.DeepSeq (NFData)
 import Foreign.Storable
 import Data.Data
 import Foreign.Ptr (castPtr)
+import Data.Type.Equality
+import Unsafe.Coerce
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
                         head, last,
@@ -299,6 +304,20 @@ length' :: forall v n a. (KnownNat n)
         => Vector v n a -> Proxy n
 length' _ = Proxy
 {-# inline length' #-}
+
+-- | /O(1)/ Reveal a 'KnownNat' instance for a vector's length, determined
+-- at runtime.
+knownLength :: forall v n a r. (VG.Vector v a)
+            => Vector v n a -> (KnownNat n => r) -> r
+knownLength v f = knownLength' v $ const f
+
+-- | /O(1)/ Reveal a 'KnownNat' instance and 'Proxy' for a vector's length,
+-- determined at runtime.
+knownLength' :: forall v n a r. (VG.Vector v a)
+             => Vector v n a -> (KnownNat n => Proxy n -> r) -> r
+knownLength' (Vector v) f = case someNatVal (fromIntegral (VG.length v)) of
+    Just (SomeNat (Proxy :: Proxy n')) -> case unsafeCoerce Refl :: n' :~: n of Refl -> f Proxy
+    Nothing -> error "knownLength: VG.length returned negative length."
 
 -- | /O(1)/ Safe indexing using a 'Finite'.
 index :: forall v n a. (KnownNat n, VG.Vector v a)

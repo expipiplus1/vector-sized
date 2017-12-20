@@ -23,6 +23,8 @@ module Data.Vector.Storable.Sized
    -- ** Length information
   , length
   , length'
+  , knownLength
+  , knownLength'
     -- ** Indexing
   , index
   , index'
@@ -259,6 +261,18 @@ length' :: forall n a. (KnownNat n)
         => Vector n a -> Proxy n
 length' = V.length'
 {-# inline length' #-}
+
+-- | /O(1)/ Reveal a 'KnownNat' instance for a vector's length, determined
+-- at runtime.
+knownLength :: forall n a r. Storable a
+            => Vector n a -> (KnownNat n => r) -> r
+knownLength = V.knownLength
+
+-- | /O(1)/ Reveal a 'KnownNat' instance and 'Proxy' for a vector's length,
+-- determined at runtime.
+knownLength' :: forall n a r. Storable a
+             => Vector n a -> (KnownNat n => Proxy n -> r) -> r
+knownLength' = V.knownLength'
 
 -- | /O(1)/ Safe indexing using a 'Finite'.
 index :: forall n a. (KnownNat n, Storable a)
