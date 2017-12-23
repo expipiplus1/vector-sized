@@ -296,7 +296,7 @@ instance {-# OVERLAPPING #-} (VG.Vector v m) => Monoid (Vector v 0 m) where
 -- | /O(1)/ Yield the length of the vector as an 'Int'. This is more like
 -- 'natVal' than 'Data.Vector.length', extracting the value from the 'KnownNat'
 -- instance and not looking at the vector itself.
-length :: forall v n a. (KnownNat n)
+length :: forall v n a. KnownNat n
        => Vector v n a -> Int
 length _ = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline length #-}
@@ -304,8 +304,8 @@ length _ = fromInteger (natVal (Proxy :: Proxy n))
 -- | /O(1)/ Yield the length of the vector as a 'Proxy'. This function
 -- doesn't /do/ anything; it merely allows the size parameter of the vector
 -- to be passed around as a 'Proxy'.
-length' :: forall v n a. (KnownNat n)
-        => Vector v n a -> Proxy n
+length' :: forall v n a.
+           Vector v n a -> Proxy n
 length' _ = Proxy
 {-# inline length' #-}
 

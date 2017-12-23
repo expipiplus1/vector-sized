@@ -261,8 +261,8 @@ length = V.length
 -- | /O(1)/ Yield the length of the vector as a 'Proxy'. This function
 -- doesn't /do/ anything; it merely allows the size parameter of the vector
 -- to be passed around as a 'Proxy'.
-length' :: forall n a. KnownNat n
-        => Vector n a -> Proxy n
+length' :: forall n a.
+           Vector n a -> Proxy n
 length' = V.length'
 {-# inline length' #-}
 
