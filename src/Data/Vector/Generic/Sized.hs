@@ -293,13 +293,17 @@ instance {-# OVERLAPPING #-} (VG.Vector v m) => Monoid (Vector v 0 m) where
   mempty = empty
   _empty1 `mappend` _empty2 = empty
 
--- | /O(1)/ Yield the length of the vector as an 'Int'.
+-- | /O(1)/ Yield the length of the vector as an 'Int'. This is more like
+-- 'natVal' than 'Data.Vector.length', extracting the value from the 'KnownNat'
+-- instance and not looking at the vector itself.
 length :: forall v n a. (KnownNat n)
        => Vector v n a -> Int
 length _ = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline length #-}
 
--- | /O(1)/ Yield the length of the vector as a 'Proxy'.
+-- | /O(1)/ Yield the length of the vector as a 'Proxy'. This function
+-- doesn't /do/ anything; it merely allows the size parameter of the vector
+-- to be passed around as a 'Proxy'.
 length' :: forall v n a. (KnownNat n)
         => Vector v n a -> Proxy n
 length' _ = Proxy
@@ -307,16 +311,20 @@ length' _ = Proxy
 
 -- | /O(1)/ Reveal a 'KnownNat' instance for a vector's length, determined
 -- at runtime.
-knownLength :: forall v n a r. (VG.Vector v a)
-            => Vector v n a -> (KnownNat n => r) -> r
-knownLength v f = knownLength' v $ const f
+knownLength :: forall v n a r. VG.Vector v a
+            => Vector v n a -- ^ a vector of some (potentially unknown) length
+            -> (KnownNat n => r) -- ^ a value that depends on knowing the vector's length
+            -> r -- ^ the value computed with the length
+knownLength v x = knownLength' v $ const x
 
 -- | /O(1)/ Reveal a 'KnownNat' instance and 'Proxy' for a vector's length,
 -- determined at runtime.
-knownLength' :: forall v n a r. (VG.Vector v a)
-             => Vector v n a -> (KnownNat n => Proxy n -> r) -> r
-knownLength' (Vector v) f = case someNatVal (fromIntegral (VG.length v)) of
-    Just (SomeNat (Proxy :: Proxy n')) -> case unsafeCoerce Refl :: n' :~: n of Refl -> f Proxy
+knownLength' :: forall v n a r. VG.Vector v a
+             => Vector v n a -- ^ a vector of some (potentially unknown) length
+             -> (KnownNat n => Proxy n -> r) -- ^ a value that depends on knowing the vector's length, which is given as a 'Proxy'
+             -> r -- ^ the value computed with the length
+knownLength' (Vector v) x = case someNatVal (fromIntegral (VG.length v)) of
+    Just (SomeNat (Proxy :: Proxy n')) -> case unsafeCoerce Refl :: n' :~: n of Refl -> x Proxy
     Nothing -> error "knownLength: VG.length returned negative length."
 
 -- | /O(1)/ Safe indexing using a 'Finite'.
