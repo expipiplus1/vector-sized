@@ -239,6 +239,7 @@ import Data.Proxy
 import Control.DeepSeq (NFData)
 import Foreign.Storable
 import Data.Data
+import Data.Functor.Classes
 import Foreign.Ptr (castPtr)
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
@@ -258,6 +259,7 @@ import Prelude hiding ( length, null,
 -- | A wrapper to tag vectors with a type level length.
 newtype Vector v (n :: Nat) a = Vector (v a)
   deriving ( Show, Eq, Ord, Functor, Foldable, Traversable, NFData, Generic
+           , Show1, Eq1, Ord1
            , Data, Typeable
            )
 
