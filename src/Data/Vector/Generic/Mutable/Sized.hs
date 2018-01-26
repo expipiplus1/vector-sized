@@ -72,6 +72,11 @@ module Data.Vector.Generic.Mutable.Sized
   , set
   , copy
   , move
+    -- * Conversions
+    -- ** Unsized Mutable Vectors
+  , toSized
+  , withSized
+  , fromSized
   ) where
 
 import qualified Data.Vector.Generic.Mutable as VGM
@@ -363,4 +368,55 @@ move :: (PrimMonad m, VGM.MVector v a)
      -> m ()
 move (MVector v) (MVector u) = VGM.unsafeMove v u
 {-# inline move #-}
+
+--   , toSized
+--   , withSized
+--   , fromSized
+--   , withMVectorUnsafe
+
+-- | Convert a 'Data.Vector.Generic.Mutable.MVector' into
+-- a 'Data.Vector.Generic.Mutable.Sized.MVector' if it has the correct
+-- size, otherwise return Nothing.
+--
+-- Note that this does no copying; the returned 'MVector' is a reference to
+-- the exact same vector in memory as the given one, and any modifications
+-- to it are also reflected in the given
+-- 'Data.Vector.Generic.Mutable.MVector'.
+toSized :: forall v n s a. (VGM.MVector v a, KnownNat n)
+        => v s a -> Maybe (MVector v n s a)
+toSized v
+  | n' == fromIntegral (VGM.length v) = Just (MVector v)
+  | otherwise                         = Nothing
+  where n' = natVal (Proxy :: Proxy n)
+{-# inline toSized #-}
+
+-- | Takes a 'Data.Vector.Generic.Mutable.MVector' and returns
+-- a continuation providing a 'Data.Vector.Generic.Mutable.Sized' with
+-- a size parameter @n@ that is determined at runtime based on the length
+-- of the input vector.
+--
+-- Essentially converts a 'Data.Vector.Generic.Mutable.MVector' into
+-- a 'Data.Vector.Generic.Sized.MVector' with the correct size parameter
+-- @n@.
+--
+-- Note that this does no copying; the returned 'MVector' is a reference to
+-- the exact same vector in memory as the given one, and any modifications
+-- to it are also reflected in the given
+-- 'Data.Vector.Generic.Mutable.MVector'.
+withSized :: forall v s a r. VGM.MVector v a
+          => v s a -> (forall n. KnownNat n => MVector v n s a -> r) -> r
+withSized v f = case someNatVal (fromIntegral (VGM.length v)) of
+    Just (SomeNat (Proxy :: Proxy n)) -> f (MVector v :: MVector v n s a)
+    Nothing -> error "withSized: VGM.length returned negative length."
+
+-- | Convert a 'Data.Vector.Generic.Mutable.Sized.MVector' into a
+-- 'Data.Vector.Generic.Mutable.MVector'.
+--
+-- Note that this does no copying; the returned
+-- 'Data.Vector.Generic.Mutable.MVector' is a reference to the exact same
+-- vector in memory as the given one, and any modifications to it are also
+-- reflected in the given 'MVector'.
+fromSized :: MVector v n s a -> v s a
+fromSized (MVector v) = v
+{-# inline fromSized #-}
 
