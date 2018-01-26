@@ -1,11 +1,6 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RankNTypes #-}
@@ -66,12 +61,18 @@ module Data.Vector.Generic.Mutable.Sized
   , swap
   , exchange
   , exchange'
+  , unsafeRead
+  , unsafeWrite
+  , unsafeModify
+  , unsafeSwap
+  , unsafeExchange
   -- * Modifying vectors
   , nextPermutation
   -- ** Filling and copying
   , set
   , copy
   , move
+  , unsafeCopy
     -- * Conversions
     -- ** Unsized Mutable Vectors
   , toSized
@@ -80,23 +81,13 @@ module Data.Vector.Generic.Mutable.Sized
   ) where
 
 import qualified Data.Vector.Generic.Mutable as VGM
-import GHC.Generics (Generic)
+import Data.Vector.Generic.Mutable.Sized.Internal
 import GHC.TypeLits
 import Data.Finite
 import Data.Proxy
-import Control.DeepSeq (NFData)
 import Control.Monad.Primitive
-import Data.Data
-import Data.Functor.Classes
 import Prelude hiding ( length, null, replicate, init,
                         tail, take, drop, splitAt, read )
-
--- | A wrapper to tag mutable vectors with a type level length.
-newtype MVector v (n :: Nat) s a = MVector (v s a)
-  deriving ( Show, Eq, Ord, Functor, Foldable, Traversable, NFData, Generic
-           , Show1, Eq1, Ord1
-           , Data, Typeable
-           )
 
 -- | /O(1)/ Yield the length of the mutable vector as an 'Int'.
 length :: forall v n s a. (KnownNat n)
@@ -294,6 +285,13 @@ read' :: forall v n k a m p. (KnownNat n, KnownNat k, PrimMonad m, VGM.MVector v
 read' (MVector v) p = v `VGM.unsafeRead` fromInteger (natVal p)
 {-# inline read' #-}
 
+-- | /O(1)/ Yield the element at a given 'Int' position without bounds
+-- checking.
+unsafeRead :: forall v n a m. (KnownNat n, PrimMonad m, VGM.MVector v a)
+           => MVector v n (PrimState m) a -> Int -> m a
+unsafeRead (MVector v) i = v `VGM.unsafeRead` i
+{-# inline unsafeRead #-}
+
 -- | /O(1)/ Replace the element at a given type-safe position using 'Finite'.
 write :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
       => MVector v n (PrimState m) a -> Finite n -> a -> m ()
@@ -305,6 +303,13 @@ write' :: forall v n k a m p. (KnownNat n, KnownNat k, PrimMonad m, VGM.MVector 
        => MVector v (n+k+1) (PrimState m) a -> p k -> a -> m ()
 write' (MVector v) p = VGM.unsafeWrite v (fromInteger (natVal p))
 {-# inline write' #-}
+
+-- | /O(1)/ Replace the element at a given 'Int' position without bounds
+-- checking.
+unsafeWrite :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
+      => MVector v n (PrimState m) a -> Int -> a -> m ()
+unsafeWrite (MVector v) i = VGM.unsafeWrite v i
+{-# inline unsafeWrite #-}
 
 -- | /O(1)/ Modify the element at a given type-safe position using 'Finite'.
 modify :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
@@ -318,11 +323,25 @@ modify' :: forall v n k a m p. (KnownNat n, KnownNat k, PrimMonad m, VGM.MVector
 modify' (MVector v) f p = VGM.unsafeModify v f (fromInteger (natVal p))
 {-# inline modify' #-}
 
+-- | /O(1)/ Modify the element at a given 'Int' position without bounds
+-- checking.
+unsafeModify :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
+       => MVector v n (PrimState m) a -> (a -> a) -> Int -> m ()
+unsafeModify (MVector v) f i = VGM.unsafeModify v f i
+{-# inline unsafeModify #-}
+
 -- | /O(1)/ Swap the elements at a given type-safe position using 'Finite's.
 swap :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
      => MVector v n (PrimState m) a -> Finite n -> Finite n -> m ()
 swap (MVector v) i j = VGM.unsafeSwap v (fromIntegral i) (fromIntegral j)
 {-# inline swap #-}
+
+-- | /O(1)/ Swap the elements at a given 'Int' position without bounds
+-- checking.
+unsafeSwap :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
+           => MVector v n (PrimState m) a -> Int -> Int -> m ()
+unsafeSwap (MVector v) i j = VGM.unsafeSwap v i j
+{-# inline unsafeSwap #-}
 
 -- | /O(1)/ Replace the element at a given type-safe position and return
 -- the old element, using 'Finite'.
@@ -337,6 +356,13 @@ exchange' :: forall v n k a m p. (KnownNat n, KnownNat k, PrimMonad m, VGM.MVect
           => MVector v (n+k+1) (PrimState m) a -> p k -> a -> m a
 exchange' (MVector v) p = VGM.unsafeExchange v (fromInteger (natVal p))
 {-# inline exchange' #-}
+
+-- | /O(1)/ Replace the element at a given 'Int' position and return
+-- the old element. No bounds checks are performed.
+unsafeExchange :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
+         => MVector v n (PrimState m) a -> Int -> a -> m a
+unsafeExchange (MVector v) i = VGM.unsafeExchange v i
+{-# inline unsafeExchange #-}
 
 -- | Compute the next (lexicographically) permutation of a given vector
 -- in-place.  Returns 'False' when the input is the last permutation.
@@ -355,8 +381,18 @@ copy :: (PrimMonad m, VGM.MVector v a)
      => MVector v n (PrimState m) a       -- ^ target
      -> MVector v n (PrimState m) a       -- ^ source
      -> m ()
-copy (MVector v) (MVector u) = VGM.copy v u
+copy (MVector v) (MVector u)
+    | v `VGM.overlaps` u = error "copy: overlapping vectors"
+    | otherwise          = VGM.unsafeCopy v u
 {-# inline copy #-}
+
+-- | Copy a vector. The two vectors may not overlap. This is not checked.
+unsafeCopy :: (PrimMonad m, VGM.MVector v a)
+           => MVector v n (PrimState m) a       -- ^ target
+           -> MVector v n (PrimState m) a       -- ^ source
+           -> m ()
+unsafeCopy (MVector v) (MVector u) = VGM.unsafeCopy v u
+{-# inline unsafeCopy #-}
 
 -- | Move the contents of a vector.  If the two vectors do not overlap,
 -- this is equivalent to 'copy'.  Otherwise, the copying is performed as if
@@ -368,11 +404,6 @@ move :: (PrimMonad m, VGM.MVector v a)
      -> m ()
 move (MVector v) (MVector u) = VGM.unsafeMove v u
 {-# inline move #-}
-
---   , toSized
---   , withSized
---   , fromSized
---   , withMVectorUnsafe
 
 -- | Convert a 'Data.Vector.Generic.Mutable.MVector' into
 -- a 'Data.Vector.Generic.Mutable.Sized.MVector' if it has the correct
