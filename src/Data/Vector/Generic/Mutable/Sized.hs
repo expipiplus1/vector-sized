@@ -10,12 +10,26 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RankNTypes #-}
 
+{-|
+This module reexports the functionality in 'Data.Vector.Generic.Mutable'
+which maps well to explicity sized vectors.
+
+Functions returning a vector determine the size from the type context
+unless they have a @'@ suffix in which case they take an explicit 'Proxy'
+argument.
+
+Functions where the resultant vector size is not know until compile time
+are not exported.
+-}
 
 module Data.Vector.Generic.Mutable.Sized
   ( MVector
+   -- * Accessors
+   -- ** Length information
   , length
   , length'
   , null
+   -- ** Extracting subvectors
   , slice
   , slice'
   , init
@@ -26,6 +40,10 @@ module Data.Vector.Generic.Mutable.Sized
   , drop'
   , splitAt
   , splitAt'
+  -- ** Overlaps
+  , overlaps
+  -- * Construction
+  -- ** Initialisation
   , new
   , unsafeNew
   , replicate
@@ -33,9 +51,12 @@ module Data.Vector.Generic.Mutable.Sized
   , replicateM
   , replicateM'
   , clone
+  -- ** Growing
   , grow
   , growFront
+  -- ** Restricting memory usage
   , clear
+  -- * Accessing individual elements
   , read
   , read'
   , write
@@ -45,26 +66,23 @@ module Data.Vector.Generic.Mutable.Sized
   , swap
   , exchange
   , exchange'
+  -- * Modifying vectors
   , nextPermutation
+  -- ** Filling and copying
   , set
   , copy
   , move
   ) where
 
-import qualified Data.Vector.Generic as VG
 import qualified Data.Vector.Generic.Mutable as VGM
-import qualified Data.Vector as Boxed
 import GHC.Generics (Generic)
 import GHC.TypeLits
 import Data.Finite
-import Data.Finite.Internal
 import Data.Proxy
 import Control.DeepSeq (NFData)
 import Control.Monad.Primitive
-import Foreign.Storable
 import Data.Data
 import Data.Functor.Classes
-import Foreign.Ptr (castPtr)
 import Prelude hiding ( length, null, replicate, init,
                         tail, take, drop, splitAt, read )
 
@@ -95,9 +113,9 @@ null = (== 0) . length
 
 -- | /O(1)/ Yield a slice of the mutable vector without copying it with an
 -- inferred length argument.
-slice :: forall v i n m s a p. (KnownNat i, KnownNat n, KnownNat m, VGM.MVector v a)
+slice :: forall v i n k s a p. (KnownNat i, KnownNat n, KnownNat k, VGM.MVector v a)
       => p i -- ^ starting index
-      -> MVector v (i+n+m) s a
+      -> MVector v (i+n+k) s a
       -> MVector v n s a
 slice start (MVector v) = MVector (VGM.unsafeSlice i n v)
   where i = fromInteger (natVal start)
@@ -106,11 +124,11 @@ slice start (MVector v) = MVector (VGM.unsafeSlice i n v)
 
 -- | /O(1)/ Yield a slice of the mutable vector without copying it with an
 -- explicit length argument.
-slice' :: forall v i n m s a p
-        . (KnownNat i, KnownNat n, KnownNat m, VGM.MVector v a)
+slice' :: forall v i n k s a p
+        . (KnownNat i, KnownNat n, KnownNat k, VGM.MVector v a)
        => p i -- ^ starting index
        -> p n -- ^ length
-       -> MVector v (i+n+m) s a
+       -> MVector v (i+n+k) s a
        -> MVector v n s a
 slice' start _ = slice start
 {-# inline slice' #-}
@@ -132,8 +150,8 @@ tail (MVector v) = MVector (VGM.unsafeTail v)
 -- | /O(1)/ Yield the first n elements. The resultant vector always contains
 -- this many elements. The length of the resultant vector is inferred from the
 -- type.
-take :: forall v n m s a. (KnownNat n, KnownNat m, VGM.MVector v a)
-     => MVector v (n+m) s a -> MVector v n s a
+take :: forall v n k s a. (KnownNat n, KnownNat k, VGM.MVector v a)
+     => MVector v (n+k) s a -> MVector v n s a
 take (MVector v) = MVector (VGM.unsafeTake i v)
   where i = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline take #-}
@@ -141,16 +159,16 @@ take (MVector v) = MVector (VGM.unsafeTake i v)
 -- | /O(1)/ Yield the first n elements. The resultant vector always contains
 -- this many elements. The length of the resultant vector is given explicitly
 -- as a 'Proxy' argument.
-take' :: forall v n m s a p. (KnownNat n, KnownNat m, VGM.MVector v a)
-      => p n -> MVector v (n+m) s a -> MVector v n s a
+take' :: forall v n k s a p. (KnownNat n, KnownNat k, VGM.MVector v a)
+      => p n -> MVector v (n+k) s a -> MVector v n s a
 take' _ = take
 {-# inline take' #-}
 
 -- | /O(1)/ Yield all but the the first n elements. The given vector must
 -- contain at least this many elements The length of the resultant vector is
 -- inferred from the type.
-drop :: forall v n m s a. (KnownNat n, KnownNat m, VGM.MVector v a)
-     => MVector v (n+m) s a -> MVector v m s a
+drop :: forall v n k s a. (KnownNat n, KnownNat k, VGM.MVector v a)
+     => MVector v (n+k) s a -> MVector v k s a
 drop (MVector v) = MVector (VGM.unsafeDrop i v)
   where i = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline drop #-}
@@ -158,10 +176,20 @@ drop (MVector v) = MVector (VGM.unsafeDrop i v)
 -- | /O(1)/ Yield all but the the first n elements. The given vector must
 -- contain at least this many elements The length of the resultant vector is
 -- givel explicitly as a 'Proxy' argument.
-drop' :: forall v n m s a p. (KnownNat n, KnownNat m, VGM.MVector v a)
-      => p n -> MVector v (n+m) s a -> MVector v m s a
+drop' :: forall v n k s a p. (KnownNat n, KnownNat k, VGM.MVector v a)
+      => p n -> MVector v (n+k) s a -> MVector v k s a
 drop' _ = drop
 {-# inline drop' #-}
+
+-- | /O(1)/ Yield all but the the first n elements. The given vector must
+-- contain at least this many elements The length of the resultant vector is
+-- inferred from the type.
+overlaps :: forall v n k s a. (KnownNat n, KnownNat k, VGM.MVector v a)
+         => MVector v n s a
+         -> MVector v k s a
+         -> Bool
+overlaps (MVector v) (MVector u) = VGM.overlaps v u
+{-# inline overlaps #-}
 
 -- | /O(1)/ Yield the first n elements paired with the remainder without copying.
 -- The lengths of the resultant vector are inferred from the type.
