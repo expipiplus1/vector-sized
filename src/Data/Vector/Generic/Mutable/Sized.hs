@@ -11,7 +11,44 @@
 {-# LANGUAGE RankNTypes #-}
 
 
-module Data.Vector.Generic.Mutable.Sized (
+module Data.Vector.Generic.Mutable.Sized
+  ( MVector
+  , length
+  , length'
+  , null
+  , slice
+  , slice'
+  , init
+  , tail
+  , take
+  , take'
+  , drop
+  , drop'
+  , splitAt
+  , splitAt'
+  , new
+  , unsafeNew
+  , replicate
+  , replicate'
+  , replicateM
+  , replicateM'
+  , clone
+  , grow
+  , growFront
+  , clear
+  , read
+  , read'
+  , write
+  , write'
+  , modify
+  , modify'
+  , swap
+  , exchange
+  , exchange'
+  , nextPermutation
+  , set
+  , copy
+  , move
   ) where
 
 import qualified Data.Vector.Generic as VG
@@ -28,20 +65,8 @@ import Foreign.Storable
 import Data.Data
 import Data.Functor.Classes
 import Foreign.Ptr (castPtr)
-import Prelude hiding ( length, null,
-                        replicate, (++), concat,
-                        head, last,
-                        init, tail, take, drop, splitAt, reverse,
-                        map, concat, concatMap,
-                        zipWith, zipWith3, zip, zip3, unzip, unzip3,
-                        filter, takeWhile, dropWhile, span, break,
-                        elem, notElem,
-                        foldl, foldl1, foldr, foldr1,
-                        all, any, and, or, sum, product, maximum, minimum,
-                        scanl, scanl1, scanr, scanr1,
-                        enumFromTo, enumFromThenTo,
-                        mapM, mapM_, sequence, sequence_,
-                        showsPrec )
+import Prelude hiding ( length, null, replicate, init,
+                        tail, take, drop, splitAt, read )
 
 -- | A wrapper to tag mutable vectors with a type level length.
 newtype MVector v (n :: Nat) s a = MVector (v s a)
@@ -198,7 +223,116 @@ replicateM' _ = replicateM
 {-# inline replicateM' #-}
 
 -- | Create a copy of a mutable vector.
-clone :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
+clone :: forall v n m a. (PrimMonad m, VGM.MVector v a)
       => MVector v n (PrimState m) a -> m (MVector v n (PrimState m) a)
 clone (MVector v) = MVector <$> VGM.clone v
 {-# inline clone #-}
+
+-- | Grow a mutable vector by an amount given explicitly as a 'Proxy'
+-- argument.
+grow :: forall v n k m a p. (KnownNat k, PrimMonad m, VGM.MVector v a)
+      => p k -> MVector v n (PrimState m) a -> m (MVector v (n + k) (PrimState m) a)
+grow _ (MVector v) = MVector <$> VGM.unsafeGrow v (fromIntegral (natVal (Proxy :: Proxy k)))
+{-# inline grow #-}
+
+-- | Grow a mutable vector (from the front) by an amount given explicitly
+-- as a 'Proxy' argument.
+growFront :: forall v n k m a p. (KnownNat k, PrimMonad m, VGM.MVector v a)
+      => p k -> MVector v n (PrimState m) a -> m (MVector v (n + k) (PrimState m) a)
+growFront _ (MVector v) = MVector <$>
+    VGM.unsafeGrowFront v (fromIntegral (natVal (Proxy :: Proxy k)))
+{-# inline growFront #-}
+
+-- | Reset all elements of the vector to some undefined value, clearing all
+-- references to external objects.
+clear :: (PrimMonad m, VGM.MVector v a) => MVector v n (PrimState m) a -> m ()
+clear (MVector v) = VGM.clear v
+{-# inline clear #-}
+
+-- | /O(1)/ Yield the element at a given type-safe position using 'Finite'.
+read :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
+      => MVector v n (PrimState m) a -> Finite n -> m a
+read (MVector v) i = v `VGM.unsafeRead` fromIntegral i
+{-# inline read #-}
+
+-- | /O(1)/ Yield the element at a given type-safe position using 'Proxy'.
+read' :: forall v n k a m p. (KnownNat n, KnownNat k, PrimMonad m, VGM.MVector v a)
+       => MVector v (n+k+1) (PrimState m) a -> p k -> m a
+read' (MVector v) p = v `VGM.unsafeRead` fromInteger (natVal p)
+{-# inline read' #-}
+
+-- | /O(1)/ Replace the element at a given type-safe position using 'Finite'.
+write :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
+      => MVector v n (PrimState m) a -> Finite n -> a -> m ()
+write (MVector v) i = VGM.unsafeWrite v (fromIntegral i)
+{-# inline write #-}
+
+-- | /O(1)/ Replace the element at a given type-safe position using 'Proxy'.
+write' :: forall v n k a m p. (KnownNat n, KnownNat k, PrimMonad m, VGM.MVector v a)
+       => MVector v (n+k+1) (PrimState m) a -> p k -> a -> m ()
+write' (MVector v) p = VGM.unsafeWrite v (fromInteger (natVal p))
+{-# inline write' #-}
+
+-- | /O(1)/ Modify the element at a given type-safe position using 'Finite'.
+modify :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
+       => MVector v n (PrimState m) a -> (a -> a) -> Finite n -> m ()
+modify (MVector v) f i = VGM.unsafeModify v f (fromIntegral i)
+{-# inline modify #-}
+
+-- | /O(1)/ Modify the element at a given type-safe position using 'Proxy'.
+modify' :: forall v n k a m p. (KnownNat n, KnownNat k, PrimMonad m, VGM.MVector v a)
+        => MVector v (n+k+1) (PrimState m) a -> (a -> a) -> p k -> m ()
+modify' (MVector v) f p = VGM.unsafeModify v f (fromInteger (natVal p))
+{-# inline modify' #-}
+
+-- | /O(1)/ Swap the elements at a given type-safe position using 'Finite's.
+swap :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
+     => MVector v n (PrimState m) a -> Finite n -> Finite n -> m ()
+swap (MVector v) i j = VGM.unsafeSwap v (fromIntegral i) (fromIntegral j)
+{-# inline swap #-}
+
+-- | /O(1)/ Replace the element at a given type-safe position and return
+-- the old element, using 'Finite'.
+exchange :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
+         => MVector v n (PrimState m) a -> Finite n -> a -> m a
+exchange (MVector v) i = VGM.unsafeExchange v (fromIntegral i)
+{-# inline exchange #-}
+
+-- | /O(1)/ Replace the element at a given type-safe position and return
+-- the old element, using 'Finite'.
+exchange' :: forall v n k a m p. (KnownNat n, KnownNat k, PrimMonad m, VGM.MVector v a)
+          => MVector v (n+k+1) (PrimState m) a -> p k -> a -> m a
+exchange' (MVector v) p = VGM.unsafeExchange v (fromInteger (natVal p))
+{-# inline exchange' #-}
+
+-- | Compute the next (lexicographically) permutation of a given vector
+-- in-place.  Returns 'False' when the input is the last permutation.
+nextPermutation :: forall v n e m. (KnownNat n, Ord e, PrimMonad m, VGM.MVector v e)
+                => MVector v n (PrimState m) e -> m Bool
+nextPermutation (MVector v) = VGM.nextPermutation v
+{-# inline nextPermutation #-}
+
+-- | Set all elements of the vector to the given value.
+set :: (PrimMonad m, VGM.MVector v a) => MVector v n (PrimState m) a -> a -> m ()
+set (MVector v) = VGM.set v
+{-# inline set #-}
+
+-- | Copy a vector. The two vectors may not overlap.
+copy :: (PrimMonad m, VGM.MVector v a)
+     => MVector v n (PrimState m) a       -- ^ target
+     -> MVector v n (PrimState m) a       -- ^ source
+     -> m ()
+copy (MVector v) (MVector u) = VGM.copy v u
+{-# inline copy #-}
+
+-- | Move the contents of a vector.  If the two vectors do not overlap,
+-- this is equivalent to 'copy'.  Otherwise, the copying is performed as if
+-- the source vector were copied to a temporary vector and then the
+-- temporary vector was copied to the target vector.
+move :: (PrimMonad m, VGM.MVector v a)
+     => MVector v n (PrimState m) a       -- ^ target
+     -> MVector v n (PrimState m) a       -- ^ source
+     -> m ()
+move (MVector v) (MVector u) = VGM.unsafeMove v u
+{-# inline move #-}
+
