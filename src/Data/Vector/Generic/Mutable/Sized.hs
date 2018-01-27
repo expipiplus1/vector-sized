@@ -424,9 +424,9 @@ toSized v
 {-# inline toSized #-}
 
 -- | Takes a 'Data.Vector.Generic.Mutable.MVector' and returns
--- a continuation providing a 'Data.Vector.Generic.Mutable.Sized' with
--- a size parameter @n@ that is determined at runtime based on the length
--- of the input vector.
+-- a continuation providing a 'Data.Vector.Generic.Mutable.Sized.MVector'
+-- with a size parameter @n@ that is determined at runtime based on the
+-- length of the input vector.
 --
 -- Essentially converts a 'Data.Vector.Generic.Mutable.MVector' into
 -- a 'Data.Vector.Generic.Sized.MVector' with the correct size parameter
