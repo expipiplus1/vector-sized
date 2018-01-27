@@ -7,6 +7,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RankNTypes #-}
 
@@ -271,6 +272,8 @@ newtype Vector v (n :: Nat) a = Vector (v a)
            , Show1, Eq1, Ord1
            , Data, Typeable
            )
+
+type instance VG.Mutable (Vector v n) = MVector (VG.Mutable v) n
 
 -- | Any sized vector containing storable elements is itself storable.
 instance (KnownNat n, Storable a, VG.Vector v a)

@@ -81,6 +81,8 @@ module Data.Vector.Generic.Mutable.Sized
   ) where
 
 import qualified Data.Vector.Generic.Mutable as VGM
+import qualified Data.Vector.Storable.Mutable as VSM
+import qualified Data.Vector.Storable as VS
 import Data.Vector.Generic.Mutable.Sized.Internal
 import GHC.TypeLits
 import Data.Finite
