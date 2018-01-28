@@ -24,6 +24,7 @@ not exported.
 
 module Data.Vector.Generic.Sized
  ( Vector
+  , MVector
    -- * Accessors
    -- ** Length information
   , length

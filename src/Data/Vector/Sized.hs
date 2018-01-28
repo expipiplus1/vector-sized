@@ -20,7 +20,7 @@ not exported.
 
 module Data.Vector.Sized
  ( Vector
- , VM.MVector
+  , VM.MVector
    -- * Accessors
    -- ** Length information
   , length

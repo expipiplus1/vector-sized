@@ -92,6 +92,10 @@ import Prelude hiding ( length, null, replicate, init,
 -- 'Data.Vector.Storable.Mutable'
 type MVector = VGM.MVector VM.MVector
 
+-- * Accessors
+
+-- ** Length information
+
 -- | /O(1)/ Yield the length of the mutable vector as an 'Int'.
 length :: forall n s a. (KnownNat n)
        => MVector n s a -> Int
@@ -109,6 +113,8 @@ null :: forall n s a. (KnownNat n)
        => MVector n s a -> Bool
 null = VGM.null
 {-# inline null #-}
+
+-- ** Extracting subvectors
 
 -- | /O(1)/ Yield a slice of the mutable vector without copying it with an
 -- inferred length argument.
@@ -176,16 +182,6 @@ drop' :: forall n k s a p. (KnownNat n, KnownNat k)
 drop' = VGM.drop'
 {-# inline drop' #-}
 
--- | /O(1)/ Yield all but the the first n elements. The given vector must
--- contain at least this many elements The length of the resultant vector is
--- inferred from the type.
-overlaps :: forall n k s a. (KnownNat n, KnownNat k)
-         => MVector n s a
-         -> MVector k s a
-         -> Bool
-overlaps = VGM.overlaps
-{-# inline overlaps #-}
-
 -- | /O(1)/ Yield the first n elements paired with the remainder without copying.
 -- The lengths of the resultant vector are inferred from the type.
 splitAt :: forall n m s a. (KnownNat n, KnownNat m)
@@ -200,6 +196,22 @@ splitAt' :: forall n m s a p. (KnownNat n, KnownNat m)
          => p n -> MVector (n+m) s a -> (MVector n s a, MVector m s a)
 splitAt' = VGM.splitAt'
 {-# inline splitAt' #-}
+
+-- ** Overlaps
+
+-- | /O(1)/ Yield all but the the first n elements. The given vector must
+-- contain at least this many elements The length of the resultant vector is
+-- inferred from the type.
+overlaps :: forall n k s a. (KnownNat n, KnownNat k)
+         => MVector n s a
+         -> MVector k s a
+         -> Bool
+overlaps = VGM.overlaps
+{-# inline overlaps #-}
+
+-- * Construction
+
+-- ** Initialisation
 
 -- | Create a mutable vector where the length is inferred from the type.
 new :: forall n m a. (KnownNat n, PrimMonad m)
@@ -249,6 +261,8 @@ clone :: forall n m a. PrimMonad m
 clone = VGM.clone
 {-# inline clone #-}
 
+-- ** Growing
+
 -- | Grow a mutable vector by an amount given explicitly as a 'Proxy'
 -- argument.
 grow :: forall n k m a p. (KnownNat k, PrimMonad m)
@@ -263,11 +277,15 @@ growFront :: forall n k m a p. (KnownNat k, PrimMonad m)
 growFront = VGM.growFront
 {-# inline growFront #-}
 
+-- ** Restricting memory usage
+
 -- | Reset all elements of the vector to some undefined value, clearing all
 -- references to external objects.
 clear :: PrimMonad m => MVector n (PrimState m) a -> m ()
 clear = VGM.clear
 {-# inline clear #-}
+
+-- * Accessing individual elements
 
 -- | /O(1)/ Yield the element at a given type-safe position using 'Finite'.
 read :: forall n m a. (KnownNat n, PrimMonad m)
@@ -360,12 +378,16 @@ unsafeExchange :: forall n m a. (KnownNat n, PrimMonad m)
 unsafeExchange = VGM.unsafeExchange
 {-# inline unsafeExchange #-}
 
+-- * Modifying vectors
+
 -- | Compute the next (lexicographically) permutation of a given vector
 -- in-place.  Returns 'False' when the input is the last permutation.
 nextPermutation :: forall n e m. (KnownNat n, Ord e, PrimMonad m)
                 => MVector n (PrimState m) e -> m Bool
 nextPermutation = VGM.nextPermutation
 {-# inline nextPermutation #-}
+
+-- ** Filling and copying
 
 -- | Set all elements of the vector to the given value.
 set :: PrimMonad m => MVector n (PrimState m) a -> a -> m ()
@@ -398,6 +420,10 @@ move :: PrimMonad m
      -> m ()
 move = VGM.move
 {-# inline move #-}
+
+-- * Conversions
+
+-- ** Unsized Mutable Vectors
 
 -- | Convert a 'Data.Vector.Generic.Mutable.MVector' into
 -- a 'Data.Vector.Generic.Mutable.Sized.MVector' if it has the correct
