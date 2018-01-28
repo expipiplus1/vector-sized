@@ -1620,8 +1620,8 @@ freeze (MVector v) = Vector <$> VG.freeze v
 -- | /O(1)/ Unsafely convert a mutable vector to an immutable one withouy
 -- copying. The mutable vector may not be used after this operation.
 unsafeFreeze :: (PrimMonad m, VG.Vector v a)
-       => SVGM.MVector (VG.Mutable v) n (PrimState m) a
-       -> m (Vector v n a)
+             => SVGM.MVector (VG.Mutable v) n (PrimState m) a
+             -> m (Vector v n a)
 unsafeFreeze (MVector v) = Vector <$> VG.unsafeFreeze v
 
 -- | /O(n)/ Yield a mutable copy of the immutable vector.
@@ -1633,8 +1633,8 @@ thaw (Vector v) = MVector <$> VG.thaw v
 -- | /O(n)/ Unsafely convert an immutable vector to a mutable one without
 -- copying. The immutable vector may not be used after this operation.
 unsafeThaw :: (PrimMonad m, VG.Vector v a)
-     => Vector v n a
-     -> m (SVGM.MVector (VG.Mutable v) n (PrimState m) a)
+           => Vector v n a
+           -> m (SVGM.MVector (VG.Mutable v) n (PrimState m) a)
 unsafeThaw (Vector v) = MVector <$> VG.unsafeThaw v
 
 -- | /O(n)/ Copy an immutable vector into a mutable one.

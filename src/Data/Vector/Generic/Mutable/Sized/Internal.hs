@@ -4,8 +4,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
 
-module Data.Vector.Generic.Mutable.Sized.Internal (
-    MVector(..)
+module Data.Vector.Generic.Mutable.Sized.Internal
+ ( MVector(..)
   ) where
 
 import GHC.Generics (Generic)

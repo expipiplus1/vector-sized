@@ -18,7 +18,7 @@ are not exported.
 -}
 
 module Data.Vector.Generic.Mutable.Sized
-  ( MVector
+ ( MVector
    -- * Accessors
    -- ** Length information
   , length

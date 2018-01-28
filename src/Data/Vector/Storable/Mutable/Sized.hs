@@ -15,7 +15,7 @@ not exported.
 -}
 
 module Data.Vector.Storable.Mutable.Sized
-  ( MVector
+ ( MVector
    -- * Accessors
    -- ** Length information
   , length
