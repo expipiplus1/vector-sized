@@ -81,8 +81,6 @@ module Data.Vector.Generic.Mutable.Sized
   ) where
 
 import qualified Data.Vector.Generic.Mutable as VGM
-import qualified Data.Vector.Storable.Mutable as VSM
-import qualified Data.Vector.Storable as VS
 import Data.Vector.Generic.Mutable.Sized.Internal
 import GHC.TypeLits
 import Data.Finite
@@ -328,7 +326,7 @@ write' (MVector v) p = VGM.unsafeWrite v (fromInteger (natVal p))
 -- checking.
 unsafeWrite :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
       => MVector v n (PrimState m) a -> Int -> a -> m ()
-unsafeWrite (MVector v) i = VGM.unsafeWrite v i
+unsafeWrite (MVector v) = VGM.unsafeWrite v
 {-# inline unsafeWrite #-}
 
 -- | /O(1)/ Modify the element at a given type-safe position using 'Finite'.
@@ -347,7 +345,7 @@ modify' (MVector v) f p = VGM.unsafeModify v f (fromInteger (natVal p))
 -- checking.
 unsafeModify :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
        => MVector v n (PrimState m) a -> (a -> a) -> Int -> m ()
-unsafeModify (MVector v) f i = VGM.unsafeModify v f i
+unsafeModify (MVector v) = VGM.unsafeModify v
 {-# inline unsafeModify #-}
 
 -- | /O(1)/ Swap the elements at a given type-safe position using 'Finite's.
@@ -360,7 +358,7 @@ swap (MVector v) i j = VGM.unsafeSwap v (fromIntegral i) (fromIntegral j)
 -- checking.
 unsafeSwap :: forall v n m a. (KnownNat n, PrimMonad m, VGM.MVector v a)
            => MVector v n (PrimState m) a -> Int -> Int -> m ()
-unsafeSwap (MVector v) i j = VGM.unsafeSwap v i j
+unsafeSwap (MVector v) = VGM.unsafeSwap v
 {-# inline unsafeSwap #-}
 
 -- | /O(1)/ Replace the element at a given type-safe position and return

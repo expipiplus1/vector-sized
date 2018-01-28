@@ -78,7 +78,6 @@ module Data.Vector.Mutable.Sized
   ) where
 
 import qualified Data.Vector.Generic.Mutable.Sized as VGM
-import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as VM
 import GHC.TypeLits
 import Data.Finite
@@ -433,7 +432,7 @@ move = VGM.move
 -- the exact same vector in memory as the given one, and any modifications
 -- to it are also reflected in the given
 -- 'Data.Vector.Generic.Mutable.MVector'.
-toSized :: forall v n a s. KnownNat n
+toSized :: forall n a s. KnownNat n
         => VM.MVector s a -> Maybe (MVector n s a)
 toSized = VGM.toSized
 {-# inline toSized #-}
