@@ -23,7 +23,17 @@ library
                      , vector >= 0.11 && < 0.13
                      , deepseq >= 1.1 && < 1.5
                      , finite-typelits >= 0.1
+                     , indexed-list-literals >= 0.1.0.1
   default-language:    Haskell2010
+  default-extensions:  DataKinds
+                     , GeneralizedNewtypeDeriving
+                     , FlexibleContexts
+                     , FlexibleInstances
+                     , GeneralizedNewtypeDeriving
+                     , KindSignatures
+                     , RankNTypes
+                     , ScopedTypeVariables
+                     , TypeOperators
 
 source-repository head
   type:     git
