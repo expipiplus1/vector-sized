@@ -821,7 +821,7 @@ imap = V.imap
 
 -- | /O(n*m)/ Map a function over a vector and concatenate the results. The
 -- function is required to always return the same length vector.
-concatMap :: (a -> Vector m b) -> Vector n a -> Vector (n * m) b
+concatMap :: (a -> Vector m b) -> Vector n a -> Vector (n*m) b
 concatMap = V.concatMap
 {-# inline concatMap #-}
 
