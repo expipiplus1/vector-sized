@@ -50,6 +50,7 @@ module Data.Vector.Storable.Sized
     -- ** Initialization
   , empty
   , singleton
+  , vector
   , replicate
   , replicate'
   , generate
@@ -225,6 +226,7 @@ module Data.Vector.Storable.Sized
 
 import qualified Data.Vector.Generic.Sized as V
 import qualified Data.Vector.Storable as VS
+import Data.IndexedListLiterals (IndexedListLiterals)
 import GHC.TypeLits
 import Data.Finite
 import Data.Proxy
@@ -443,6 +445,15 @@ singleton :: forall a. (Storable a)
            => a -> Vector 1 a
 singleton = V.singleton
 {-# inline singleton #-}
+
+-- | /O(n)/ Construct a vector in a type safe manner
+--   vector (1,2) :: Vector 2 Int
+--   vector ("hey", "what's", "going", "on") :: Vector 4 String
+vector :: forall a input length.
+          (Storable a, IndexedListLiterals input length a, KnownNat length)
+       => input -> Vector length a
+vector = V.vector
+{-# inline vector #-}
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.

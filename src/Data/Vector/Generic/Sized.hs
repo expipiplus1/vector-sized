@@ -1,14 +1,7 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeApplications #-}
 
 {-|
 This module reexports the functionality in 'Data.Vector.Generic' which maps well
@@ -54,6 +47,7 @@ module Data.Vector.Generic.Sized
     -- ** Initialization
   , empty
   , singleton
+  , vector
   , replicate
   , replicate'
   , generate
@@ -241,6 +235,8 @@ import Foreign.Storable
 import Data.Data
 import Data.Functor.Classes
 import Foreign.Ptr (castPtr)
+import Data.IndexedListLiterals hiding (toList)
+import qualified Data.IndexedListLiterals as ILL
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
                         head, last,
@@ -336,19 +332,19 @@ last (Vector v) = VG.unsafeLast v
 -- | Lens to access (/O(1)/) and update (/O(n)/) an arbitrary element by its index.
 ix :: forall v n a f. (KnownNat n, VG.Vector v a, Functor f)
    => Finite n -> (a -> f a) -> Vector v n a -> f (Vector v n a)
-ix n f vector = (\x -> vector // [(fromInteger $ getFinite n, x)]) <$> f (index vector n)
+ix n f vec = (\x -> vec // [(fromInteger $ getFinite n, x)]) <$> f (index vec n)
 {-# inline ix #-}
 
 -- | Lens to access (/O(1)/) and update (/O(n)/) the first element of a non-empty vector.
 _head :: forall v n a f. (KnownNat n, VG.Vector v a, Functor f)
       => (a -> f a) -> Vector v (1+n) a -> f (Vector v (1+n) a)
-_head f vector = (\x -> cons x $ tail vector) <$> f (head vector)
+_head f vec = (\x -> cons x $ tail vec) <$> f (head vec)
 {-# inline _head #-}
 
 -- | Lens to access (/O(1)/) and update (/O(n)/) the last element of a non-empty vector.
 _last :: forall v n a f. (KnownNat n, VG.Vector v a, Functor f)
        => (a -> f a) -> Vector v (n+1) a -> f (Vector v (n+1) a)
-_last f vector = (\x -> snoc (init vector) x) <$> f (last vector)
+_last f vec = (\x -> snoc (init vec) x) <$> f (last vec)
 {-# inline _last #-}
 
 -- | /O(1)/ Safe indexing in a monad. See the documentation for 'VG.indexM' for
@@ -493,6 +489,14 @@ singleton :: forall v a. (VG.Vector v a)
            => a -> Vector v 1 a
 singleton a = Vector (VG.singleton a)
 {-# inline singleton #-}
+
+-- | /O(n)/ Construct a vector in a type safe manner
+--   vector (1,2) :: Vector v 2 Int
+--   vector ("hey", "what's", "going", "on") :: Vector v 4 String
+vector :: forall v a input length.
+          (VG.Vector v a, IndexedListLiterals input length a, KnownNat length)
+       => input -> Vector v length a
+vector = Vector . VG.fromListN (fromIntegral $ natVal $ Proxy @length) . ILL.toList
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.

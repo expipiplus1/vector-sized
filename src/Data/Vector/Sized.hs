@@ -1,12 +1,3 @@
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE KindSignatures             #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TypeOperators              #-}
-
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Sized'
  specialized to 'Data.Vector'.
@@ -51,6 +42,7 @@ module Data.Vector.Sized
     -- ** Initialization
   , empty
   , singleton
+  , vector
   , replicate
   , replicate'
   , generate
@@ -229,6 +221,7 @@ import qualified Data.Vector as VU
 import GHC.TypeLits
 import Data.Finite
 import Data.Proxy
+import Data.IndexedListLiterals hiding (toList)
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
                         head, last,
@@ -436,6 +429,14 @@ empty = V.empty
 singleton :: forall a. a -> Vector 1 a
 singleton = V.singleton
 {-# inline singleton #-}
+
+-- | /O(n)/ Construct a vector in a type safe manner
+--   vector (1,2) :: Vector 2 Int
+--   vector ("hey", "what's", "going", "on") :: Vector 4 String
+vector :: forall input length ty.
+          (IndexedListLiterals input length ty, KnownNat length)
+       => input -> Vector length ty
+vector = V.vector
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.
@@ -820,7 +821,7 @@ imap = V.imap
 
 -- | /O(n*m)/ Map a function over a vector and concatenate the results. The
 -- function is required to always return the same length vector.
-concatMap :: (a -> Vector m b) -> Vector n a -> Vector (n*m) b
+concatMap :: (a -> Vector m b) -> Vector n a -> Vector (n * m) b
 concatMap = V.concatMap
 {-# inline concatMap #-}
 
@@ -1481,4 +1482,3 @@ fromSized = V.fromSized
 withVectorUnsafe :: (VU.Vector a -> VU.Vector b) -> Vector n a -> Vector n b
 withVectorUnsafe = V.withVectorUnsafe
 {-# inline withVectorUnsafe #-}
-
