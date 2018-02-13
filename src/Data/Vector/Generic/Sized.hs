@@ -279,6 +279,11 @@ instance KnownNat n => Applicative (Vector Boxed.Vector n) where
   pure = replicate
   (<*>) = zipWith ($)
 
+instance (Semigroup m, VG.Vector v m, KnownNat n) => Semigroup (Vector v n m) where
+  (<>) = zipWith (<>)
+instance {-# OVERLAPPING #-} (VG.Vector v m) => Semigroup (Vector v 0 m) where
+  _empty1 <> _empty2 = empty
+
 -- | The 'Monoid' instance for sized vectors does not have the same
 -- behaviour as the 'Monoid' instance for the unsized vectors found in the
 -- 'vectors' package. Its @mempty@ is a vector of @mempty@s and its @mappend@
