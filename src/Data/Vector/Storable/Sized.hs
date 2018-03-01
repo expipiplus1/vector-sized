@@ -1,11 +1,3 @@
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE FlexibleInstances   #-}
-{-# LANGUAGE KindSignatures      #-}
-{-# LANGUAGE RankNTypes          #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators       #-}
-
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Sized'
  specialized to 'Data.Vector.Storable'
@@ -50,7 +42,7 @@ module Data.Vector.Storable.Sized
     -- ** Initialization
   , empty
   , singleton
-  , vector
+  , fromTuple
   , replicate
   , replicate'
   , generate
@@ -447,13 +439,13 @@ singleton = V.singleton
 {-# inline singleton #-}
 
 -- | /O(n)/ Construct a vector in a type safe manner
---   vector (1,2) :: Vector 2 Int
---   vector ("hey", "what's", "going", "on") :: Vector 4 String
-vector :: forall a input length.
-          (Storable a, IndexedListLiterals input length a, KnownNat length)
-       => input -> Vector length a
-vector = V.vector
-{-# inline vector #-}
+--   fromTuple (1,2) :: Vector 2 Int
+--   fromTuple ("hey", "what's", "going", "on") :: Vector 4 String
+fromTuple :: forall a input length.
+             (Storable a, IndexedListLiterals input length a, KnownNat length)
+          => input -> Vector length a
+fromTuple = V.fromTuple
+{-# inline fromTuple #-}
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.

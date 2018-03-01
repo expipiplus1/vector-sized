@@ -47,7 +47,7 @@ module Data.Vector.Generic.Sized
     -- ** Initialization
   , empty
   , singleton
-  , vector
+  , fromTuple
   , replicate
   , replicate'
   , generate
@@ -491,12 +491,12 @@ singleton a = Vector (VG.singleton a)
 {-# inline singleton #-}
 
 -- | /O(n)/ Construct a vector in a type safe manner
---   vector (1,2) :: Vector v 2 Int
---   vector ("hey", "what's", "going", "on") :: Vector v 4 String
-vector :: forall v a input length.
-          (VG.Vector v a, IndexedListLiterals input length a, KnownNat length)
-       => input -> Vector v length a
-vector = Vector . VG.fromListN (fromIntegral $ natVal $ Proxy @length) . ILL.toList
+--   fromTuple (1,2) :: Vector v 2 Int
+--   fromTuple ("hey", "what's", "going", "on") :: Vector v 4 String
+fromTuple :: forall v a input length.
+             (VG.Vector v a, IndexedListLiterals input length a, KnownNat length)
+          => input -> Vector v length a
+fromTuple = Vector . VG.fromListN (fromIntegral $ natVal $ Proxy @length) . ILL.toList
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.
