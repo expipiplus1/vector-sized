@@ -19,11 +19,16 @@ library
   exposed-modules:     Data.Vector.Sized
                      , Data.Vector.Generic.Sized
                      , Data.Vector.Storable.Sized
+                     , Data.Vector.Mutable.Sized
+                     , Data.Vector.Generic.Mutable.Sized
+                     , Data.Vector.Storable.Mutable.Sized
+  other-modules:       Data.Vector.Generic.Mutable.Sized.Internal
   build-depends:       base >= 4.9 && < 5
                      , vector >= 0.11 && < 0.13
                      , deepseq >= 1.1 && < 1.5
                      , finite-typelits >= 0.1
                      , indexed-list-literals >= 0.1.0.1
+                     , primitive >= 0.5 && < 0.7
   default-language:    Haskell2010
 
 source-repository head

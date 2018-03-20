@@ -7,6 +7,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -25,6 +26,7 @@ not exported.
 
 module Data.Vector.Generic.Sized
  ( Vector
+  , MVector
    -- * Accessors
    -- ** Length information
   , length
@@ -225,6 +227,12 @@ module Data.Vector.Generic.Sized
   , withSizedList
     -- ** Other Vector types
   , convert
+    -- ** Mutable vectors
+  , freeze
+  , thaw
+  , copy
+  , unsafeFreeze
+  , unsafeThaw
     -- ** Unsized Vectors
   , toSized
   , withSized
@@ -234,6 +242,8 @@ module Data.Vector.Generic.Sized
 
 import qualified Data.Vector.Generic as VG
 import qualified Data.Vector as Boxed
+import qualified Data.Vector.Generic.Mutable.Sized as SVGM
+import Data.Vector.Generic.Mutable.Sized.Internal
 import GHC.Generics (Generic)
 import GHC.TypeNats
 import Data.Bifunctor
@@ -241,6 +251,7 @@ import Data.Finite
 import Data.Finite.Internal
 import Data.Proxy
 import Control.DeepSeq (NFData)
+import Control.Monad.Primitive
 import Foreign.Storable
 import Data.Data
 import Data.Functor.Classes
@@ -272,6 +283,8 @@ instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
       expectP (Ident "Vector")
       vec <- readPrec
       if VG.length vec == (fromIntegral $ natVal (Proxy :: Proxy n)) then return $ Vector vec else pfail
+
+type instance VG.Mutable (Vector v n) = MVector (VG.Mutable v) n
 
 -- | Any sized vector containing storable elements is itself storable.
 instance (KnownNat n, Storable a, VG.Vector v a)
@@ -1625,6 +1638,41 @@ withSizedList xs = withSized (VG.fromList xs)
 convert :: (VG.Vector v a, VG.Vector w a) => Vector v n a -> Vector w n a
 convert = withVectorUnsafe VG.convert
 {-# inline convert #-}
+
+-- ** Mutable vectors
+
+-- | /O(n)/ Yield an immutable copy of the mutable vector.
+freeze :: (PrimMonad m, VG.Vector v a)
+       => SVGM.MVector (VG.Mutable v) n (PrimState m) a
+       -> m (Vector v n a)
+freeze (MVector v) = Vector <$> VG.freeze v
+
+-- | /O(1)/ Unsafely convert a mutable vector to an immutable one withouy
+-- copying. The mutable vector may not be used after this operation.
+unsafeFreeze :: (PrimMonad m, VG.Vector v a)
+             => SVGM.MVector (VG.Mutable v) n (PrimState m) a
+             -> m (Vector v n a)
+unsafeFreeze (MVector v) = Vector <$> VG.unsafeFreeze v
+
+-- | /O(n)/ Yield a mutable copy of the immutable vector.
+thaw :: (PrimMonad m, VG.Vector v a)
+     => Vector v n a
+     -> m (SVGM.MVector (VG.Mutable v) n (PrimState m) a)
+thaw (Vector v) = MVector <$> VG.thaw v
+
+-- | /O(n)/ Unsafely convert an immutable vector to a mutable one without
+-- copying. The immutable vector may not be used after this operation.
+unsafeThaw :: (PrimMonad m, VG.Vector v a)
+           => Vector v n a
+           -> m (SVGM.MVector (VG.Mutable v) n (PrimState m) a)
+unsafeThaw (Vector v) = MVector <$> VG.unsafeThaw v
+
+-- | /O(n)/ Copy an immutable vector into a mutable one.
+copy :: (PrimMonad m, VG.Vector v a)
+     => SVGM.MVector (VG.Mutable v) n (PrimState m) a
+     -> Vector v n a
+     -> m ()
+copy (MVector v) (Vector u) = VG.unsafeCopy v u
 
 -- ** Unsized vectors
 

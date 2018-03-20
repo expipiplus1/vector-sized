@@ -19,6 +19,7 @@ not exported.
 
 module Data.Vector.Storable.Sized
  ( Vector
+  , VSM.MVector
    -- * Accessors
    -- ** Length information
   , length
@@ -217,6 +218,12 @@ module Data.Vector.Storable.Sized
   , fromListN
   , fromListN'
   , withSizedList
+    -- ** Mutable vectors
+  , freeze
+  , thaw
+  , copy
+  , unsafeFreeze
+  , unsafeThaw
     -- ** Unsized Vectors
   , toSized
   , withSized
@@ -227,9 +234,11 @@ module Data.Vector.Storable.Sized
 import qualified Data.Vector.Generic.Sized as V
 import qualified Data.Vector.Storable as VS
 import Data.IndexedListLiterals (IndexedListLiterals)
+import qualified Data.Vector.Storable.Mutable.Sized as VSM
 import GHC.TypeLits
 import Data.Finite
 import Data.Proxy
+import Control.Monad.Primitive
 import Foreign.Storable
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
@@ -1517,6 +1526,41 @@ withSizedList :: forall a r. Storable a
               => [a] -> (forall n. KnownNat n => Vector n a -> r) -> r
 withSizedList xs = withSized (VS.fromList xs)
 {-# inline withSizedList #-}
+
+-- ** Mutable vectors
+
+-- | /O(n)/ Yield an immutable copy of the mutable vector.
+freeze :: (PrimMonad m, Storable a)
+       => VSM.MVector n (PrimState m) a
+       -> m (Vector n a)
+freeze = V.freeze
+
+-- | /O(1)/ Unsafely convert a mutable vector to an immutable one withouy
+-- copying. The mutable vector may not be used after this operation.
+unsafeFreeze :: (PrimMonad m, Storable a)
+             => VSM.MVector n (PrimState m) a
+             -> m (Vector n a)
+unsafeFreeze = V.unsafeFreeze
+
+-- | /O(n)/ Yield a mutable copy of the immutable vector.
+thaw :: (PrimMonad m, Storable a)
+     => Vector n a
+     -> m (VSM.MVector n (PrimState m) a)
+thaw = V.thaw
+
+-- | /O(n)/ Unsafely convert an immutable vector to a mutable one without
+-- copying. The immutable vector may not be used after this operation.
+unsafeThaw :: (PrimMonad m, Storable a)
+           => Vector n a
+           -> m (VSM.MVector n (PrimState m) a)
+unsafeThaw = V.unsafeThaw
+
+-- | /O(n)/ Copy an immutable vector into a mutable one.
+copy :: (PrimMonad m, Storable a)
+     => VSM.MVector n (PrimState m) a
+     -> Vector n a
+     -> m ()
+copy = V.copy
 
 -- ** Unsized vectors
 
