@@ -25,7 +25,7 @@ not exported.
 -}
 
 module Data.Vector.Generic.Sized
- ( Vector
+  ( Vector
   , MVector
    -- * Accessors
    -- ** Length information
@@ -240,6 +240,7 @@ module Data.Vector.Generic.Sized
   , withVectorUnsafe
   ) where
 
+import Data.Vector.Generic.Sized.Internal
 import qualified Data.Vector.Generic as VG
 import qualified Data.Vector as Boxed
 import qualified Data.Vector.Generic.Mutable.Sized as SVGM
@@ -270,13 +271,6 @@ import Prelude
                scanr, scanr1, mapM, mapM_, sequence, sequence_)
 import Data.IndexedListLiterals hiding (toList)
 import qualified Data.IndexedListLiterals as ILL
-
--- | A wrapper to tag vectors with a type level length.
-newtype Vector v (n :: Nat) a = Vector (v a)
-  deriving ( Show, Eq, Ord, Functor, Foldable, Traversable, NFData, Generic
-           , Show1, Eq1, Ord1
-           , Data, Typeable
-           )
 
 instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
   readPrec = parens $ prec 10 $ do
