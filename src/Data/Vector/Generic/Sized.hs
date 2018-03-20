@@ -233,7 +233,7 @@ module Data.Vector.Generic.Sized
 import qualified Data.Vector.Generic as VG
 import qualified Data.Vector as Boxed
 import GHC.Generics (Generic)
-import GHC.TypeLits
+import GHC.TypeNats
 import Data.Bifunctor
 import Data.Finite
 import Data.Finite.Internal
@@ -267,12 +267,12 @@ instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
   readPrec = parens $ prec 10 $ do
       expectP (Ident "Vector")
       vec <- readPrec
-      if VG.length vec == (fromInteger $ natVal (Proxy :: Proxy n)) then return $ Vector vec else pfail
+      if VG.length vec == (fromIntegral $ natVal (Proxy :: Proxy n)) then return $ Vector vec else pfail
 
 -- | Any sized vector containing storable elements is itself storable.
 instance (KnownNat n, Storable a, VG.Vector v a)
       => Storable (Vector v n a) where
-  sizeOf _ = sizeOf (undefined :: a) * fromInteger (natVal (Proxy :: Proxy n))
+  sizeOf _ = sizeOf (undefined :: a) * fromIntegral (natVal (Proxy :: Proxy n))
   alignment _ = alignment (undefined :: a)
   peek ptr = generateM (peekElemOff (castPtr ptr) . fromIntegral)
   poke ptr = imapM_ (pokeElemOff (castPtr ptr) . fromIntegral)
@@ -313,7 +313,7 @@ instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
 -- instance and not looking at the vector itself.
 length :: forall v n a. KnownNat n
        => Vector v n a -> Int
-length _ = fromInteger (natVal (Proxy :: Proxy n))
+length _ = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline length #-}
 
 -- | /O(1)/ Yield the length of the vector as a 'Proxy'. This function
@@ -339,8 +339,7 @@ knownLength' :: forall v n a r. VG.Vector v a
              -> (KnownNat n => Proxy n -> r) -- ^ a value that depends on knowing the vector's length, which is given as a 'Proxy'
              -> r -- ^ the value computed with the length
 knownLength' (Vector v) x = case someNatVal (fromIntegral (VG.length v)) of
-    Just (SomeNat (Proxy :: Proxy n')) -> case unsafeCoerce Refl :: n' :~: n of Refl -> x Proxy
-    Nothing -> error "knownLength: VG.length returned negative length."
+    SomeNat (Proxy :: Proxy n') -> case unsafeCoerce Refl :: n' :~: n of Refl -> x Proxy
 
 -- | /O(1)/ Safe indexing using a 'Finite'.
 index :: forall v n a. (KnownNat n, VG.Vector v a)
@@ -352,7 +351,7 @@ index (Vector v) i = v `VG.unsafeIndex` fromIntegral i
 index' :: forall v n m a p. (KnownNat n, KnownNat m, VG.Vector v a)
        => Vector v (n+m+1) a -> p n -> a
 index' (Vector v) p = v `VG.unsafeIndex` i
-  where i = fromInteger (natVal p)
+  where i = fromIntegral (natVal p)
 {-# inline index' #-}
 
 -- | /O(1)/ Indexing using an Int without bounds checking.
@@ -403,7 +402,7 @@ indexM (Vector v) i = v `VG.indexM` fromIntegral i
 indexM' :: forall v n k a m p. (KnownNat n, KnownNat k, VG.Vector v a, Monad m)
       => Vector v (n+k) a -> p n -> m a
 indexM' (Vector v) p = v `VG.indexM` i
-  where i = fromInteger (natVal p)
+  where i = fromIntegral (natVal p)
 {-# inline indexM' #-}
 
 -- | /O(1)/ Indexing using an Int without bounds checking. See the
@@ -434,8 +433,8 @@ slice :: forall v i n m a p. (KnownNat i, KnownNat n, KnownNat m, VG.Vector v a)
       -> Vector v (i+n+m) a
       -> Vector v n a
 slice start (Vector v) = Vector (VG.unsafeSlice i n v)
-  where i = fromInteger (natVal start)
-        n = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal start)
+        n = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline slice #-}
 
 -- | /O(1)/ Yield a slice of the vector without copying it with an explicit
@@ -469,7 +468,7 @@ tail (Vector v) = Vector (VG.unsafeTail v)
 take :: forall v n m a. (KnownNat n, KnownNat m, VG.Vector v a)
      => Vector v (n+m) a -> Vector v n a
 take (Vector v) = Vector (VG.unsafeTake i v)
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline take #-}
 
 -- | /O(1)/ Yield the first n elements. The resultant vector always contains
@@ -486,7 +485,7 @@ take' _ = take
 drop :: forall v n m a. (KnownNat n, KnownNat m, VG.Vector v a)
      => Vector v (n+m) a -> Vector v m a
 drop (Vector v) = Vector (VG.unsafeDrop i v)
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline drop #-}
 
 -- | /O(1)/ Yield all but the the first n elements. The given vector must
@@ -502,7 +501,7 @@ drop' _ = drop
 splitAt :: forall v n m a. (KnownNat n, KnownNat m, VG.Vector v a)
         => Vector v (n+m) a -> (Vector v n a, Vector v m a)
 splitAt (Vector v) = (Vector a, Vector b)
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
         (a, b) = VG.splitAt i v
 {-# inline splitAt #-}
 
@@ -539,7 +538,7 @@ singleton a = Vector (VG.singleton a)
 replicate :: forall v n a. (KnownNat n, VG.Vector v a)
           => a -> Vector v n a
 replicate a = Vector (VG.replicate i a)
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline replicate #-}
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
@@ -554,7 +553,7 @@ replicate' _ = replicate
 generate :: forall v n a. (KnownNat n, VG.Vector v a)
          => (Finite n -> a) -> Vector v n a
 generate f = Vector (VG.generate i (f . Finite . fromIntegral))
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline generate #-}
 
 -- | /O(n)/ construct a vector of the given length by applying the function to
@@ -569,7 +568,7 @@ generate' _ = generate
 iterateN :: forall v n a. (KnownNat n, VG.Vector v a)
          => (a -> a) -> a -> Vector v n a
 iterateN f z = Vector (VG.iterateN i f z)
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline iterateN #-}
 
 -- | /O(n)/ Apply function n times to value. Zeroth element is original value.
@@ -588,7 +587,7 @@ iterateN' _ = iterateN
 replicateM :: forall v n m a. (KnownNat n, VG.Vector v a, Monad m)
            => m a -> m (Vector v n a)
 replicateM a = Vector <$> VG.replicateM i a
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline replicateM #-}
 
 -- | /O(n)/ Execute the monadic action @n@ times and store the results in a
@@ -603,7 +602,7 @@ replicateM' _ = replicateM
 generateM :: forall v n m a. (KnownNat n, VG.Vector v a, Monad m)
           => (Finite n -> m a) -> m (Vector v n a)
 generateM f = Vector <$> VG.generateM i (f . Finite . fromIntegral)
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline generateM #-}
 
 -- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
@@ -623,7 +622,7 @@ generateM' _ = generateM
 unfoldrN :: forall v n a b. (KnownNat n, VG.Vector v a)
          => (b -> (a, b)) -> b -> Vector v n a
 unfoldrN f z = Vector (VG.unfoldrN i (Just . f) z)
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline unfoldrN #-}
 
 -- | /O(n)/ Construct a vector with exactly @n@ elements by repeatedly applying
@@ -643,7 +642,7 @@ unfoldrN' _ = unfoldrN
 enumFromN :: forall v n a. (KnownNat n, VG.Vector v a, Num a)
           => a -> Vector v n a
 enumFromN a = Vector (VG.enumFromN a i)
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline enumFromN #-}
 
 -- | /O(n)/ Yield a vector of length @n@ containing the values @x@, @x+1@
@@ -658,7 +657,7 @@ enumFromN' a _ = enumFromN a
 enumFromStepN :: forall v n a. (KnownNat n, VG.Vector v a, Num a)
           => a -> a -> Vector v n a
 enumFromStepN a a' = Vector (VG.enumFromStepN a a' i)
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline enumFromStepN #-}
 
 -- | /O(n)/ Yield a vector of the given length containing the values @x@, @x+y@,
@@ -1587,7 +1586,7 @@ fromList = toSized . VG.fromList
 fromListN :: forall v n a. (VG.Vector v a, KnownNat n)
           => [a] -> Maybe (Vector v n a)
 fromListN = toSized . VG.fromListN i
-  where i = fromInteger (natVal (Proxy :: Proxy n))
+  where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline fromListN #-}
 
 -- | /O(n)/ Convert the first @n@ elements of a list to a vector. The length of
@@ -1638,8 +1637,7 @@ toSized v
 withSized :: forall v a r. VG.Vector v a
           => v a -> (forall n. KnownNat n => Vector v n a -> r) -> r
 withSized v f = case someNatVal (fromIntegral (VG.length v)) of
-    Just (SomeNat (Proxy :: Proxy n)) -> f (Vector v :: Vector v n a)
-    Nothing -> error "withSized: VG.length returned negative length."
+  SomeNat (Proxy :: Proxy n) -> f (Vector v :: Vector v n a)
 
 fromSized :: Vector v n a -> v a
 fromSized (Vector v) = v
