@@ -12,6 +12,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE CPP #-}
 
 {-|
 This module reexports the functionality in 'Data.Vector.Generic' which maps well
@@ -60,7 +61,9 @@ module Data.Vector.Generic.Sized
     -- ** Initialization
   , empty
   , singleton
+#if !MIN_VERSION_GLASGOW_HASKELL(8,3,0,0)
   , fromTuple
+#endif
   , replicate
   , replicate'
   , generate
@@ -269,8 +272,12 @@ import Prelude
                zip3, unzip, unzip3, elem, notElem, foldl, foldl1, foldr, foldr1,
                all, any, and, or, sum, product, maximum, minimum, scanl, scanl1,
                scanr, scanr1, mapM, mapM_, sequence, sequence_)
+
+
+#if !MIN_VERSION_GLASGOW_HASKELL(8,3,0,0)
 import Data.IndexedListLiterals hiding (toList)
 import qualified Data.IndexedListLiterals as ILL
+#endif
 
 instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
   readPrec = parens $ prec 10 $ do
@@ -544,6 +551,7 @@ singleton :: forall v a. (VG.Vector v a)
 singleton a = Vector (VG.singleton a)
 {-# inline singleton #-}
 
+#if !MIN_VERSION_GLASGOW_HASKELL(8,3,0,0)
 -- | /O(n)/ Construct a vector in a type safe manner
 --   fromTuple (1,2) :: Vector v 2 Int
 --   fromTuple ("hey", "what's", "going", "on") :: Vector v 4 String
@@ -551,6 +559,7 @@ fromTuple :: forall v a input length.
              (VG.Vector v a, IndexedListLiterals input length a, KnownNat length)
           => input -> Vector v length a
 fromTuple = Vector . VG.fromListN (fromIntegral $ natVal $ Proxy @length) . ILL.toList
+#endif
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.
