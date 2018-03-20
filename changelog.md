@@ -7,6 +7,8 @@
 - Performance improvements for `Applicative`
 - Add a `knownLength` function
 - Add `fromTuple`
+- Add sized variants of mutable vectors 
+- Expose sized vector constructors from Internal modules
 
 ## [0.6.1.0] - 2017-08-04
 - Add lenses ix, _head and _last
