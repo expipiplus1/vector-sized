@@ -313,6 +313,11 @@ instance (Semigroup g, VG.Vector v g) => Semigroup (Vector v n g) where
   (<>) = zipWith (<>)
   stimes = map . stimes
 
+instance (Semigroup m, VG.Vector v m, KnownNat n) => Semigroup (Vector v n m) where
+  (<>) = zipWith (<>)
+instance {-# OVERLAPPING #-} (VG.Vector v m) => Semigroup (Vector v 0 m) where
+  _empty1 <> _empty2 = empty
+
 -- | The 'Monoid' instance for sized vectors does not have the same
 -- behaviour as the 'Monoid' instance for the unsized vectors found in the
 -- 'vectors' package. This instance has @mempty = replicate mempty@ and
