@@ -9,6 +9,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeFamilies #-}
 
 {-|
 This module reexports the functionality in 'Data.Vector.Generic' which maps well
@@ -27,6 +28,8 @@ module Data.Vector.Generic.Sized
    -- ** Length information
   , length
   , length'
+  , knownLength
+  , knownLength'
     -- ** Indexing
   , index
   , index'
@@ -244,20 +247,14 @@ import Data.Semigroup
 import Text.Read.Lex
 import Text.ParserCombinators.ReadPrec
 import GHC.Read
-import Prelude hiding ( length, null,
-                        replicate, (++), concat,
-                        head, last,
-                        init, tail, take, drop, splitAt, reverse,
-                        map, concat, concatMap,
-                        zipWith, zipWith3, zip, zip3, unzip, unzip3,
-                        filter, takeWhile, dropWhile, span, break,
-                        elem, notElem,
-                        foldl, foldl1, foldr, foldr1,
-                        all, any, and, or, sum, product, maximum, minimum,
-                        scanl, scanl1, scanr, scanr1,
-                        enumFromTo, enumFromThenTo,
-                        mapM, mapM_, sequence, sequence_,
-                        showsPrec )
+import Data.Type.Equality
+import Unsafe.Coerce
+import Prelude
+       hiding (length, replicate, (++), head, last, init, tail, take,
+               drop, splitAt, reverse, map, concatMap, zipWith, zipWith3, zip,
+               zip3, unzip, unzip3, elem, notElem, foldl, foldl1, foldr, foldr1,
+               all, any, and, or, sum, product, maximum, minimum, scanl, scanl1,
+               scanr, scanr1, mapM, mapM_, sequence, sequence_)
 
 -- | A wrapper to tag vectors with a type level length.
 newtype Vector v (n :: Nat) a = Vector (v a)
@@ -311,17 +308,39 @@ instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
   mappend = zipWith mappend
   mconcat vs = generate $ mconcat . flip fmap vs . flip index
 
--- | /O(1)/ Yield the length of the vector as an 'Int'.
-length :: forall v n a. (KnownNat n)
+-- | /O(1)/ Yield the length of the vector as an 'Int'. This is more like
+-- 'natVal' than 'Data.Vector.length', extracting the value from the 'KnownNat'
+-- instance and not looking at the vector itself.
+length :: forall v n a. KnownNat n
        => Vector v n a -> Int
 length _ = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline length #-}
 
--- | /O(1)/ Yield the length of the vector as a 'Proxy'.
-length' :: forall v n a. (KnownNat n)
-        => Vector v n a -> Proxy n
+-- | /O(1)/ Yield the length of the vector as a 'Proxy'. This function
+-- doesn't /do/ anything; it merely allows the size parameter of the vector
+-- to be passed around as a 'Proxy'.
+length' :: forall v n a.
+           Vector v n a -> Proxy n
 length' _ = Proxy
 {-# inline length' #-}
+
+-- | /O(1)/ Reveal a 'KnownNat' instance for a vector's length, determined
+-- at runtime.
+knownLength :: forall v n a r. VG.Vector v a
+            => Vector v n a -- ^ a vector of some (potentially unknown) length
+            -> (KnownNat n => r) -- ^ a value that depends on knowing the vector's length
+            -> r -- ^ the value computed with the length
+knownLength v x = knownLength' v $ const x
+
+-- | /O(1)/ Reveal a 'KnownNat' instance and 'Proxy' for a vector's length,
+-- determined at runtime.
+knownLength' :: forall v n a r. VG.Vector v a
+             => Vector v n a -- ^ a vector of some (potentially unknown) length
+             -> (KnownNat n => Proxy n -> r) -- ^ a value that depends on knowing the vector's length, which is given as a 'Proxy'
+             -> r -- ^ the value computed with the length
+knownLength' (Vector v) x = case someNatVal (fromIntegral (VG.length v)) of
+    Just (SomeNat (Proxy :: Proxy n')) -> case unsafeCoerce Refl :: n' :~: n of Refl -> x Proxy
+    Nothing -> error "knownLength: VG.length returned negative length."
 
 -- | /O(1)/ Safe indexing using a 'Finite'.
 index :: forall v n a. (KnownNat n, VG.Vector v a)

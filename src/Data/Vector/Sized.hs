@@ -24,6 +24,8 @@ module Data.Vector.Sized
    -- ** Length information
   , length
   , length'
+  , knownLength
+  , knownLength'
     -- ** Indexing
   , index
   , index'
@@ -246,17 +248,37 @@ import Prelude hiding ( length, null,
 -- 'Data.Vector'
 type Vector = V.Vector VU.Vector
 
--- | /O(1)/ Yield the length of the vector as an 'Int'.
+-- | /O(1)/ Yield the length of the vector as an 'Int'. This is more like
+-- 'natVal' than 'Data.Vector.length', extracting the value from the 'KnownNat'
+-- instance and not looking at the vector itself.
 length :: forall n a. KnownNat n
        => Vector n a -> Int
 length = V.length
 {-# inline length #-}
 
--- | /O(1)/ Yield the length of the vector as a 'Proxy'.
-length' :: forall n a. KnownNat n
-        => Vector n a -> Proxy n
+-- | /O(1)/ Yield the length of the vector as a 'Proxy'. This function
+-- doesn't /do/ anything; it merely allows the size parameter of the vector
+-- to be passed around as a 'Proxy'.
+length' :: forall n a.
+           Vector n a -> Proxy n
 length' = V.length'
 {-# inline length' #-}
+
+-- | /O(1)/ Reveal a 'KnownNat' instance for a vector's length, determined
+-- at runtime.
+knownLength :: forall n a r.
+               Vector n a -- ^ a vector of some (potentially unknown) length
+            -> (KnownNat n => r) -- ^ a value that depends on knowing the vector's length
+            -> r -- ^ the value computed with the length
+knownLength = V.knownLength
+
+-- | /O(1)/ Reveal a 'KnownNat' instance and 'Proxy' for a vector's length,
+-- determined at runtime.
+knownLength' :: forall n a r.
+                Vector n a -- ^ a vector of some (potentially unknown) length
+             -> (KnownNat n => Proxy n -> r) -- ^ a value that depends on knowing the vector's length, which is given as a 'Proxy'
+             -> r -- ^ the value computed with the length
+knownLength' = V.knownLength'
 
 -- | /O(1)/ Safe indexing using a 'Finite'.
 index :: forall n a. KnownNat n
