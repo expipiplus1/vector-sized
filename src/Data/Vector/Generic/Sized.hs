@@ -311,12 +311,6 @@ instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
   mappend = zipWith mappend
   mconcat vs = generate_ $ mconcat . flip fmap vs . flip index
 
--- | This instance exists to relax the 'Monoid' constraint in the case of
--- empty vectors.
-instance {-# OVERLAPPING #-} (VG.Vector v m) => Monoid (Vector v 0 m) where
-  mempty = empty
-  l `mappend` r = l `seq` r `seq` empty
-
 -- | /O(1)/ Yield the length of the vector as an 'Int'.
 length :: forall v n a. (KnownNat n)
        => Vector v n a -> Int
