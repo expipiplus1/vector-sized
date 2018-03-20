@@ -2,7 +2,9 @@
 
 ## HEAD
 
-- More functions using Finite instead of Int
+- More functions using `Finite` instead of `Int`
+- Add `Read` and `Semigroup` instances
+- Performance improvements for `Applicative`
 
 ## [0.6.1.0] - 2017-08-04
 - Add lenses ix, _head and _last
