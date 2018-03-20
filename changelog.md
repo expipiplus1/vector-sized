@@ -5,6 +5,7 @@
 - More functions using `Finite` instead of `Int`
 - Add `Read` and `Semigroup` instances
 - Performance improvements for `Applicative`
+- Add a knownLength function
 
 ## [0.6.1.0] - 2017-08-04
 - Add lenses ix, _head and _last
