@@ -240,6 +240,10 @@ import Foreign.Storable
 import Data.Data
 import Data.Functor.Classes
 import Foreign.Ptr (castPtr)
+import Data.Semigroup
+import Text.Read.Lex
+import Text.ParserCombinators.ReadPrec
+import GHC.Read
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
                         head, last,
@@ -262,6 +266,12 @@ newtype Vector v (n :: Nat) a = Vector (v a)
            , Data, Typeable
            )
 
+instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
+  readPrec = parens $ prec 10 $ do
+      expectP (Ident "Vector")
+      vec <- readPrec
+      if VG.length vec == (fromInteger $ natVal (Proxy :: Proxy n)) then return $ Vector vec else pfail
+
 -- | Any sized vector containing storable elements is itself storable.
 instance (KnownNat n, Storable a, VG.Vector v a)
       => Storable (Vector v n a) where
@@ -277,17 +287,35 @@ instance (KnownNat n, Storable a, VG.Vector v a)
 instance KnownNat n => Applicative (Vector Boxed.Vector n) where
   pure = replicate
   (<*>) = zipWith ($)
+  (*>) = seq
+  (<*) = flip seq
+
+-- | The 'Semigroup' instance for sized vectors does not have the same
+-- behaviour as the 'Semigroup' instance for the unsized vectors found in the
+-- 'vectors' package. This instance has @(<>) = zipWith (<>)@, but 'vectors'
+-- uses concatentation.
+instance (Semigroup g, VG.Vector v g) => Semigroup (Vector v n g) where
+  (<>) = zipWith (<>)
+  stimes = map . stimes
 
 -- | The 'Monoid' instance for sized vectors does not have the same
 -- behaviour as the 'Monoid' instance for the unsized vectors found in the
--- 'vectors' package. Its @mempty@ is a vector of @mempty@s and its @mappend@
--- is @zipWith mappend@.
+-- 'vectors' package. This instance has @mempty = replicate mempty@ and
+-- @mappend = zipWith mappend@, where the 'vectors' instance uses the empty
+-- vector and concatenation.
+--
+-- If 'mempty' is not necessary, using the 'Semigroup' instance over this
+-- 'Monoid' will dodge the 'KnownNat' constraint.
 instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
   mempty = replicate mempty
   mappend = zipWith mappend
+  mconcat vs = generate_ $ mconcat . flip fmap vs . flip index
+
+-- | This instance exists to relax the 'Monoid' constraint in the case of
+-- empty vectors.
 instance {-# OVERLAPPING #-} (VG.Vector v m) => Monoid (Vector v 0 m) where
   mempty = empty
-  _empty1 `mappend` _empty2 = empty
+  l `mappend` r = l `seq` r `seq` empty
 
 -- | /O(1)/ Yield the length of the vector as an 'Int'.
 length :: forall v n a. (KnownNat n)
