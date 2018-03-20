@@ -1,14 +1,16 @@
 # Change Log
 
-## HEAD
+## [1.0.0.0] - 2018-03-20
 
 - More functions using `Finite` instead of `Int`
 - Add `Read` and `Semigroup` instances
 - Performance improvements for `Applicative`
 - Add a `knownLength` function
-- Add `fromTuple`
+- Add `fromTuple` (ghc < 8.3 for now)
 - Add sized variants of mutable vectors 
 - Expose sized vector constructors from Internal modules
+
+Huge thanks to all the contributors!
 
 ## [0.6.1.0] - 2017-08-04
 - Add lenses ix, _head and _last
