@@ -10,6 +10,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeApplications #-}
 
 {-|
 This module reexports the functionality in 'Data.Vector.Generic' which maps well
@@ -57,6 +58,7 @@ module Data.Vector.Generic.Sized
     -- ** Initialization
   , empty
   , singleton
+  , fromTuple
   , replicate
   , replicate'
   , generate
@@ -255,6 +257,8 @@ import Prelude
                zip3, unzip, unzip3, elem, notElem, foldl, foldl1, foldr, foldr1,
                all, any, and, or, sum, product, maximum, minimum, scanl, scanl1,
                scanr, scanr1, mapM, mapM_, sequence, sequence_)
+import Data.IndexedListLiterals hiding (toList)
+import qualified Data.IndexedListLiterals as ILL
 
 -- | A wrapper to tag vectors with a type level length.
 newtype Vector v (n :: Nat) a = Vector (v a)
@@ -532,6 +536,14 @@ singleton :: forall v a. (VG.Vector v a)
            => a -> Vector v 1 a
 singleton a = Vector (VG.singleton a)
 {-# inline singleton #-}
+
+-- | /O(n)/ Construct a vector in a type safe manner
+--   fromTuple (1,2) :: Vector v 2 Int
+--   fromTuple ("hey", "what's", "going", "on") :: Vector v 4 String
+fromTuple :: forall v a input length.
+             (VG.Vector v a, IndexedListLiterals input length a, KnownNat length)
+          => input -> Vector v length a
+fromTuple = Vector . VG.fromListN (fromIntegral $ natVal $ Proxy @length) . ILL.toList
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.
