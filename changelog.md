@@ -1,5 +1,9 @@
 # Change Log
 
+## HEAD
+
+- More functions using Finite instead of Int
+
 ## [0.6.1.0] - 2017-08-04
 - Add lenses ix, _head and _last
 
