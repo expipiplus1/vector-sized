@@ -249,7 +249,7 @@ import qualified Data.Vector as Boxed
 import qualified Data.Vector.Generic.Mutable.Sized as SVGM
 import Data.Vector.Generic.Mutable.Sized.Internal
 import GHC.Generics (Generic)
-import GHC.TypeNats
+import GHC.TypeLits
 import Data.Bifunctor
 import Data.Finite
 import Data.Finite.Internal
@@ -357,7 +357,8 @@ knownLength' :: forall v n a r. VG.Vector v a
              -> (KnownNat n => Proxy n -> r) -- ^ a value that depends on knowing the vector's length, which is given as a 'Proxy'
              -> r -- ^ the value computed with the length
 knownLength' (Vector v) x = case someNatVal (fromIntegral (VG.length v)) of
-    SomeNat (Proxy :: Proxy n') -> case unsafeCoerce Refl :: n' :~: n of Refl -> x Proxy
+  Just (SomeNat (Proxy :: Proxy n')) -> case unsafeCoerce Refl :: n' :~: n of Refl -> x Proxy
+  Nothing -> error "impossible: Vector has negative length"
 
 -- | /O(1)/ Safe indexing using a 'Finite'.
 index :: forall v n a. (KnownNat n, VG.Vector v a)
@@ -1700,7 +1701,8 @@ toSized v
 withSized :: forall v a r. VG.Vector v a
           => v a -> (forall n. KnownNat n => Vector v n a -> r) -> r
 withSized v f = case someNatVal (fromIntegral (VG.length v)) of
-  SomeNat (Proxy :: Proxy n) -> f (Vector v :: Vector v n a)
+  Just (SomeNat (Proxy :: Proxy n)) -> f (Vector v :: Vector v n a)
+  Nothing -> error "impossible: Vector has negative length"
 
 fromSized :: Vector v n a -> v a
 fromSized (Vector v) = v
