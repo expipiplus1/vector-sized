@@ -1,10 +1,11 @@
+{-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
-{-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE CPP                 #-}
 
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Sized'
@@ -19,10 +20,13 @@ not exported.
 
 module Data.Vector.Storable.Sized
  ( Vector
+  , VSM.MVector
    -- * Accessors
    -- ** Length information
   , length
   , length'
+  , knownLength
+  , knownLength'
     -- ** Indexing
   , index
   , index'
@@ -50,11 +54,13 @@ module Data.Vector.Storable.Sized
     -- ** Initialization
   , empty
   , singleton
+#if !MIN_VERSION_GLASGOW_HASKELL(8,3,0,0)
+  , fromTuple
+#endif
   , replicate
   , replicate'
   , generate
   , generate'
-  , generate_
   , iterateN
   , iterateN'
     -- ** Monadic initialization
@@ -62,7 +68,6 @@ module Data.Vector.Storable.Sized
   , replicateM'
   , generateM
   , generateM'
-  , generateM_
     -- ** Unfolding
   , unfoldrN
   , unfoldrN'
@@ -216,6 +221,12 @@ module Data.Vector.Storable.Sized
   , fromListN
   , fromListN'
   , withSizedList
+    -- ** Mutable vectors
+  , freeze
+  , thaw
+  , copy
+  , unsafeFreeze
+  , unsafeThaw
     -- ** Unsized Vectors
   , toSized
   , withSized
@@ -225,9 +236,14 @@ module Data.Vector.Storable.Sized
 
 import qualified Data.Vector.Generic.Sized as V
 import qualified Data.Vector.Storable as VS
+#if !MIN_VERSION_GLASGOW_HASKELL(8,3,0,0)
+import Data.IndexedListLiterals (IndexedListLiterals)
+#endif
+import qualified Data.Vector.Storable.Mutable.Sized as VSM
 import GHC.TypeLits
 import Data.Finite
 import Data.Proxy
+import Control.Monad.Primitive
 import Foreign.Storable
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
@@ -248,17 +264,37 @@ import Prelude hiding ( length, null,
 -- 'Data.Vector.Storable'
 type Vector = V.Vector VS.Vector
 
--- | /O(1)/ Yield the length of the vector as an 'Int'.
-length :: forall n a. (KnownNat n)
+-- | /O(1)/ Yield the length of the vector as an 'Int'. This is more like
+-- 'natVal' than 'Data.Vector.length', extracting the value from the 'KnownNat'
+-- instance and not looking at the vector itself.
+length :: forall n a. KnownNat n
        => Vector n a -> Int
 length = V.length
 {-# inline length #-}
 
--- | /O(1)/ Yield the length of the vector as a 'Proxy'.
-length' :: forall n a. (KnownNat n)
-        => Vector n a -> Proxy n
+-- | /O(1)/ Yield the length of the vector as a 'Proxy'. This function
+-- doesn't /do/ anything; it merely allows the size parameter of the vector
+-- to be passed around as a 'Proxy'.
+length' :: forall n a.
+           Vector n a -> Proxy n
 length' = V.length'
 {-# inline length' #-}
+
+-- | /O(1)/ Reveal a 'KnownNat' instance for a vector's length, determined
+-- at runtime.
+knownLength :: forall n a r. Storable a
+            => Vector n a -- ^ a vector of some (potentially unknown) length
+            -> (KnownNat n => r) -- ^ a value that depends on knowing the vector's length
+            -> r -- ^ the value computed with the length
+knownLength = V.knownLength
+
+-- | /O(1)/ Reveal a 'KnownNat' instance and 'Proxy' for a vector's length,
+-- determined at runtime.
+knownLength' :: forall n a r. Storable a
+             => Vector n a -- ^ a vector of some (potentially unknown) length
+             -> (KnownNat n => Proxy n -> r) -- ^ a value that depends on knowing the vector's length, which is given as a 'Proxy'
+             -> r -- ^ the value computed with the length
+knownLength' = V.knownLength'
 
 -- | /O(1)/ Safe indexing using a 'Finite'.
 index :: forall n a. (KnownNat n, Storable a)
@@ -444,6 +480,17 @@ singleton :: forall a. (Storable a)
 singleton = V.singleton
 {-# inline singleton #-}
 
+#if !MIN_VERSION_GLASGOW_HASKELL(8,3,0,0)
+-- | /O(n)/ Construct a vector in a type safe manner
+--   fromTuple (1,2) :: Vector 2 Int
+--   fromTuple ("hey", "what's", "going", "on") :: Vector 4 String
+fromTuple :: forall a input length.
+             (Storable a, IndexedListLiterals input length a, KnownNat length)
+          => input -> Vector length a
+fromTuple = V.fromTuple
+{-# inline fromTuple #-}
+#endif
+
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.
 replicate :: forall n a. (KnownNat n, Storable a)
@@ -461,26 +508,16 @@ replicate' = V.replicate'
 -- | /O(n)/ construct a vector of the given length by applying the function to
 -- each index where the length is inferred from the type.
 generate :: forall n a. (KnownNat n, Storable a)
-         => (Int -> a) -> Vector n a
+         => (Finite n -> a) -> Vector n a
 generate = V.generate
 {-# inline generate #-}
 
 -- | /O(n)/ construct a vector of the given length by applying the function to
 -- each index where the length is given explicitly as a 'Proxy' argument.
 generate' :: forall n a p. (KnownNat n, Storable a)
-          => p n -> (Int -> a) -> Vector n a
+          => p n -> (Finite n -> a) -> Vector n a
 generate' = V.generate'
 {-# inline generate' #-}
-
--- | /O(n)/ construct a vector of the given length by applying the function to
--- each index where the length is inferred from the type.
---
--- The function can expect a @'Finite' n@, meaning that its input will
--- always be between @0@ and @n - 1@.
-generate_ :: forall n a. (KnownNat n, Storable a)
-          => (Finite n -> a) -> Vector n a
-generate_ = V.generate_
-{-# inline generate_ #-}
 
 -- | /O(n)/ Apply function n times to value. Zeroth element is original value.
 -- The length is inferred from the type.
@@ -517,26 +554,16 @@ replicateM' = V.replicateM'
 -- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
 -- each index where n is inferred from the type.
 generateM :: forall n m a. (KnownNat n, Storable a, Monad m)
-          => (Int -> m a) -> m (Vector n a)
+          => (Finite n -> m a) -> m (Vector n a)
 generateM = V.generateM
 {-# inline generateM #-}
 
 -- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
 -- each index where n is given explicitly as a 'Proxy' argument.
 generateM' :: forall n m a p. (KnownNat n, Storable a, Monad m)
-           => p n -> (Int -> m a) -> m (Vector n a)
+           => p n -> (Finite n -> m a) -> m (Vector n a)
 generateM' = V.generateM'
 {-# inline generateM' #-}
-
--- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
--- each index where n is inferred from the type.
---
--- The function can expect a @'Finite' n@, meaning that its input will
--- always be between @0@ and @n - 1@.
-generateM_ :: forall n m a. (KnownNat n, Storable a, Monad m)
-           => (Finite n -> m a) -> m (Vector n a)
-generateM_ = V.generateM_
-{-# inline generateM_ #-}
 
 --
 -- ** Unfolding
@@ -645,8 +672,8 @@ force = V.force
 -- > <5,9,2,7> // [(2,1),(0,3),(2,8)] = <3,9,8,7>
 --
 (//) :: (Storable a)
-     => Vector m a -- ^ initial vector (of length @m@)
-     -> [(Int, a)]   -- ^ list of index/value pairs (of length @n@)
+     => Vector m a      -- ^ initial vector (of length @m@)
+     -> [(Finite m, a)] -- ^ list of index/value pairs (of length @n@)
      -> Vector m a
 (//) = (V.//)
 {-# inline (//) #-}
@@ -824,8 +851,8 @@ unsafeBackpermute = V.unsafeBackpermute
 --
 
 -- | /O(n)/ Pair each element in a vector with its index
-indexed :: (Storable a, Storable (Int,a))
-        => Vector n a -> Vector n (Int,a)
+indexed :: (Storable a, Storable (Int, a), Storable (Finite n, a))
+        => Vector n a -> Vector n (Finite n,a)
 indexed = V.indexed
 {-# inline indexed #-}
 
@@ -841,7 +868,7 @@ map = V.map
 
 -- | /O(n)/ Apply a function to every element of a vector and its index
 imap :: (Storable a, Storable b)
-     => (Int -> a -> b) -> Vector n a -> Vector n b
+     => (Finite n -> a -> b) -> Vector n a -> Vector n b
 imap = V.imap
 {-# inline imap #-}
 
@@ -866,7 +893,7 @@ mapM = V.mapM
 -- | /O(n)/ Apply the monadic action to every element of a vector and its
 -- index, yielding a vector of results
 imapM :: (Monad m, Storable a, Storable b)
-      => (Int -> a -> m b) -> Vector n a -> m (Vector n b)
+      => (Finite n -> a -> m b) -> Vector n a -> m (Vector n b)
 imapM = V.imapM
 {-# inline imapM #-}
 
@@ -878,7 +905,7 @@ mapM_ = V.mapM_
 
 -- | /O(n)/ Apply the monadic action to every element of a vector and its
 -- index, ignoring the results
-imapM_ :: (Monad m, Storable a) => (Int -> a -> m b) -> Vector n a -> m ()
+imapM_ :: (Monad m, Storable a) => (Finite n -> a -> m b) -> Vector n a -> m ()
 imapM_ = V.imapM_
 {-# inline imapM_ #-}
 
@@ -947,7 +974,7 @@ zipWith6 = V.zipWith6
 -- | /O(n)/ Zip two vectors of the same length with a function that also takes
 -- the elements' indices).
 izipWith :: (Storable a,Storable b,Storable c)
-         => (Int -> a -> b -> c)
+         => (Finite n -> a -> b -> c)
          -> Vector n a
          -> Vector n b
          -> Vector n c
@@ -955,7 +982,7 @@ izipWith = V.izipWith
 {-# inline izipWith #-}
 
 izipWith3 :: (Storable a,Storable b,Storable c,Storable d)
-          => (Int -> a -> b -> c -> d)
+          => (Finite n -> a -> b -> c -> d)
           -> Vector n a
           -> Vector n b
           -> Vector n c
@@ -964,7 +991,7 @@ izipWith3 = V.izipWith3
 {-# inline izipWith3 #-}
 
 izipWith4 :: (Storable a,Storable b,Storable c,Storable d,Storable e)
-          => (Int -> a -> b -> c -> d -> e)
+          => (Finite n -> a -> b -> c -> d -> e)
           -> Vector n a
           -> Vector n b
           -> Vector n c
@@ -974,7 +1001,7 @@ izipWith4 = V.izipWith4
 {-# inline izipWith4 #-}
 
 izipWith5 :: (Storable a,Storable b,Storable c,Storable d,Storable e,Storable f)
-          => (Int -> a -> b -> c -> d -> e -> f)
+          => (Finite n -> a -> b -> c -> d -> e -> f)
           -> Vector n a
           -> Vector n b
           -> Vector n c
@@ -985,7 +1012,7 @@ izipWith5 = V.izipWith5
 {-# inline izipWith5 #-}
 
 izipWith6 :: (Storable a,Storable b,Storable c,Storable d,Storable e,Storable f,Storable g)
-          => (Int -> a -> b -> c -> d -> e -> f -> g)
+          => (Finite n -> a -> b -> c -> d -> e -> f -> g)
           -> Vector n a
           -> Vector n b
           -> Vector n c
@@ -1051,7 +1078,7 @@ zipWithM = V.zipWithM
 -- | /O(n)/ Zip the two vectors with a monadic action that also takes the
 -- element index and yield a vector of results
 izipWithM :: (Monad m, Storable a, Storable b, Storable c)
-         => (Int -> a -> b -> m c) -> Vector n a -> Vector n b -> m (Vector n c)
+         => (Finite n -> a -> b -> m c) -> Vector n a -> Vector n b -> m (Vector n c)
 izipWithM = V.izipWithM
 {-# inline izipWithM #-}
 
@@ -1064,7 +1091,7 @@ zipWithM_ = V.zipWithM_
 -- | /O(n)/ Zip the two vectors with a monadic action that also takes
 -- the element index and ignore the results
 izipWithM_ :: (Monad m, Storable a, Storable b)
-           => (Int -> a -> b -> m c) -> Vector n a -> Vector n b -> m ()
+           => (Finite n -> a -> b -> m c) -> Vector n a -> Vector n b -> m ()
 izipWithM_ = V.izipWithM_
 {-# inline izipWithM_ #-}
 
@@ -1129,14 +1156,14 @@ find = V.find
 
 -- | /O(n)/ Yield 'Just' the index of the first element matching the predicate
 -- or 'Nothing' if no such element exists.
-findIndex :: Storable a => (a -> Bool) -> Vector n a -> Maybe Int
+findIndex :: Storable a => (a -> Bool) -> Vector n a -> Maybe (Finite n)
 findIndex = V.findIndex
 {-# inline findIndex #-}
 
 -- | /O(n)/ Yield 'Just' the index of the first occurence of the given element or
 -- 'Nothing' if the vector does not contain the element. This is a specialised
 -- version of 'findIndex'.
-elemIndex :: (Storable a, Eq a) => a -> Vector n a -> Maybe Int
+elemIndex :: (Storable a, Eq a) => a -> Vector n a -> Maybe (Finite n)
 elemIndex = V.elemIndex
 {-# inline elemIndex #-}
 
@@ -1185,24 +1212,24 @@ foldr1' = V.foldr1'
 {-# inline foldr1' #-}
 
 -- | /O(n)/ Left fold (function applied to each element and its index)
-ifoldl :: Storable b => (a -> Int -> b -> a) -> a -> Vector n b -> a
+ifoldl :: Storable b => (a -> Finite n -> b -> a) -> a -> Vector n b -> a
 ifoldl = V.ifoldl
 {-# inline ifoldl #-}
 
 -- | /O(n)/ Left fold with strict accumulator (function applied to each element
 -- and its index)
-ifoldl' :: Storable b => (a -> Int -> b -> a) -> a -> Vector n b -> a
+ifoldl' :: Storable b => (a -> Finite n -> b -> a) -> a -> Vector n b -> a
 ifoldl' = V.ifoldl'
 {-# inline ifoldl' #-}
 
 -- | /O(n)/ Right fold (function applied to each element and its index)
-ifoldr :: Storable a => (Int -> a -> b -> b) -> b -> Vector n a -> b
+ifoldr :: Storable a => (Finite n -> a -> b -> b) -> b -> Vector n a -> b
 ifoldr = V.ifoldr
 {-# inline ifoldr #-}
 
 -- | /O(n)/ Right fold with strict accumulator (function applied to each
 -- element and its index)
-ifoldr' :: Storable a => (Int -> a -> b -> b) -> b -> Vector n a -> b
+ifoldr' :: Storable a => (Finite n -> a -> b -> b) -> b -> Vector n a -> b
 ifoldr' = V.ifoldr'
 {-# inline ifoldr' #-}
 
@@ -1263,26 +1290,26 @@ minimumBy = V.minimumBy
 {-# inline minimumBy #-}
 
 -- | /O(n)/ Yield the index of the maximum element of the non-empty vector.
-maxIndex :: (Storable a, Ord a, KnownNat n) => Vector (n+1) a -> Int
+maxIndex :: (Storable a, Ord a, KnownNat n) => Vector (n+1) a -> Finite (n + 1)
 maxIndex = V.maxIndex
 {-# inline maxIndex #-}
 
 -- | /O(n)/ Yield the index of the maximum element of the non-empty vector
 -- according to the given comparison function.
 maxIndexBy :: (Storable a, KnownNat n)
-           => (a -> a -> Ordering) -> Vector (n+1) a -> Int
+           => (a -> a -> Ordering) -> Vector (n+1) a -> Finite (n + 1)
 maxIndexBy = V.maxIndexBy
 {-# inline maxIndexBy #-}
 
 -- | /O(n)/ Yield the index of the minimum element of the non-empty vector.
-minIndex :: (Storable a, Ord a, KnownNat n) => Vector (n+1) a -> Int
+minIndex :: (Storable a, Ord a, KnownNat n) => Vector (n+1) a -> Finite (n + 1)
 minIndex = V.minIndex
 {-# inline minIndex #-}
 
 -- | /O(n)/ Yield the index of the minimum element of the non-empty vector
 -- according to the given comparison function.
 minIndexBy :: (Storable a, KnownNat n)
-           => (a -> a -> Ordering) -> Vector (n+1) a -> Int
+           => (a -> a -> Ordering) -> Vector (n+1) a -> Finite (n + 1)
 minIndexBy = V.minIndexBy
 {-# inline minIndexBy #-}
 
@@ -1294,7 +1321,7 @@ foldM = V.foldM
 {-# inline foldM #-}
 
 -- | /O(n)/ Monadic fold (action applied to each element and its index)
-ifoldM :: (Monad m, Storable b) => (a -> Int -> b -> m a) -> a -> Vector n b -> m a
+ifoldM :: (Monad m, Storable b) => (a -> Finite n -> b -> m a) -> a -> Vector n b -> m a
 ifoldM = V.ifoldM
 {-# inline ifoldM #-}
 
@@ -1312,7 +1339,7 @@ foldM' = V.foldM'
 -- | /O(n)/ Monadic fold with strict accumulator (action applied to each
 -- element and its index)
 ifoldM' :: (Monad m, Storable b)
-        => (a -> Int -> b -> m a) -> a -> Vector n b -> m a
+        => (a -> Finite n -> b -> m a) -> a -> Vector n b -> m a
 ifoldM' = V.ifoldM'
 {-# inline ifoldM' #-}
 
@@ -1331,7 +1358,7 @@ foldM_ = V.foldM_
 -- | /O(n)/ Monadic fold that discards the result (action applied to
 -- each element and its index)
 ifoldM_ :: (Monad m, Storable b)
-        => (a -> Int -> b -> m a) -> a -> Vector n b -> m ()
+        => (a -> Finite n -> b -> m a) -> a -> Vector n b -> m ()
 ifoldM_ = V.ifoldM_
 {-# inline ifoldM_ #-}
 
@@ -1350,7 +1377,7 @@ foldM'_ = V.foldM'_
 -- | /O(n)/ Monadic fold with strict accumulator that discards the result
 -- (action applied to each element and its index)
 ifoldM'_ :: (Monad m, Storable b)
-         => (a -> Int -> b -> m a) -> a -> Vector n b -> m ()
+         => (a -> Finite n -> b -> m a) -> a -> Vector n b -> m ()
 ifoldM'_ = V.ifoldM'_
 {-# inline ifoldM'_ #-}
 
@@ -1506,6 +1533,41 @@ withSizedList :: forall a r. Storable a
               => [a] -> (forall n. KnownNat n => Vector n a -> r) -> r
 withSizedList xs = withSized (VS.fromList xs)
 {-# inline withSizedList #-}
+
+-- ** Mutable vectors
+
+-- | /O(n)/ Yield an immutable copy of the mutable vector.
+freeze :: (PrimMonad m, Storable a)
+       => VSM.MVector n (PrimState m) a
+       -> m (Vector n a)
+freeze = V.freeze
+
+-- | /O(1)/ Unsafely convert a mutable vector to an immutable one withouy
+-- copying. The mutable vector may not be used after this operation.
+unsafeFreeze :: (PrimMonad m, Storable a)
+             => VSM.MVector n (PrimState m) a
+             -> m (Vector n a)
+unsafeFreeze = V.unsafeFreeze
+
+-- | /O(n)/ Yield a mutable copy of the immutable vector.
+thaw :: (PrimMonad m, Storable a)
+     => Vector n a
+     -> m (VSM.MVector n (PrimState m) a)
+thaw = V.thaw
+
+-- | /O(n)/ Unsafely convert an immutable vector to a mutable one without
+-- copying. The immutable vector may not be used after this operation.
+unsafeThaw :: (PrimMonad m, Storable a)
+           => Vector n a
+           -> m (VSM.MVector n (PrimState m) a)
+unsafeThaw = V.unsafeThaw
+
+-- | /O(n)/ Copy an immutable vector into a mutable one.
+copy :: (PrimMonad m, Storable a)
+     => VSM.MVector n (PrimState m) a
+     -> Vector n a
+     -> m ()
+copy = V.copy
 
 -- ** Unsized vectors
 
