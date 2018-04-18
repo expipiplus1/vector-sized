@@ -54,9 +54,7 @@ module Data.Vector.Sized
     -- ** Initialization
   , empty
   , singleton
-#if !MIN_VERSION_GLASGOW_HASKELL(8,3,0,0)
   , fromTuple
-#endif
   , replicate
   , replicate'
   , generate
@@ -240,9 +238,7 @@ import qualified Data.Vector.Mutable.Sized as VM
 import GHC.TypeLits
 import Data.Finite
 import Data.Proxy
-#if !MIN_VERSION_GLASGOW_HASKELL(8,3,0,0)
 import Data.IndexedListLiterals hiding (toList)
-#endif
 import Control.Monad.Primitive
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
@@ -472,7 +468,6 @@ singleton :: forall a. a -> Vector 1 a
 singleton = V.singleton
 {-# inline singleton #-}
 
-#if !MIN_VERSION_GLASGOW_HASKELL(8,3,0,0)
 -- | /O(n)/ Construct a vector in a type safe manner
 --   fromTuple (1,2) :: Vector 2 Int
 --   fromTuple ("hey", "what's", "going", "on") :: Vector 4 String
@@ -480,7 +475,6 @@ fromTuple :: forall input length ty.
              (IndexedListLiterals input length ty, KnownNat length)
           => input -> Vector length ty
 fromTuple = V.fromTuple
-#endif
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.
