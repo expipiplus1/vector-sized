@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.1.0] - 2018-04-12
+
+- Add Representable and Distributive instances for sized boxed vectors
+
 ## [1.0.0.0] - 2018-03-20
 
 - More functions using `Finite` instead of `Int`
