@@ -5,6 +5,7 @@ packages:
 - '.'
 extra-deps:
 - finite-typelits-0.1.0.0
-- indexed-list-literals-0.1.0.1
+- indexed-list-literals-0.2.0.0
+- Only-0.1
 flags: {}
 extra-package-dbs: []
