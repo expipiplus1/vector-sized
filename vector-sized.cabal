@@ -14,9 +14,6 @@ extra-source-files:  readme.md
                    , changelog.md
 cabal-version:       >=1.10
 
--- nice literals are not enabled on GHC 8.4; see
--- https://github.com/DavidM-D/indexed-list-literals/issues/1
-
 library
   hs-source-dirs:      src
   exposed-modules:     Data.Vector.Sized

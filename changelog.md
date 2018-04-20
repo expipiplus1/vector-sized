@@ -3,6 +3,7 @@
 ## [1.0.1.0] - 2018-04-12
 
 - Add Representable and Distributive instances for sized boxed vectors
+- Use newer version of indexed-list-literals to allow a fully featured compile on ghc 8.4
 
 ## [1.0.0.0] - 2018-03-20
 
