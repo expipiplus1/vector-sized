@@ -274,7 +274,7 @@ import Prelude
                scanr, scanr1, mapM, mapM_, sequence, sequence_)
 
 
-import Data.IndexedListLiterals hiding (toList)
+import Data.IndexedListLiterals hiding (toList, fromList)
 import qualified Data.IndexedListLiterals as ILL
 
 instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
