@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveTraversable          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures             #-}
+{-# OPTIONS_HADDOCK not-home            #-}
 
 module Data.Vector.Generic.Sized.Internal
   ( Vector(..)
