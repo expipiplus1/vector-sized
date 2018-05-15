@@ -238,7 +238,7 @@ import qualified Data.Vector.Mutable.Sized as VM
 import GHC.TypeLits
 import Data.Finite
 import Data.Proxy
-import Data.IndexedListLiterals hiding (toList)
+import Data.IndexedListLiterals hiding (toList, fromList)
 import Control.Monad.Primitive
 import Prelude hiding ( length, null,
                         replicate, (++), concat,
