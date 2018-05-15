@@ -1,5 +1,10 @@
 # Change Log
 
+## [1.0.2.0] - 2018-05-15
+
+- `not-home` haddock annotations for Internal modules, for more helpful linking
+- Fix build with indexed-list-literals-0.2.1.0
+
 ## [1.0.1.0] - 2018-04-12
 
 - Add Representable and Distributive instances for sized boxed vectors
