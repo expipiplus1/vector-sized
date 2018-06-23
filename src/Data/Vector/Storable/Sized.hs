@@ -293,19 +293,19 @@ knownLength' :: forall n a r. Storable a
 knownLength' = V.knownLength'
 
 -- | /O(1)/ Safe indexing using a 'Finite'.
-index :: forall n a. (KnownNat n, Storable a)
+index :: forall n a. Storable a
       => Vector n a -> Finite n -> a
 index = V.index
 {-# inline index #-}
 
 -- | /O(1)/ Safe indexing using a 'Proxy'.
-index' :: forall n m a p. (KnownNat n, KnownNat m, Storable a)
+index' :: forall n m a p. (KnownNat n, Storable a)
        => Vector (n+m+1) a -> p n -> a
 index' = V.index'
 {-# inline index' #-}
 
 -- | /O(1)/ Indexing using an Int without bounds checking.
-unsafeIndex :: forall n a. (KnownNat n, Storable a)
+unsafeIndex :: forall n a. Storable a
       => Vector n a -> Int -> a
 unsafeIndex = V.unsafeIndex
 {-# inline unsafeIndex #-}
@@ -323,19 +323,19 @@ last = V.last
 {-# inline last #-}
 
 -- | Lens to access (/O(1)/) and update (/O(n)/) an arbitrary element by its index.
-ix :: forall n a f. (KnownNat n, Storable a, Functor f)
+ix :: forall n a f. (Storable a, Functor f)
    => Finite n -> (a -> f a) -> Vector n a -> f (Vector n a)
 ix = V.ix
 {-# inline ix #-}
 
 -- | Lens to access (/O(1)/) and update (/O(n)/) the first element of a non-empty vector.
-_head :: forall n a f. (KnownNat n, Storable a, Functor f)
+_head :: forall n a f. (Storable a, Functor f)
       => (a -> f a) -> Vector (1+n) a -> f (Vector (1+n) a)
 _head = V._head
 {-# inline _head #-}
 
 -- | Lens to access (/O(1)/) and update (/O(n)/) the last element of a non-empty vector.
-_last :: forall n a f. (KnownNat n, Storable a, Functor f)
+_last :: forall n a f. (Storable a, Functor f)
        => (a -> f a) -> Vector (n+1) a -> f (Vector (n+1) a)
 _last = V._last
 {-# inline _last #-}
@@ -343,42 +343,42 @@ _last = V._last
 
 -- | /O(1)/ Safe indexing in a monad. See the documentation for 'VG.indexM' for
 -- an explanation of why this is useful.
-indexM :: forall n a m. (KnownNat n, Storable a, Monad m)
+indexM :: forall n a m. (Storable a, Monad m)
       => Vector n a -> Finite n -> m a
 indexM = V.indexM
 {-# inline indexM #-}
 
 -- | /O(1)/ Safe indexing in a monad using a 'Proxy'. See the documentation for
 -- 'VG.indexM' for an explanation of why this is useful.
-indexM' :: forall n k a m p. (KnownNat n, KnownNat k, Storable a, Monad m)
+indexM' :: forall n k a m p. (KnownNat n, Storable a, Monad m)
       => Vector (n+k) a -> p n -> m a
 indexM' = V.indexM'
 {-# inline indexM' #-}
 
 -- | /O(1)/ Indexing using an Int without bounds checking. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
-unsafeIndexM :: forall n a m. (KnownNat n, Storable a, Monad m)
+unsafeIndexM :: forall n a m. (Storable a, Monad m)
       => Vector n a -> Int -> m a
 unsafeIndexM = V.unsafeIndexM
 {-# inline unsafeIndexM #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector in a monad. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
-headM :: forall n a m. (KnownNat n, Storable a, Monad m)
+headM :: forall n a m. (Storable a, Monad m)
       => Vector (1+n) a -> m a
 headM = V.headM
 {-# inline headM #-}
 
 -- | /O(1)/ Yield the last element of a non-empty vector in a monad. See the
 -- documentation for 'VG.indexM' for an explanation of why this is useful.
-lastM :: forall n a m. (KnownNat n, Storable a, Monad m)
+lastM :: forall n a m. (Storable a, Monad m)
       => Vector (n+1) a -> m a
 lastM = V.lastM
 {-# inline lastM #-}
 
 -- | /O(1)/ Yield a slice of the vector without copying it with an inferred
 -- length argument.
-slice :: forall i n m a p. (KnownNat i, KnownNat n, KnownNat m, Storable a)
+slice :: forall i n m a p. (KnownNat i, KnownNat n, Storable a)
       => p i -- ^ starting index
       -> Vector (i+n+m) a
       -> Vector n a
@@ -387,7 +387,7 @@ slice = V.slice
 
 -- | /O(1)/ Yield a slice of the vector without copying it with an explicit
 -- length argument.
-slice' :: forall i n m a p. (KnownNat i, KnownNat n, KnownNat m, Storable a)
+slice' :: forall i n m a p. (KnownNat i, KnownNat n, Storable a)
        => p i -- ^ starting index
        -> p n -- ^ length
        -> Vector (i+n+m) a
@@ -412,7 +412,7 @@ tail = V.tail
 -- | /O(1)/ Yield the first n elements. The resultant vector always contains
 -- this many elements. The length of the resultant vector is inferred from the
 -- type.
-take :: forall n m a. (KnownNat n, KnownNat m, Storable a)
+take :: forall n m a. (KnownNat n, Storable a)
      => Vector (n+m) a -> Vector n a
 take = V.take
 {-# inline take #-}
@@ -420,7 +420,7 @@ take = V.take
 -- | /O(1)/ Yield the first n elements. The resultant vector always contains
 -- this many elements. The length of the resultant vector is given explicitly
 -- as a 'Proxy' argument.
-take' :: forall n m a p. (KnownNat n, KnownNat m, Storable a)
+take' :: forall n m a p. (KnownNat n, Storable a)
       => p n -> Vector (n+m) a -> Vector n a
 take' = V.take'
 {-# inline take' #-}
@@ -428,7 +428,7 @@ take' = V.take'
 -- | /O(1)/ Yield all but the the first n elements. The given vector must
 -- contain at least this many elements The length of the resultant vector is
 -- inferred from the type.
-drop :: forall n m a. (KnownNat n, KnownNat m, Storable a)
+drop :: forall n m a. (KnownNat n, Storable a)
      => Vector (n+m) a -> Vector m a
 drop = V.drop
 {-# inline drop #-}
@@ -436,14 +436,14 @@ drop = V.drop
 -- | /O(1)/ Yield all but the the first n elements. The given vector must
 -- contain at least this many elements The length of the resultant vector is
 -- givel explicitly as a 'Proxy' argument.
-drop' :: forall n m a p. (KnownNat n, KnownNat m, Storable a)
+drop' :: forall n m a p. (KnownNat n, Storable a)
       => p n -> Vector (n+m) a -> Vector m a
 drop' = V.drop'
 {-# inline drop' #-}
 
 -- | /O(1)/ Yield the first n elements paired with the remainder without copying.
 -- The lengths of the resultant vector are inferred from the type.
-splitAt :: forall n m a. (KnownNat n, KnownNat m, Storable a)
+splitAt :: forall n m a. (KnownNat n, Storable a)
         => Vector (n+m) a -> (Vector n a, Vector m a)
 splitAt = V.splitAt
 {-# inline splitAt #-}
@@ -451,7 +451,7 @@ splitAt = V.splitAt
 -- | /O(1)/ Yield the first n elements paired with the remainder without
 -- copying.  The length of the first resultant vector is passed explicitly as a
 -- 'Proxy' argument.
-splitAt' :: forall n m a p. (KnownNat n, KnownNat m, Storable a)
+splitAt' :: forall n m a p. (KnownNat n, Storable a)
          => p n -> Vector (n+m) a -> (Vector n a, Vector m a)
 splitAt' = V.splitAt'
 {-# inline splitAt' #-}
@@ -1171,7 +1171,7 @@ foldl = V.foldl
 {-# inline foldl #-}
 
 -- | /O(n)/ Left fold on non-empty vectors
-foldl1 :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (1+n) a -> a
+foldl1 :: Storable a => (a -> a -> a) -> Vector (1+n) a -> a
 foldl1 = V.foldl1
 {-# inline foldl1 #-}
 
@@ -1181,7 +1181,7 @@ foldl' = V.foldl'
 {-# inline foldl' #-}
 
 -- | /O(n)/ Left fold on non-empty vectors with strict accumulator
-foldl1' :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (1+n) a -> a
+foldl1' :: Storable a => (a -> a -> a) -> Vector (1+n) a -> a
 foldl1' = V.foldl1'
 {-# inline foldl1' #-}
 
@@ -1191,7 +1191,7 @@ foldr = V.foldr
 {-# inline foldr #-}
 
 -- | /O(n)/ Right fold on non-empty vectors
-foldr1 :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (n+1) a -> a
+foldr1 :: Storable a => (a -> a -> a) -> Vector (n+1) a -> a
 foldr1 = V.foldr1
 {-# inline foldr1 #-}
 
@@ -1201,7 +1201,7 @@ foldr' = V.foldr'
 {-# inline foldr' #-}
 
 -- | /O(n)/ Right fold on non-empty vectors with strict accumulator
-foldr1' :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (n+1) a -> a
+foldr1' :: Storable a => (a -> a -> a) -> Vector (n+1) a -> a
 foldr1' = V.foldr1'
 {-# inline foldr1' #-}
 
@@ -1260,49 +1260,49 @@ product = V.product
 {-# inline product #-}
 
 -- | /O(n)/ Yield the maximum element of the non-empty vector.
-maximum :: (Storable a, Ord a, KnownNat n) => Vector (n+1) a -> a
+maximum :: (Storable a, Ord a) => Vector (n+1) a -> a
 maximum = V.maximum
 {-# inline maximum #-}
 
 -- | /O(n)/ Yield the maximum element of the non-empty vector according to the
 -- given comparison function.
-maximumBy :: (Storable a, KnownNat n)
+maximumBy :: Storable a
           => (a -> a -> Ordering) -> Vector (n+1) a -> a
 maximumBy = V.maximumBy
 {-# inline maximumBy #-}
 
 -- | /O(n)/ Yield the minimum element of the non-empty vector.
-minimum :: (Storable a, Ord a, KnownNat n) => Vector (n+1) a -> a
+minimum :: (Storable a, Ord a) => Vector (n+1) a -> a
 minimum = V.minimum
 {-# inline minimum #-}
 
 -- | /O(n)/ Yield the minimum element of the non-empty vector according to the
 -- given comparison function.
-minimumBy :: (Storable a, KnownNat n)
+minimumBy :: Storable a
           => (a -> a -> Ordering) -> Vector (n+1) a -> a
 minimumBy = V.minimumBy
 {-# inline minimumBy #-}
 
 -- | /O(n)/ Yield the index of the maximum element of the non-empty vector.
-maxIndex :: (Storable a, Ord a, KnownNat n) => Vector (n+1) a -> Finite (n + 1)
+maxIndex :: (Storable a, Ord a) => Vector (n+1) a -> Finite (n + 1)
 maxIndex = V.maxIndex
 {-# inline maxIndex #-}
 
 -- | /O(n)/ Yield the index of the maximum element of the non-empty vector
 -- according to the given comparison function.
-maxIndexBy :: (Storable a, KnownNat n)
+maxIndexBy :: Storable a
            => (a -> a -> Ordering) -> Vector (n+1) a -> Finite (n + 1)
 maxIndexBy = V.maxIndexBy
 {-# inline maxIndexBy #-}
 
 -- | /O(n)/ Yield the index of the minimum element of the non-empty vector.
-minIndex :: (Storable a, Ord a, KnownNat n) => Vector (n+1) a -> Finite (n + 1)
+minIndex :: (Storable a, Ord a) => Vector (n+1) a -> Finite (n + 1)
 minIndex = V.minIndex
 {-# inline minIndex #-}
 
 -- | /O(n)/ Yield the index of the minimum element of the non-empty vector
 -- according to the given comparison function.
-minIndexBy :: (Storable a, KnownNat n)
+minIndexBy :: Storable a
            => (a -> a -> Ordering) -> Vector (n+1) a -> Finite (n + 1)
 minIndexBy = V.minIndexBy
 {-# inline minIndexBy #-}
@@ -1320,7 +1320,7 @@ ifoldM = V.ifoldM
 {-# inline ifoldM #-}
 
 -- | /O(n)/ Monadic fold over non-empty vectors
-fold1M :: (Monad m, Storable a, KnownNat n)
+fold1M :: (Monad m, Storable a)
        => (a -> a -> m a) -> Vector (1+n) a -> m a
 fold1M = V.fold1M
 {-# inline fold1M #-}
@@ -1338,7 +1338,7 @@ ifoldM' = V.ifoldM'
 {-# inline ifoldM' #-}
 
 -- | /O(n)/ Monadic fold over non-empty vectors with strict accumulator
-fold1M' :: (Monad m, Storable a, KnownNat n)
+fold1M' :: (Monad m, Storable a)
         => (a -> a -> m a) -> Vector (n+1) a -> m a
 fold1M' = V.fold1M'
 {-# inline fold1M' #-}
@@ -1357,7 +1357,7 @@ ifoldM_ = V.ifoldM_
 {-# inline ifoldM_ #-}
 
 -- | /O(n)/ Monadic fold over non-empty vectors that discards the result
-fold1M_ :: (Monad m, Storable a, KnownNat n)
+fold1M_ :: (Monad m, Storable a)
         => (a -> a -> m a) -> Vector (n+1) a -> m ()
 fold1M_ = V.fold1M_
 {-# inline fold1M_ #-}
@@ -1377,7 +1377,7 @@ ifoldM'_ = V.ifoldM'_
 
 -- | /O(n)/ Monad fold over non-empty vectors with strict accumulator
 -- that discards the result
-fold1M'_ :: (Monad m, Storable a, KnownNat n)
+fold1M'_ :: (Monad m, Storable a)
          => (a -> a -> m a) -> Vector (n+1) a -> m ()
 fold1M'_ = V.fold1M'_
 {-# inline fold1M'_ #-}
@@ -1437,12 +1437,12 @@ scanl' = V.scanl'
 {-# inline scanl' #-}
 
 -- | /O(n)/ Scan over a non-empty vector
-scanl1 :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
+scanl1 :: Storable a => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
 scanl1 = V.scanl1
 {-# inline scanl1 #-}
 
 -- | /O(n)/ Scan over a non-empty vector with a strict accumulator
-scanl1' :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
+scanl1' :: Storable a => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
 scanl1' = V.scanl1'
 {-# inline scanl1' #-}
 
@@ -1477,13 +1477,13 @@ scanr' = V.scanr'
 {-# inline scanr' #-}
 
 -- | /O(n)/ Right-to-left scan over a non-empty vector
-scanr1 :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
+scanr1 :: Storable a => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
 scanr1 = V.scanr1
 {-# inline scanr1 #-}
 
 -- | /O(n)/ Right-to-left scan over a non-empty vector with a strict
 -- accumulator
-scanr1' :: (Storable a, KnownNat n) => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
+scanr1' :: Storable a => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
 scanr1' = V.scanr1'
 {-# inline scanr1' #-}
 
@@ -1592,7 +1592,7 @@ fromSized = V.fromSized
 
 -- | Apply a function on unsized vectors to a sized vector. The function must
 -- preserve the size of the vector, this is not checked.
-withVectorUnsafe :: forall a b (n :: Nat). (Storable a, Storable b)
+withVectorUnsafe :: forall a b (n :: Nat). ()
                  => (VS.Vector a -> VS.Vector b) -> Vector n a -> Vector n b
 withVectorUnsafe = V.withVectorUnsafe
 {-# inline withVectorUnsafe #-}

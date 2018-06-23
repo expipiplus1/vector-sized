@@ -99,13 +99,13 @@ type MVector = VGM.MVector VM.MVector
 -- ** Length information
 
 -- | /O(1)/ Yield the length of the mutable vector as an 'Int'.
-length :: forall n s a. (KnownNat n)
+length :: forall n s a. KnownNat n
        => MVector n s a -> Int
 length = VGM.length
 {-# inline length #-}
 
 -- | /O(1)/ Yield the length of the mutable vector as a 'Proxy'.
-length' :: forall n s a. (KnownNat n)
+length' :: forall n s a. ()
         => MVector n s a -> Proxy n
 length' = VGM.length'
 {-# inline length' #-}
@@ -120,7 +120,7 @@ null = VGM.null
 
 -- | /O(1)/ Yield a slice of the mutable vector without copying it with an
 -- inferred length argument.
-slice :: forall i n k s a p. (KnownNat i, KnownNat n, KnownNat k)
+slice :: forall i n k s a p. (KnownNat i, KnownNat n)
       => p i -- ^ starting index
       -> MVector (i+n+k) s a
       -> MVector n s a
@@ -130,7 +130,7 @@ slice = VGM.slice
 -- | /O(1)/ Yield a slice of the mutable vector without copying it with an
 -- explicit length argument.
 slice' :: forall i n k s a p
-        . (KnownNat i, KnownNat n, KnownNat k)
+        . (KnownNat i, KnownNat n)
        => p i -- ^ starting index
        -> p n -- ^ length
        -> MVector (i+n+k) s a
@@ -155,7 +155,7 @@ tail = VGM.tail
 -- | /O(1)/ Yield the first n elements. The resultant vector always contains
 -- this many elements. The length of the resultant vector is inferred from the
 -- type.
-take :: forall n k s a. (KnownNat n, KnownNat k)
+take :: forall n k s a. KnownNat n
      => MVector (n+k) s a -> MVector n s a
 take = VGM.take
 {-# inline take #-}
@@ -163,7 +163,7 @@ take = VGM.take
 -- | /O(1)/ Yield the first n elements. The resultant vector always contains
 -- this many elements. The length of the resultant vector is given explicitly
 -- as a 'Proxy' argument.
-take' :: forall n k s a p. (KnownNat n, KnownNat k)
+take' :: forall n k s a p. KnownNat n
       => p n -> MVector (n+k) s a -> MVector n s a
 take' = VGM.take'
 {-# inline take' #-}
@@ -171,7 +171,7 @@ take' = VGM.take'
 -- | /O(1)/ Yield all but the the first n elements. The given vector must
 -- contain at least this many elements The length of the resultant vector is
 -- inferred from the type.
-drop :: forall n k s a. (KnownNat n, KnownNat k)
+drop :: forall n k s a. KnownNat n
      => MVector (n+k) s a -> MVector k s a
 drop = VGM.drop
 {-# inline drop #-}
@@ -179,14 +179,14 @@ drop = VGM.drop
 -- | /O(1)/ Yield all but the the first n elements. The given vector must
 -- contain at least this many elements The length of the resultant vector is
 -- givel explicitly as a 'Proxy' argument.
-drop' :: forall n k s a p. (KnownNat n, KnownNat k)
+drop' :: forall n k s a p. KnownNat n
       => p n -> MVector (n+k) s a -> MVector k s a
 drop' = VGM.drop'
 {-# inline drop' #-}
 
 -- | /O(1)/ Yield the first n elements paired with the remainder without copying.
 -- The lengths of the resultant vector are inferred from the type.
-splitAt :: forall n m s a. (KnownNat n, KnownNat m)
+splitAt :: forall n m s a. KnownNat n
         => MVector (n+m) s a -> (MVector n s a, MVector m s a)
 splitAt = VGM.splitAt
 {-# inline splitAt #-}
@@ -194,7 +194,7 @@ splitAt = VGM.splitAt
 -- | /O(1)/ Yield the first n elements paired with the remainder without
 -- copying.  The length of the first resultant vector is passed explicitly as a
 -- 'Proxy' argument.
-splitAt' :: forall n m s a p. (KnownNat n, KnownNat m)
+splitAt' :: forall n m s a p. KnownNat n
          => p n -> MVector (n+m) s a -> (MVector n s a, MVector m s a)
 splitAt' = VGM.splitAt'
 {-# inline splitAt' #-}
@@ -204,7 +204,7 @@ splitAt' = VGM.splitAt'
 -- | /O(1)/ Yield all but the the first n elements. The given vector must
 -- contain at least this many elements The length of the resultant vector is
 -- inferred from the type.
-overlaps :: forall n k s a. (KnownNat n, KnownNat k)
+overlaps :: forall n k s a. ()
          => MVector n s a
          -> MVector k s a
          -> Bool
@@ -290,92 +290,92 @@ clear = VGM.clear
 -- * Accessing individual elements
 
 -- | /O(1)/ Yield the element at a given type-safe position using 'Finite'.
-read :: forall n m a. (KnownNat n, PrimMonad m)
+read :: forall n m a. PrimMonad m
       => MVector n (PrimState m) a -> Finite n -> m a
 read = VGM.read
 {-# inline read #-}
 
 -- | /O(1)/ Yield the element at a given type-safe position using 'Proxy'.
-read' :: forall n k a m p. (KnownNat n, KnownNat k, PrimMonad m)
+read' :: forall n k a m p. (KnownNat k, PrimMonad m)
        => MVector (n+k+1) (PrimState m) a -> p k -> m a
 read' = VGM.read'
 {-# inline read' #-}
 
 -- | /O(1)/ Yield the element at a given 'Int' position without bounds
 -- checking.
-unsafeRead :: forall n a m. (KnownNat n, PrimMonad m)
+unsafeRead :: forall n a m. PrimMonad m
            => MVector n (PrimState m) a -> Int -> m a
 unsafeRead = VGM.unsafeRead
 {-# inline unsafeRead #-}
 
 -- | /O(1)/ Replace the element at a given type-safe position using 'Finite'.
-write :: forall n m a. (KnownNat n, PrimMonad m)
+write :: forall n m a. PrimMonad m
       => MVector n (PrimState m) a -> Finite n -> a -> m ()
 write = VGM.write
 {-# inline write #-}
 
 -- | /O(1)/ Replace the element at a given type-safe position using 'Proxy'.
-write' :: forall n k a m p. (KnownNat n, KnownNat k, PrimMonad m)
+write' :: forall n k a m p. (KnownNat k, PrimMonad m)
        => MVector (n+k+1) (PrimState m) a -> p k -> a -> m ()
 write' = VGM.write'
 {-# inline write' #-}
 
 -- | /O(1)/ Replace the element at a given 'Int' position without bounds
 -- checking.
-unsafeWrite :: forall n m a. (KnownNat n, PrimMonad m)
+unsafeWrite :: forall n m a. PrimMonad m
       => MVector n (PrimState m) a -> Int -> a -> m ()
 unsafeWrite = VGM.unsafeWrite
 {-# inline unsafeWrite #-}
 
 -- | /O(1)/ Modify the element at a given type-safe position using 'Finite'.
-modify :: forall n m a. (KnownNat n, PrimMonad m)
+modify :: forall n m a. PrimMonad m
        => MVector n (PrimState m) a -> (a -> a) -> Finite n -> m ()
 modify = VGM.modify
 {-# inline modify #-}
 
 -- | /O(1)/ Modify the element at a given type-safe position using 'Proxy'.
-modify' :: forall n k a m p. (KnownNat n, KnownNat k, PrimMonad m)
+modify' :: forall n k a m p. (KnownNat k, PrimMonad m)
         => MVector (n+k+1) (PrimState m) a -> (a -> a) -> p k -> m ()
 modify' = VGM.modify'
 {-# inline modify' #-}
 
 -- | /O(1)/ Modify the element at a given 'Int' position without bounds
 -- checking.
-unsafeModify :: forall n m a. (KnownNat n, PrimMonad m)
+unsafeModify :: forall n m a. PrimMonad m
        => MVector n (PrimState m) a -> (a -> a) -> Int -> m ()
 unsafeModify = VGM.unsafeModify
 {-# inline unsafeModify #-}
 
 -- | /O(1)/ Swap the elements at a given type-safe position using 'Finite's.
-swap :: forall n m a. (KnownNat n, PrimMonad m)
+swap :: forall n m a. PrimMonad m
      => MVector n (PrimState m) a -> Finite n -> Finite n -> m ()
 swap = VGM.swap
 {-# inline swap #-}
 
 -- | /O(1)/ Swap the elements at a given 'Int' position without bounds
 -- checking.
-unsafeSwap :: forall n m a. (KnownNat n, PrimMonad m)
+unsafeSwap :: forall n m a. PrimMonad m
            => MVector n (PrimState m) a -> Int -> Int -> m ()
 unsafeSwap = VGM.unsafeSwap
 {-# inline unsafeSwap #-}
 
 -- | /O(1)/ Replace the element at a given type-safe position and return
 -- the old element, using 'Finite'.
-exchange :: forall n m a. (KnownNat n, PrimMonad m)
+exchange :: forall n m a. PrimMonad m
          => MVector n (PrimState m) a -> Finite n -> a -> m a
 exchange = VGM.exchange
 {-# inline exchange #-}
 
 -- | /O(1)/ Replace the element at a given type-safe position and return
 -- the old element, using 'Finite'.
-exchange' :: forall n k a m p. (KnownNat n, KnownNat k, PrimMonad m)
+exchange' :: forall n k a m p. (KnownNat k, PrimMonad m)
           => MVector (n+k+1) (PrimState m) a -> p k -> a -> m a
 exchange' = VGM.exchange'
 {-# inline exchange' #-}
 
 -- | /O(1)/ Replace the element at a given 'Int' position and return
 -- the old element. No bounds checks are performed.
-unsafeExchange :: forall n m a. (KnownNat n, PrimMonad m)
+unsafeExchange :: forall n m a. PrimMonad m
          => MVector n (PrimState m) a -> Int -> a -> m a
 unsafeExchange = VGM.unsafeExchange
 {-# inline unsafeExchange #-}
@@ -385,7 +385,7 @@ unsafeExchange = VGM.unsafeExchange
 
 -- | Compute the next (lexicographically) permutation of a given vector
 -- in-place.  Returns 'False' when the input is the last permutation.
-nextPermutation :: forall n e m. (KnownNat n, Ord e, PrimMonad m)
+nextPermutation :: forall n e m. (Ord e, PrimMonad m)
                 => MVector n (PrimState m) e -> m Bool
 nextPermutation = VGM.nextPermutation
 {-# inline nextPermutation #-}
