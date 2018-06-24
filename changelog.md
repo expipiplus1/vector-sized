@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.3.0] - 2018-06-24
+
+- Remove redundant KnownNat constraints
+
 ## [1.0.2.0] - 2018-05-15
 
 - `not-home` haddock annotations for Internal modules, for more helpful linking
