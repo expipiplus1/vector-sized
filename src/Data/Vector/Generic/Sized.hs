@@ -303,6 +303,16 @@ instance KnownNat n => Applicative (Vector Boxed.Vector n) where
   (*>) = seq
   (<*) = flip seq
 
+-- | Treats a @'Data.Vector.Sized.Vector' n a@ as, essentially, a @'Finite'
+-- n -> a@, and emulates the 'Monad' instance for that function.
+--
+-- @'join' :: Vector n (Vector n a) -> Vector n a@ gets the /diagonal/ from
+-- a square "matrix".
+instance KnownNat n => Monad (Vector Boxed.Vector n) where
+  return   = replicate
+  xs >>= f = imap (\i x -> f x `index` i) xs
+  (>>)     = seq
+
 -- | The 'Semigroup' instance for sized vectors does not have the same
 -- behaviour as the 'Semigroup' instance for the unsized vectors found in the
 -- 'vectors' package. This instance has @(<>) = zipWith (<>)@, but 'vectors'
