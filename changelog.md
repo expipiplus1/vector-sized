@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.4.0] - 2018-07-14
+
+- Add Monad instance for boxed vectors.
+
 ## [1.0.3.1] - 2018-07-10
 
 - Loosen upper bound on `distributive`
