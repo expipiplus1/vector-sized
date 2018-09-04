@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.4.1] - 2018-09-04
+
+- Fix compilation on ghc 8.6.
+
 ## [1.0.4.0] - 2018-07-14
 
 - Add Monad instance for boxed vectors.
