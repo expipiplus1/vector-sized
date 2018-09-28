@@ -326,14 +326,14 @@ instance KnownNat n => Monad (Vector Boxed.Vector n) where
 -- @
 -- duplicate [1,2,3,4,5] = [[1,2,3,4,5], [2,3,4,5,1], [3,4,5,1,2], [4,5,1,2,3], [5,1,2,3,4]]
 -- @
-instance (KnownNat n, KnownNat m, n ~ (1 + m)) => Comonad (Vector Boxed.Vector n) where
+instance (KnownNat n, n ~ (1 + m)) => Comonad (Vector Boxed.Vector n) where
   extract = head
   extend f r@(Vector v) = Vector $ VG.generate len (\i -> f (Vector (VG.slice i len v')))
     where
       v' = v VG.++ VG.slice 0 (len - 1) v
       len = length r
 
-instance (KnownNat n, KnownNat m, n ~ (1 + m)) => ComonadApply (Vector Boxed.Vector n) where
+instance (KnownNat n, n ~ (1 + m)) => ComonadApply (Vector Boxed.Vector n) where
   (<@>) = (<*>)
   (<@)  = (<*)
   (@>)  = (*>)
