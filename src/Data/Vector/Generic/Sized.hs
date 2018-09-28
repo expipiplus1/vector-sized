@@ -330,7 +330,7 @@ instance (KnownNat n, n ~ (1 + m)) => Comonad (Vector Boxed.Vector n) where
   extract = head
   extend f r@(Vector v) = Vector $ VG.generate len (\i -> f (Vector (VG.slice i len v')))
     where
-      v' = v VG.++ VG.slice 0 (len - 1) v
+      v' = v VG.++ VG.init v
       len = length r
 
 instance (KnownNat n, n ~ (1 + m)) => ComonadApply (Vector Boxed.Vector n) where
