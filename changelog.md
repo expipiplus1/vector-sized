@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.0.5.0] - 2018-10-17
+
+- Add Ix instance
+- Add Comonad instance
+
+Thanks mpilgrem and KingoftheHomeless
+
 ## [1.0.4.1] - 2018-09-04
 
 - Fix compilation on ghc 8.6.
