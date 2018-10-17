@@ -257,6 +257,7 @@ import Control.Monad.Primitive
 import Foreign.Storable
 import Data.Data
 import Data.Functor.Classes
+import Control.Comonad
 import Foreign.Ptr (castPtr)
 import Data.Semigroup
 import Text.Read.Lex
@@ -312,6 +313,29 @@ instance KnownNat n => Monad (Vector Boxed.Vector n) where
   return   = replicate
   xs >>= f = imap (\i x -> f x `index` i) xs
   (>>)     = seq
+
+-- | Non-empty sized vectors are lawful comonads.
+--
+-- 'extract' is 'head'
+--
+-- 'duplicate' generates all unique sequences of a vector with the same length as it,
+-- using wrap-around.
+--
+-- e.g.
+-- @
+-- duplicate [1,2,3,4,5] = [[1,2,3,4,5], [2,3,4,5,1], [3,4,5,1,2], [4,5,1,2,3], [5,1,2,3,4]]
+-- @
+instance (KnownNat n, n ~ (1 + m)) => Comonad (Vector Boxed.Vector n) where
+  extract = head
+  extend f r@(Vector v) = Vector $ VG.generate len (\i -> f (Vector (VG.slice i len v')))
+    where
+      v' = v VG.++ VG.init v
+      len = length r
+
+instance (KnownNat n, n ~ (1 + m)) => ComonadApply (Vector Boxed.Vector n) where
+  (<@>) = (<*>)
+  (<@)  = (<*)
+  (@>)  = (*>)
 
 -- | The 'Semigroup' instance for sized vectors does not have the same
 -- behaviour as the 'Semigroup' instance for the unsized vectors found in the
