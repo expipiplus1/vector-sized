@@ -24,6 +24,8 @@ library
                      , Data.Vector.Generic.Mutable.Sized
                      , Data.Vector.Storable.Mutable.Sized
                      , Data.Vector.Generic.Mutable.Sized.Internal
+                     , Data.Vector.Unboxed.Sized
+                     , Data.Vector.Unboxed.Mutable.Sized
   build-depends:       base >= 4.9 && < 5
                      , vector >= 0.11 && < 0.13
                      , deepseq >= 1.1 && < 1.5
