@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.1.0.0] - 2018-11-08
+
+- Generalise Ix instance
+- Add Unboxed vectors
+- Fiddle extension guarding
+
+Thanks everyone!
+
 ## [1.0.5.0] - 2018-10-17
 
 - Add Ix instance
