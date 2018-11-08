@@ -679,7 +679,7 @@ force = V.force
 --
 -- > update <5,9,2,7> <(2,1),(0,3),(2,8)> = <3,9,8,7>
 --
-update :: (Unbox a, Unbox (Int, a))
+update :: (Unbox a)
         => Vector m a        -- ^ initial vector (of length @m@)
         -> Vector n (Int, a) -- ^ vector of index/value pairs (of length @n@)
         -> Vector m a
@@ -715,7 +715,7 @@ unsafeUpd = V.unsafeUpd
 {-# inline unsafeUpd #-}
 
 -- | Same as 'update' but without bounds checking.
-unsafeUpdate :: (Unbox a, Unbox (Int, a))
+unsafeUpdate :: (Unbox a)
              => Vector m a        -- ^ initial vector (of length @m@)
              -> Vector n (Int, a) -- ^ vector of index/value pairs (of length @n@)
              -> Vector m a
@@ -751,7 +751,7 @@ accum = V.accum
 -- element @a@ at position @i@ by @f a b@.
 --
 -- > accumulate (+) <5,9,2> <(2,4),(1,6),(0,3),(1,7)> = <5+3, 9+6+7, 2+4>
-accumulate :: (Unbox a, Unbox (Int, b))
+accumulate :: (Unbox a, Unbox b)
            => (a -> b -> a)      -- ^ accumulating function @f@
            -> Vector m a       -- ^ initial vector (of length @m@)
            -> Vector n (Int,b) -- ^ vector of index/value pairs (of length @n@)
@@ -791,7 +791,7 @@ unsafeAccum = V.unsafeAccum
 {-# inline unsafeAccum #-}
 
 -- | Same as 'accumulate' but without bounds checking.
-unsafeAccumulate :: (Unbox a, Unbox (Int, b))
+unsafeAccumulate :: (Unbox a, Unbox b)
                  => (a -> b -> a)      -- ^ accumulating function @f@
                  -> Vector m a       -- ^ initial vector (of length @m@)
                  -> Vector n (Int,b) -- ^ vector of index/value pairs (of length @n@)
@@ -847,7 +847,7 @@ unsafeBackpermute = V.unsafeBackpermute
 --
 
 -- | /O(n)/ Pair each element in a vector with its index
-indexed :: (Unbox a, Unbox (Int, a), Unbox (Finite n, a))
+indexed :: (Unbox a, Unbox (Finite n))
         => Vector n a -> Vector n (Finite n,a)
 indexed = V.indexed
 {-# inline indexed #-}
@@ -1020,17 +1020,17 @@ izipWith6 = V.izipWith6
 {-# inline izipWith6 #-}
 
 -- | /O(n)/ Zip two vectors of the same length
-zip :: (Unbox a, Unbox b, Unbox (a,b))
+zip :: (Unbox a, Unbox b)
     => Vector n a -> Vector n b -> Vector n (a, b)
 zip = V.zip
 {-# inline zip #-}
 
-zip3 :: (Unbox a, Unbox b, Unbox c, Unbox (a, b, c))
+zip3 :: (Unbox a, Unbox b, Unbox c)
      => Vector n a -> Vector n b -> Vector n c -> Vector n (a, b, c)
 zip3 = V.zip3
 {-# inline zip3 #-}
 
-zip4 :: (Unbox a,Unbox b,Unbox c,Unbox d,Unbox (a,b,c,d))
+zip4 :: (Unbox a,Unbox b,Unbox c,Unbox d)
      => Vector n a
      -> Vector n b
      -> Vector n c
@@ -1039,7 +1039,7 @@ zip4 :: (Unbox a,Unbox b,Unbox c,Unbox d,Unbox (a,b,c,d))
 zip4 = V.zip4
 {-# inline zip4 #-}
 
-zip5 :: (Unbox a,Unbox b,Unbox c,Unbox d,Unbox e,Unbox (a,b,c,d,e))
+zip5 :: (Unbox a,Unbox b,Unbox c,Unbox d,Unbox e)
      => Vector n a
      -> Vector n b
      -> Vector n c
@@ -1049,7 +1049,7 @@ zip5 :: (Unbox a,Unbox b,Unbox c,Unbox d,Unbox e,Unbox (a,b,c,d,e))
 zip5 = V.zip5
 {-# inline zip5 #-}
 
-zip6 :: (Unbox a,Unbox b,Unbox c,Unbox d,Unbox e,Unbox f,Unbox (a,b,c,d,e,f))
+zip6 :: (Unbox a,Unbox b,Unbox c,Unbox d,Unbox e,Unbox f)
      => Vector n a
      -> Vector n b
      -> Vector n c
@@ -1095,30 +1095,27 @@ izipWithM_ = V.izipWithM_
 -- ---------
 
 -- | /O(min(m,n))/ Unzip a vector of pairs.
-unzip :: (Unbox a, Unbox b, Unbox (a,b))
+unzip :: (Unbox a, Unbox b)
       => Vector n (a, b) -> (Vector n a, Vector n b)
 unzip = V.unzip
 {-# inline unzip #-}
 
-unzip3 :: (Unbox a, Unbox b, Unbox c, Unbox (a, b, c))
+unzip3 :: (Unbox a, Unbox b, Unbox c)
        => Vector n (a, b, c) -> (Vector n a, Vector n b, Vector n c)
 unzip3 = V.unzip3
 {-# inline unzip3 #-}
 
-unzip4 :: (Unbox a, Unbox b, Unbox c, Unbox d,
-           Unbox (a, b, c, d))
+unzip4 :: (Unbox a, Unbox b, Unbox c, Unbox d)
        => Vector n (a, b, c, d) -> (Vector n a, Vector n b, Vector n c, Vector n d)
 unzip4 = V.unzip4
 {-# inline unzip4 #-}
 
-unzip5 :: (Unbox a, Unbox b, Unbox c, Unbox d, Unbox e,
-           Unbox (a, b, c, d, e))
+unzip5 :: (Unbox a, Unbox b, Unbox c, Unbox d, Unbox e)
        => Vector n (a, b, c, d, e) -> (Vector n a, Vector n b, Vector n c, Vector n d, Vector n e)
 unzip5 = V.unzip5
 {-# inline unzip5 #-}
 
-unzip6 :: (Unbox a, Unbox b, Unbox c, Unbox d, Unbox e, Unbox f,
-           Unbox (a, b, c, d, e, f))
+unzip6 :: (Unbox a, Unbox b, Unbox c, Unbox d, Unbox e, Unbox f)
        => Vector n (a, b, c, d, e, f) -> (Vector n a, Vector n b, Vector n c, Vector n d, Vector n e, Vector n f)
 unzip6 = V.unzip6
 {-# inline unzip6 #-}
