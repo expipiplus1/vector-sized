@@ -14,6 +14,10 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE CPP #-}
 
+#if MIN_VERSION_base(4,12,0)
+{-# LANGUAGE NoStarIsType #-}
+#endif
+
 {-|
 This module reexports the functionality in 'Data.Vector.Generic' which maps well
 to explicity sized vectors.
