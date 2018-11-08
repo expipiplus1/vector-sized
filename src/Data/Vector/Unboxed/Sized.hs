@@ -7,6 +7,10 @@
 {-# LANGUAGE TypeOperators       #-}
 {-# LANGUAGE CPP                 #-}
 
+#if MIN_VERSION_base(4,12,0)
+{-# LANGUAGE NoStarIsType #-}
+#endif
+
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Sized'
  specialized to 'Data.Vector.Unboxed'
@@ -871,7 +875,7 @@ imap = V.imap
 -- | /O(n*m)/ Map a function over a vector and concatenate the results. The
 -- function is required to always return the same length vector.
 concatMap :: (Unbox a, Unbox b)
-          => (a -> Vector m b) -> Vector n a -> Vector (n*m) b
+          => (a -> Vector m b) -> Vector n a -> Vector (n * m) b
 concatMap = V.concatMap
 {-# inline concatMap #-}
 

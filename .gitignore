@@ -1,4 +1,5 @@
-
+.ghc.environment.*
+cabal.project.local
 dist
 dist-*
 cabal-dev
