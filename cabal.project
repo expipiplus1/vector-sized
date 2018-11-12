@@ -1,0 +1,3 @@
+packages:             ./*.cabal
+optimization:         2
+split-sections:       True
