@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.1.1.0] - 2018-11-13
+
+- Fix build and add CI for 8.6.2
+
 ## [1.1.0.0] - 2018-11-08
 
 - Generalise Ix instance
