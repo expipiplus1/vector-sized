@@ -1,4 +1,4 @@
-# ``vector-sized``
+# ``vector-sized`` [![Hackage][hackage-shield]][hackage]
 
 This package exports a newtype tagging the vectors from the [``vector``][1]
 package with a type-level natural representing their sized. It also exports
@@ -41,3 +41,5 @@ exceeds tens of elements.
 [5]: https://hackage.haskell.org/package/vector-0.12.0.1/docs/Data-Vector-Generic.html#t:Vector  
 [6]: https://hackage.haskell.org/package/fixed-vector
 [7]: https://github.com/expipiplus1/vulkan/pull/1
+[hackage-shield]: https://img.shields.io/badge/hackage-v1.1.10-blue.svg
+[hackage]: http://hackage.haskell.org/package/vector-sized
