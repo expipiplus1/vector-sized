@@ -1,21 +1,43 @@
-# Vector Sized
+# ``vector-sized``
 
-This package exports a newtype tagging the vectors from the
-[vector](https://hackage.haskell.org/package/vector) package with a type level
-natural representing their size.
-It also exports a few functions from vector appropriately retyped.
+This package exports a newtype tagging the vectors from the [``vector``][1]
+package with a type-level natural representing their sized. It also exports
+functions from ``vector`` whose size can be determined ahead of time,
+appropriately retyped.
 
-This package is fairly similar to
-the [fixed-vector](https://hackage.haskell.org/package/fixed-vector) package.
-While both provide vectors of statically know length they use completely
-different implementation with different tradeoffs. `vector-sized` is a newtype
-wrapper over `vector` thus it's able to handle vectors of arbitrary length but
-have to carry runtime representation of length which is significant memory
-overhead for small vectors. `fixed-vector` defines all functions as
-manipulations of Church-encoded product types (`∀r. (a→a→r) → r` for 2D vectors)
-so it can work for both arbitrary product types like `data V2 a = V2 a a` and
-opaque length-parametrized vectors provided by library. As consequence of
-implementation it can't handle vectors larger than tens of elements.
+Currently, we provide size-tagged versions of the following:
 
+* [``Data.Vector.Vector``][2], in ``Data.Vector.Sized``
+* [``Data.Vector.Generic.Vector``][5], in ``Data.Vector.Generic.Sized``
+* [``Data.Vector.Storable.Vector``][3], in ``Data.Vector.Storable.Sized``
+* [``Data.Vector.Unboxed.Vector``][4], in ``Data.Vector.Unboxed.Sized``
 
-The initial code for this package was written by @bgamari in a [PR for vulkan](https://github.com/expipiplus1/vulkan/pull/1)
+We also provide mutable versions of each of the above. Additionally, we include
+functions for converting to and from 'unsized' vectors and lists, using
+CPS-style existentials.
+
+The code in this package is based on the initial work by Ben Gamari in a [PR for
+``vulkan``][7].
+
+## How is this different to ``fixed-vector``?
+
+This package is fairly similar to [``fixed-vector``][6], as both libraries are
+designed to provide vectors of statically known length. However, the
+implementations used are different, with different tradeoffs. ``vector-sized``
+uses a newtype wrapper around vectors from ``vector``, and is thus able to
+handle vectors of arbitrary length. However, this approach requires us to carry
+a runtime representation of length, which is a significant memory overhead for
+small vectors. ``fixed-vector`` instead defines all functions as manipulations
+of Church-encoded product types of the form ``∀r. (a → a → r) → r`` (for 2D
+vectors), allowing it to work for both arbitrary product types (like ``data V2 a
+= V2 a a``) and opaque length-parameterized vectors. However, as a consequence
+of this implementation choice, ``fixed-vector`` cannot handle vectors whose size
+exceeds tens of elements.
+
+[1]: https://hackage.haskell.org/package/vector
+[2]: https://hackage.haskell.org/package/vector-0.12.0.1/docs/Data-Vector.html#t:Vector
+[3]: https://hackage.haskell.org/package/vector-0.12.0.1/docs/Data-Vector-Storable.html#t:Vector
+[4]: https://hackage.haskell.org/package/vector-0.12.0.1/docs/Data-Vector-Unboxed.html#t:Vector
+[5]: https://hackage.haskell.org/package/vector-0.12.0.1/docs/Data-Vector-Generic.html#t:Vector  
+[6]: https://hackage.haskell.org/package/fixed-vector
+[7]: https://github.com/expipiplus1/vulkan/pull/1
