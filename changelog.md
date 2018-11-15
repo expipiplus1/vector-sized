@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.2.0.0] - 2018-11-15
+
+- Add ``Hashable`` instances
+- Generalize ``concatMap``
+- Various code and documentation cleanup
+
 ## [1.1.1.0] - 2018-11-13
 
 - Fix build and add CI for 8.6.2
