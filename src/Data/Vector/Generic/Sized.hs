@@ -377,12 +377,15 @@ instance KnownNat n => Rep.Representable (Vector Boxed.Vector n) where
   {-# inline index #-}
 
 instance (Eq a, Hashable a) => Hashable (Vector Boxed.Vector n a) where
+  {-# INLINE hashWithSalt #-}
   hashWithSalt = foldl' hashWithSalt
 
 instance (Eq a, Hashable a, Storable a) => Hashable (Vector Storable.Vector n a) where
+  {-# INLINE hashWithSalt #-}
   hashWithSalt = foldl' hashWithSalt
 
 instance (Eq a, Hashable a, Unbox a) => Hashable (Vector Unboxed.Vector n a) where
+  {-# INLINE hashWithSalt #-}
   hashWithSalt = foldl' hashWithSalt
 
 -- | /O(1)/ Yield the length of the vector as an 'Int'. This is more like
