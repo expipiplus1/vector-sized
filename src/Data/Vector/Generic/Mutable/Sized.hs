@@ -9,13 +9,13 @@
 
 {-|
 This module reexports the functionality in 'Data.Vector.Generic.Mutable'
-which maps well to explicity sized vectors.
+which maps well to explicitly sized vectors.
 
 Functions returning a vector determine the size from the type context
 unless they have a @'@ suffix in which case they take an explicit 'Proxy'
 argument.
 
-Functions where the resultant vector size is not know until compile time
+Functions where the resultant vector size is not known until runtime
 are not exported.
 -}
 
@@ -111,7 +111,7 @@ length' :: forall v n s a. ()
 length' _ = Proxy
 {-# inline length' #-}
 
--- | /O(1)/ Check whether the mutable vector is empty
+-- | /O(1)/ Check whether the mutable vector is empty.
 null :: forall v n s a. KnownNat n
        => MVector v n s a -> Bool
 null _ = isJust $ Proxy @n `sameNat` Proxy @0
@@ -155,8 +155,8 @@ tail :: forall v n s a. VGM.MVector v a
 tail (MVector v) = MVector (VGM.unsafeTail v)
 {-# inline tail #-}
 
--- | /O(1)/ Yield the first n elements. The resultant vector always contains
--- this many elements. The length of the resultant vector is inferred from the
+-- | /O(1)/ Yield the first @n@ elements. The resulting vector always contains
+-- this many elements. The length of the resulting vector is inferred from the
 -- type.
 take :: forall v n k s a. (KnownNat n, VGM.MVector v a)
      => MVector v (n+k) s a -> MVector v n s a
@@ -164,16 +164,16 @@ take (MVector v) = MVector (VGM.unsafeTake i v)
   where i = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline take #-}
 
--- | /O(1)/ Yield the first n elements. The resultant vector always contains
--- this many elements. The length of the resultant vector is given explicitly
+-- | /O(1)/ Yield the first @n@ elements. The resulting vector always contains
+-- this many elements. The length of the resulting vector is given explicitly
 -- as a 'Proxy' argument.
 take' :: forall v n k s a p. (KnownNat n, VGM.MVector v a)
       => p n -> MVector v (n+k) s a -> MVector v n s a
 take' _ = take
 {-# inline take' #-}
 
--- | /O(1)/ Yield all but the the first n elements. The given vector must
--- contain at least this many elements The length of the resultant vector is
+-- | /O(1)/ Yield all but the the first @n@ elements. The given vector must
+-- contain at least this many elements. The length of the resulting vector is
 -- inferred from the type.
 drop :: forall v n k s a. (KnownNat n, VGM.MVector v a)
      => MVector v (n+k) s a -> MVector v k s a
@@ -181,16 +181,16 @@ drop (MVector v) = MVector (VGM.unsafeDrop i v)
   where i = fromInteger (natVal (Proxy :: Proxy n))
 {-# inline drop #-}
 
--- | /O(1)/ Yield all but the the first n elements. The given vector must
--- contain at least this many elements The length of the resultant vector is
--- givel explicitly as a 'Proxy' argument.
+-- | /O(1)/ Yield all but the the first @n@ elements. The given vector must
+-- contain at least this many elements. The length of the resulting vector is
+-- given explicitly as a 'Proxy' argument.
 drop' :: forall v n k s a p. (KnownNat n, VGM.MVector v a)
       => p n -> MVector v (n+k) s a -> MVector v k s a
 drop' _ = drop
 {-# inline drop' #-}
 
--- | /O(1)/ Yield the first n elements paired with the remainder without copying.
--- The lengths of the resultant vector are inferred from the type.
+-- | /O(1)/ Yield the first @n@ elements, paired with the rest, without copying.
+-- The lengths of the resulting vectors are inferred from the type.
 splitAt :: forall v n m s a. (KnownNat n, VGM.MVector v a)
         => MVector v (n+m) s a -> (MVector v n s a, MVector v m s a)
 splitAt (MVector v) = (MVector a, MVector b)
@@ -198,8 +198,8 @@ splitAt (MVector v) = (MVector a, MVector b)
         (a, b) = VGM.splitAt i v
 {-# inline splitAt #-}
 
--- | /O(1)/ Yield the first n elements paired with the remainder without
--- copying.  The length of the first resultant vector is passed explicitly as a
+-- | /O(1)/ Yield the first @n@ elements, paired with the rest, without
+-- copying. The length of the first resulting vector is passed explicitly as a
 -- 'Proxy' argument.
 splitAt' :: forall v n m s a p. (KnownNat n, VGM.MVector v a)
          => p n -> MVector v (n+m) s a -> (MVector v n s a, MVector v m s a)
@@ -208,9 +208,7 @@ splitAt' _ = splitAt
 
 -- ** Overlaps
 
--- | /O(1)/ Yield all but the the first n elements. The given vector must
--- contain at least this many elements The length of the resultant vector is
--- inferred from the type.
+-- | /O(1)/ Check whether two vectors overlap. 
 overlaps :: forall v n k s a. VGM.MVector v a
          => MVector v n s a
          -> MVector v k s a
@@ -354,13 +352,13 @@ unsafeModify :: forall v n m a. (PrimMonad m, VGM.MVector v a)
 unsafeModify (MVector v) = VGM.unsafeModify v
 {-# inline unsafeModify #-}
 
--- | /O(1)/ Swap the elements at a given type-safe position using 'Finite's.
+-- | /O(1)/ Swap the elements at given type-safe positions using 'Finite's.
 swap :: forall v n m a. (PrimMonad m, VGM.MVector v a)
      => MVector v n (PrimState m) a -> Finite n -> Finite n -> m ()
 swap (MVector v) (Finite i) (Finite j) = VGM.unsafeSwap v (fromIntegral i) (fromIntegral j)
 {-# inline swap #-}
 
--- | /O(1)/ Swap the elements at a given 'Int' position without bounds
+-- | /O(1)/ Swap the elements at given 'Int' positions without bounds
 -- checking.
 unsafeSwap :: forall v n m a. (PrimMonad m, VGM.MVector v a)
            => MVector v n (PrimState m) a -> Int -> Int -> m ()
@@ -391,7 +389,7 @@ unsafeExchange (MVector v) = VGM.unsafeExchange v
 #if MIN_VERSION_vector(0,12,0)
 -- * Modifying vectors
 
--- | Compute the next (lexicographically) permutation of a given vector
+-- | Compute the next permutation (in lexographic order) of a given vector
 -- in-place.  Returns 'False' when the input is the last permutation.
 nextPermutation :: forall v n e m. (Ord e, PrimMonad m, VGM.MVector v e)
                 => MVector v n (PrimState m) e -> m Bool

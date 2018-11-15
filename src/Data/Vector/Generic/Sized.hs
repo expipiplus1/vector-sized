@@ -293,7 +293,7 @@ instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
 
 type instance VG.Mutable (Vector v n) = MVector (VG.Mutable v) n
 
--- | Any sized vector containing storable elements is itself storable.
+-- | Any sized vector containing 'Storable' elements is itself 'Storable'.
 instance (KnownNat n, Storable a, VG.Vector v a)
       => Storable (Vector v n a) where
   sizeOf _ = sizeOf (undefined :: a) * fromIntegral (natVal (Proxy :: Proxy n))
@@ -435,7 +435,7 @@ index' (Vector v) p = v `VG.unsafeIndex` i
   where i = fromIntegral (natVal p)
 {-# inline index' #-}
 
--- | /O(1)/ Indexing using an Int without bounds checking.
+-- | /O(1)/ Indexing using an 'Int' without bounds checking.
 unsafeIndex :: forall v n a. VG.Vector v a
       => Vector v n a -> Int -> a
 unsafeIndex (Vector v) i = v `VG.unsafeIndex` i
@@ -471,15 +471,35 @@ _last :: forall v n a f. (VG.Vector v a, Functor f)
 _last f vector = snoc (init vector) <$> f (last vector)
 {-# inline _last #-}
 
--- | /O(1)/ Safe indexing in a monad. See the documentation for 'VG.indexM' for
--- an explanation of why this is useful.
+-- | /O(1)/ Safe indexing in a monad. 
+--
+-- The monad allows operations to be strict in the vector when necessary.
+-- Suppose vector copying is implemented like this:
+--
+-- @
+-- copy mv v = ... write mv i (v ! i) ...
+-- @
+--
+-- For lazy vectors, @v ! i@ would not be evaluated, which means that @mv@ would
+-- unnecessarily retain a reference to @v@ in each element when written.
+--
+-- With 'indexM', copying can be implemented like this instead:
+--
+-- @
+-- copy mv v = ... do
+--                  x <- indexM v i
+--                  write mv i x
+-- @
+--
+-- Here, no references to @v@ are retained, because indexing (but /not/ the
+-- elements) are evaluated eagerly.
 indexM :: forall v n a m. (VG.Vector v a, Monad m)
       => Vector v n a -> Finite n -> m a
 indexM (Vector v) (Finite i) = v `VG.indexM` fromIntegral i
 {-# inline indexM #-}
 
 -- | /O(1)/ Safe indexing in a monad using a 'Proxy'. See the documentation for
--- 'VG.indexM' for an explanation of why this is useful.
+-- 'indexM' for an explanation of why this is useful.
 indexM' :: forall v n k a m p. (KnownNat n, VG.Vector v a, Monad m)
       => Vector v (n+k) a -> p n -> m a
 indexM' (Vector v) p = v `VG.indexM` i
@@ -487,21 +507,21 @@ indexM' (Vector v) p = v `VG.indexM` i
 {-# inline indexM' #-}
 
 -- | /O(1)/ Indexing using an Int without bounds checking. See the
--- documentation for 'VG.indexM' for an explanation of why this is useful.
+-- documentation for 'indexM' for an explanation of why this is useful.
 unsafeIndexM :: forall v n a m. (VG.Vector v a, Monad m)
       => Vector v n a -> Int -> m a
 unsafeIndexM (Vector v) i = v `VG.unsafeIndexM` i
 {-# inline unsafeIndexM #-}
 
 -- | /O(1)/ Yield the first element of a non-empty vector in a monad. See the
--- documentation for 'VG.indexM' for an explanation of why this is useful.
+-- documentation for 'indexM' for an explanation of why this is useful.
 headM :: forall v n a m. (VG.Vector v a, Monad m)
       => Vector v (1+n) a -> m a
 headM (Vector v) = VG.unsafeHeadM v
 {-# inline headM #-}
 
 -- | /O(1)/ Yield the last element of a non-empty vector in a monad. See the
--- documentation for 'VG.indexM' for an explanation of why this is useful.
+-- documentation for 'indexM' for an explanation of why this is useful.
 lastM :: forall v n a m. (VG.Vector v a, Monad m)
       => Vector v (n+1) a -> m a
 lastM (Vector v) = VG.unsafeLastM v
@@ -543,8 +563,8 @@ tail :: forall v n a. (VG.Vector v a)
 tail (Vector v) = Vector (VG.unsafeTail v)
 {-# inline tail #-}
 
--- | /O(1)/ Yield the first n elements. The resultant vector always contains
--- this many elements. The length of the resultant vector is inferred from the
+-- | /O(1)/ Yield the first @n@ elements. The resulting vector always contains
+-- this many elements. The length of the resulting vector is inferred from the
 -- type.
 take :: forall v n m a. (KnownNat n, VG.Vector v a)
      => Vector v (n+m) a -> Vector v n a
@@ -552,16 +572,16 @@ take (Vector v) = Vector (VG.unsafeTake i v)
   where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline take #-}
 
--- | /O(1)/ Yield the first n elements. The resultant vector always contains
--- this many elements. The length of the resultant vector is given explicitly
+-- | /O(1)/ Yield the first @n@ elements. The resulting vector always contains
+-- this many elements. The length of the resulting vector is given explicitly
 -- as a 'Proxy' argument.
 take' :: forall v n m a p. (KnownNat n, VG.Vector v a)
       => p n -> Vector v (n+m) a -> Vector v n a
 take' _ = take
 {-# inline take' #-}
 
--- | /O(1)/ Yield all but the the first n elements. The given vector must
--- contain at least this many elements The length of the resultant vector is
+-- | /O(1)/ Yield all but the the first @n@ elements. The given vector must
+-- contain at least this many elements. The length of the resulting vector is
 -- inferred from the type.
 drop :: forall v n m a. (KnownNat n, VG.Vector v a)
      => Vector v (n+m) a -> Vector v m a
@@ -569,16 +589,16 @@ drop (Vector v) = Vector (VG.unsafeDrop i v)
   where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline drop #-}
 
--- | /O(1)/ Yield all but the the first n elements. The given vector must
--- contain at least this many elements The length of the resultant vector is
+-- | /O(1)/ Yield all but the the first @n@ elements. The given vector must
+-- contain at least this many elements. The length of the resulting vector is
 -- givel explicitly as a 'Proxy' argument.
 drop' :: forall v n m a p. (KnownNat n, VG.Vector v a)
       => p n -> Vector v (n+m) a -> Vector v m a
 drop' _ = drop
 {-# inline drop' #-}
 
--- | /O(1)/ Yield the first n elements paired with the remainder without copying.
--- The lengths of the resultant vector are inferred from the type.
+-- | /O(1)/ Yield the first @n@ elements, paired with the rest, without copying.
+-- The lengths of the resulting vectors are inferred from the type.
 splitAt :: forall v n m a. (KnownNat n, VG.Vector v a)
         => Vector v (n+m) a -> (Vector v n a, Vector v m a)
 splitAt (Vector v) = (Vector a, Vector b)
@@ -586,8 +606,8 @@ splitAt (Vector v) = (Vector a, Vector b)
         (a, b) = VG.splitAt i v
 {-# inline splitAt #-}
 
--- | /O(1)/ Yield the first n elements paired with the remainder without
--- copying.  The length of the first resultant vector is passed explicitly as a
+-- | /O(1)/ Yield the first @n@ elements, paired with the rest, without
+-- copying.  The length of the first resulting vector is passed explicitly as a
 -- 'Proxy' argument.
 splitAt' :: forall v n m a p. (KnownNat n, VG.Vector v a)
          => p n -> Vector v (n+m) a -> (Vector v n a, Vector v m a)
@@ -614,9 +634,11 @@ singleton :: forall v a. (VG.Vector v a)
 singleton a = Vector (VG.singleton a)
 {-# inline singleton #-}
 
--- | /O(n)/ Construct a vector in a type safe manner
+-- | /O(n)/ Construct a vector in a type-safe manner.
+-- @
 --   fromTuple (1,2) :: Vector v 2 Int
 --   fromTuple ("hey", "what's", "going", "on") :: Vector v 4 String
+-- @
 fromTuple :: forall v a input length.
              (VG.Vector v a, IndexedListLiterals input length a, KnownNat length)
           => input -> Vector v length a
@@ -637,7 +659,7 @@ replicate' :: forall v n a p. (KnownNat n, VG.Vector v a)
 replicate' _ = replicate
 {-# inline replicate' #-}
 
--- | /O(n)/ construct a vector of the given length by applying the function to
+-- | /O(n)/ Construct a vector of the given length by applying the function to
 -- each index where the length is inferred from the type.
 generate :: forall v n a. (KnownNat n, VG.Vector v a)
          => (Finite n -> a) -> Vector v n a
@@ -645,14 +667,14 @@ generate f = Vector (VG.generate i (f . Finite . fromIntegral))
   where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline generate #-}
 
--- | /O(n)/ construct a vector of the given length by applying the function to
+-- | /O(n)/ Construct a vector of the given length by applying the function to
 -- each index where the length is given explicitly as a 'Proxy' argument.
 generate' :: forall v n a p. (KnownNat n, VG.Vector v a)
           => p n -> (Finite n -> a) -> Vector v n a
 generate' _ = generate
 {-# inline generate' #-}
 
--- | /O(n)/ Apply function n times to value. Zeroth element is original value.
+-- | /O(n)/ Apply the function @n@ times to a value. Zeroth element is the original value.
 -- The length is inferred from the type.
 iterateN :: forall v n a. (KnownNat n, VG.Vector v a)
          => (a -> a) -> a -> Vector v n a
@@ -660,7 +682,7 @@ iterateN f z = Vector (VG.iterateN i f z)
   where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline iterateN #-}
 
--- | /O(n)/ Apply function n times to value. Zeroth element is original value.
+-- | /O(n)/ Apply the function @n@ times to a value. Zeroth element is the original value.
 -- The length is given explicitly as a 'Proxy' argument.
 iterateN' :: forall v n a p. (KnownNat n, VG.Vector v a)
           => p n -> (a -> a) -> a -> Vector v n a
@@ -687,7 +709,7 @@ replicateM' _ = replicateM
 {-# inline replicateM' #-}
 
 -- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
--- each index where n is inferred from the type.
+-- each index where @n@ is inferred from the type.
 generateM :: forall v n m a. (KnownNat n, VG.Vector v a, Monad m)
           => (Finite n -> m a) -> m (Vector v n a)
 generateM f = Vector <$> VG.generateM i (f . Finite . fromIntegral)
@@ -695,7 +717,7 @@ generateM f = Vector <$> VG.generateM i (f . Finite . fromIntegral)
 {-# inline generateM #-}
 
 -- | /O(n)/ Construct a vector of length @n@ by applying the monadic action to
--- each index where n is given explicitly as a 'Proxy' argument.
+-- each index where @n@ is given explicitly as a 'Proxy' argument.
 generateM' :: forall v n m a p. (KnownNat n, VG.Vector v a, Monad m)
            => p n -> (Finite n -> m a) -> m (Vector v n a)
 generateM' _ = generateM
@@ -706,7 +728,7 @@ generateM' _ = generateM
 --
 
 -- | /O(n)/ Construct a vector with exactly @n@ elements by repeatedly applying
--- the generator function to the a seed. The length, @n@, is inferred from the
+-- the generator function to the a seed. The length is inferred from the
 -- type.
 unfoldrN :: forall v n a b. (KnownNat n, VG.Vector v a)
          => (b -> (a, b)) -> b -> Vector v n a
@@ -715,7 +737,7 @@ unfoldrN f z = Vector (VG.unfoldrN i (Just . f) z)
 {-# inline unfoldrN #-}
 
 -- | /O(n)/ Construct a vector with exactly @n@ elements by repeatedly applying
--- the generator function to the a seed. The length, @n@, is given explicitly
+-- the generator function to the a seed. The length is given explicitly
 -- as a 'Proxy' argument.
 unfoldrN' :: forall v n a b p. (KnownNat n, VG.Vector v a)
           => p n -> (b -> (a, b)) -> b -> Vector v n a
@@ -726,23 +748,23 @@ unfoldrN' _ = unfoldrN
 -- ** Enumeration
 --
 
--- | /O(n)/ Yield a vector of length @n@ containing the values @x@, @x+1@
--- etc. The length, @n@, is inferred from the type.
+-- | /O(n)/ Yield a vector of length @n@ containing the values @x@, @x+1@,
+-- ... @x + (n - 1)@. The length is inferred from the type.
 enumFromN :: forall v n a. (KnownNat n, VG.Vector v a, Num a)
           => a -> Vector v n a
 enumFromN a = Vector (VG.enumFromN a i)
   where i = fromIntegral (natVal (Proxy :: Proxy n))
 {-# inline enumFromN #-}
 
--- | /O(n)/ Yield a vector of length @n@ containing the values @x@, @x+1@
--- etc. The length, @n@, is given explicitly as a 'Proxy' argument.
+-- | /O(n)/ Yield a vector of length @n@ containing the values @x@, @x+1@,
+-- ..., @x + (n - 1)@ The length is given explicitly as a 'Proxy' argument.
 enumFromN' :: forall v n a p. (KnownNat n, VG.Vector v a, Num a)
            => a -> p n -> Vector v n a
 enumFromN' a _ = enumFromN a
 {-# inline enumFromN' #-}
 
 -- | /O(n)/ Yield a vector of the given length containing the values @x@, @x+y@,
--- @x+y+y@ etc. The length, @n@, is inferred from the type.
+-- @x+2y@, ... @x + (n - 1)y@. The length is inferred from the type.
 enumFromStepN :: forall v n a. (KnownNat n, VG.Vector v a, Num a)
           => a -> a -> Vector v n a
 enumFromStepN a a' = Vector (VG.enumFromStepN a a' i)
@@ -750,7 +772,7 @@ enumFromStepN a a' = Vector (VG.enumFromStepN a a' i)
 {-# inline enumFromStepN #-}
 
 -- | /O(n)/ Yield a vector of the given length containing the values @x@, @x+y@,
--- @x+y+y@ etc. The length, @n@, is given explicitly as a 'Proxy' argument.
+-- @x+2y@, ..., @x + (n - 1)y@. The length is given explicitly as a 'Proxy' argument.
 enumFromStepN' :: forall v n a p. (KnownNat n, VG.Vector v a, Num a)
                => a -> a -> p n -> Vector v n a
 enumFromStepN' a a' _ = enumFromStepN a a'
@@ -990,7 +1012,7 @@ unsafeBackpermute (Vector v) (Vector is) = Vector (VG.unsafeBackpermute v is)
 -- ** Indexing
 --
 
--- | /O(n)/ Pair each element in a vector with its index
+-- | /O(n)/ Pair each element in a vector with its index.
 indexed :: (VG.Vector v a, VG.Vector v (Int, a), VG.Vector v (Finite n,a))
         => Vector v n a -> Vector v n (Finite n,a)
 indexed (Vector v) = Vector ((VG.map . first) (Finite . fromIntegral) $ VG.indexed v)
@@ -1000,20 +1022,20 @@ indexed (Vector v) = Vector ((VG.map . first) (Finite . fromIntegral) $ VG.index
 -- ** Mapping
 --
 
--- | /O(n)/ Map a function over a vector
+-- | /O(n)/ Map a function over a vector.
 map :: (VG.Vector v a, VG.Vector v b)
     => (a -> b) -> Vector v n a -> Vector v n b
 map f (Vector v) = Vector (VG.map f v)
 {-# inline map #-}
 
--- | /O(n)/ Apply a function to every element of a vector and its index
+-- | /O(n)/ Apply a function to every element of a vector and its index.
 imap :: (VG.Vector v a, VG.Vector v b)
      => (Finite n -> a -> b) -> Vector v n a -> Vector v n b
 imap f (Vector v) = Vector (VG.imap (f . Finite . fromIntegral) v)
 {-# inline imap #-}
 
 -- | /O(n*m)/ Map a function over a vector and concatenate the results. The
--- function is required to always return the same length vector.
+-- function is required to always return a vector of the same length.
 concatMap :: (VG.Vector v a, VG.Vector v b)
           => (a -> Vector v m b) -> Vector v n a -> Vector v (n*m) b
 concatMap f (Vector v) = Vector (VG.concatMap (fromSized . f) v)
@@ -1024,27 +1046,27 @@ concatMap f (Vector v) = Vector (VG.concatMap (fromSized . f) v)
 --
 
 -- | /O(n)/ Apply the monadic action to all elements of the vector, yielding a
--- vector of results
+-- vector of results.
 mapM :: (Monad m, VG.Vector v a, VG.Vector v b)
       => (a -> m b) -> Vector v n a -> m (Vector v n b)
 mapM f (Vector v) = Vector <$> VG.mapM f v
 {-# inline mapM #-}
 
 -- | /O(n)/ Apply the monadic action to every element of a vector and its
--- index, yielding a vector of results
+-- index, yielding a vector of results.
 imapM :: (Monad m, VG.Vector v a, VG.Vector v b)
       => (Finite n -> a -> m b) -> Vector v n a -> m (Vector v n b)
 imapM f (Vector v) = Vector <$> VG.imapM (f . Finite . fromIntegral) v
 {-# inline imapM #-}
 
 -- | /O(n)/ Apply the monadic action to all elements of a vector and ignore the
--- results
+-- results.
 mapM_ :: (Monad m, VG.Vector v a) => (a -> m b) -> Vector v n a -> m ()
 mapM_ f (Vector v) = VG.mapM_ f v
 {-# inline mapM_ #-}
 
 -- | /O(n)/ Apply the monadic action to every element of a vector and its
--- index, ignoring the results
+-- index, ignoring the results.
 imapM_ :: (Monad m, VG.Vector v a) => (Finite n -> a -> m b) -> Vector v n a -> m ()
 imapM_ f (Vector v) = VG.imapM_ (f . Finite . fromIntegral) v
 {-# inline imapM_ #-}
@@ -1217,27 +1239,27 @@ zip6 = zipWith6 (,,,,,)
 --
 
 -- | /O(n)/ Zip the two vectors of the same length with the monadic action and
--- yield a vector of results
+-- yield a vector of results.
 zipWithM :: (Monad m, VG.Vector v a, VG.Vector v b, VG.Vector v c)
          => (a -> b -> m c) -> Vector v n a -> Vector v n b -> m (Vector v n c)
 zipWithM f (Vector as) (Vector bs) = Vector <$> VG.zipWithM f as bs
 {-# inline zipWithM #-}
 
 -- | /O(n)/ Zip the two vectors with a monadic action that also takes the
--- element index and yield a vector of results
+-- element index and yield a vector of results.
 izipWithM :: (Monad m, VG.Vector v a, VG.Vector v b, VG.Vector v c)
          => (Finite n -> a -> b -> m c) -> Vector v n a -> Vector v n b -> m (Vector v n c)
 izipWithM m (Vector as) (Vector bs) = Vector <$> VG.izipWithM (m . Finite . fromIntegral) as bs
 {-# inline izipWithM #-}
 
--- | /O(n)/ Zip the two vectors with the monadic action and ignore the results
+-- | /O(n)/ Zip the two vectors with the monadic action and ignore the results.
 zipWithM_ :: (Monad m, VG.Vector v a, VG.Vector v b)
           => (a -> b -> m c) -> Vector v n a -> Vector v n b -> m ()
 zipWithM_ f (Vector as) (Vector bs) = VG.zipWithM_ f as bs
 {-# inline zipWithM_ #-}
 
 -- | /O(n)/ Zip the two vectors with a monadic action that also takes
--- the element index and ignore the results
+-- the element index and ignore the results.
 izipWithM_ :: (Monad m, VG.Vector v a, VG.Vector v b)
            => (Finite n -> a -> b -> m c) -> Vector v n a -> Vector v n b -> m ()
 izipWithM_ m (Vector as) (Vector bs) = VG.izipWithM_ (m . Finite . fromIntegral) as bs
@@ -1299,13 +1321,13 @@ unzip6 xs = (map (\(a, _, _, _, _, _) -> a) xs,
 
 
 infix 4 `elem`
--- | /O(n)/ Check if the vector contains an element
+-- | /O(n)/ Check if the vector contains an element.
 elem :: (VG.Vector v a, Eq a) => a -> Vector v n a -> Bool
 elem x (Vector v) = VG.elem x v
 {-# inline elem #-}
 
 infix 4 `notElem`
--- | /O(n)/ Check if the vector does not contain an element (inverse of 'elem')
+-- | /O(n)/ Check if the vector does not contain an element (inverse of 'elem').
 notElem :: (VG.Vector v a, Eq a) => a -> Vector v n a -> Bool
 notElem x (Vector v) = VG.notElem x v
 {-# inline notElem #-}
@@ -1333,64 +1355,64 @@ elemIndex x (Vector v) = Finite . fromIntegral <$> VG.elemIndex x v
 -- * Folding
 --------------------------------------------------------------------------------
 
--- | /O(n)/ Left fold
+-- | /O(n)/ Left fold.
 foldl :: VG.Vector v b => (a -> b -> a) -> a -> Vector v n b -> a
 foldl f z = VG.foldl f z . fromSized
 {-# inline foldl #-}
 
--- | /O(n)/ Left fold on non-empty vectors
+-- | /O(n)/ Left fold on non-empty vectors.
 foldl1 :: VG.Vector v a => (a -> a -> a) -> Vector v (1+n) a -> a
 foldl1 f = VG.foldl1 f . fromSized
 {-# inline foldl1 #-}
 
--- | /O(n)/ Left fold with strict accumulator
+-- | /O(n)/ Left fold with strict accumulator.
 foldl' :: VG.Vector v b => (a -> b -> a) -> a -> Vector v n b -> a
 foldl' f z = VG.foldl' f z . fromSized
 {-# inline foldl' #-}
 
--- | /O(n)/ Left fold on non-empty vectors with strict accumulator
+-- | /O(n)/ Left fold on non-empty vectors with strict accumulator.
 foldl1' :: VG.Vector v a => (a -> a -> a) -> Vector v (1+n) a -> a
 foldl1' f = VG.foldl1' f . fromSized
 {-# inline foldl1' #-}
 
--- | /O(n)/ Right fold
+-- | /O(n)/ Right fold.
 foldr :: VG.Vector v a => (a -> b -> b) -> b -> Vector v n a -> b
 foldr f z = VG.foldr f z . fromSized
 {-# inline foldr #-}
 
--- | /O(n)/ Right fold on non-empty vectors
+-- | /O(n)/ Right fold on non-empty vectors.
 foldr1 :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> a
 foldr1 f = VG.foldr1 f . fromSized
 {-# inline foldr1 #-}
 
--- | /O(n)/ Right fold with a strict accumulator
+-- | /O(n)/ Right fold with a strict accumulator.
 foldr' :: VG.Vector v a => (a -> b -> b) -> b -> Vector v n a -> b
 foldr' f z = VG.foldr' f z . fromSized
 {-# inline foldr' #-}
 
--- | /O(n)/ Right fold on non-empty vectors with strict accumulator
+-- | /O(n)/ Right fold on non-empty vectors with strict accumulator.
 foldr1' :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> a
 foldr1' f = VG.foldr1' f . fromSized
 {-# inline foldr1' #-}
 
--- | /O(n)/ Left fold (function applied to each element and its index)
+-- | /O(n)/ Left fold (function applied to each element and its index).
 ifoldl :: VG.Vector v b => (a -> Finite n -> b -> a) -> a -> Vector v n b -> a
 ifoldl f z = VG.ifoldl (\x -> f x . Finite . fromIntegral) z . fromSized
 {-# inline ifoldl #-}
 
 -- | /O(n)/ Left fold with strict accumulator (function applied to each element
--- and its index)
+-- and its index).
 ifoldl' :: VG.Vector v b => (a -> Finite n -> b -> a) -> a -> Vector v n b -> a
 ifoldl' f z = VG.ifoldl' (\x -> f x . Finite . fromIntegral) z . fromSized
 {-# inline ifoldl' #-}
 
--- | /O(n)/ Right fold (function applied to each element and its index)
+-- | /O(n)/ Right fold (function applied to each element and its index).
 ifoldr :: VG.Vector v a => (Finite n -> a -> b -> b) -> b -> Vector v n a -> b
 ifoldr f z = VG.ifoldr (f . Finite . fromIntegral) z . fromSized
 {-# inline ifoldr #-}
 
 -- | /O(n)/ Right fold with strict accumulator (function applied to each
--- element and its index)
+-- element and its index).
 ifoldr' :: VG.Vector v a => (Finite n -> a -> b -> b) -> b -> Vector v n a -> b
 ifoldr' f z = VG.ifoldr' (f . Finite . fromIntegral) z . fromSized
 {-# inline ifoldr' #-}
@@ -1417,12 +1439,12 @@ or :: VG.Vector v Bool => Vector v n Bool -> Bool
 or = VG.or . fromSized
 {-# inline or #-}
 
--- | /O(n)/ Compute the sum of the elements
+-- | /O(n)/ Compute the sum of the elements.
 sum :: (VG.Vector v a, Num a) => Vector v n a -> a
 sum = VG.sum . fromSized
 {-# inline sum #-}
 
--- | /O(n)/ Compute the produce of the elements
+-- | /O(n)/ Compute the product of the elements.
 product :: (VG.Vector v a, Num a) => Vector v n a -> a
 product = VG.product . fromSized
 {-# inline product #-}
@@ -1477,74 +1499,74 @@ minIndexBy cmpr = Finite . fromIntegral . VG.minIndexBy cmpr . fromSized
 
 -- ** Monadic folds
 
--- | /O(n)/ Monadic fold
+-- | /O(n)/ Monadic fold.
 foldM :: (Monad m, VG.Vector v b) => (a -> b -> m a) -> a -> Vector v n b -> m a
 foldM m z = VG.foldM m z . fromSized
 {-# inline foldM #-}
 
--- | /O(n)/ Monadic fold (action applied to each element and its index)
+-- | /O(n)/ Monadic fold (action applied to each element and its index).
 ifoldM :: (Monad m, VG.Vector v b) => (a -> Finite n -> b -> m a) -> a -> Vector v n b -> m a
 ifoldM m z = VG.ifoldM (\x -> m x . Finite . fromIntegral) z . fromSized
 {-# inline ifoldM #-}
 
--- | /O(n)/ Monadic fold over non-empty vectors
+-- | /O(n)/ Monadic fold over non-empty vectors.
 fold1M :: (Monad m, VG.Vector v a)
        => (a -> a -> m a) -> Vector v (1+n) a -> m a
 fold1M m = VG.fold1M m . fromSized
 {-# inline fold1M #-}
 
--- | /O(n)/ Monadic fold with strict accumulator
+-- | /O(n)/ Monadic fold with strict accumulator.
 foldM' :: (Monad m, VG.Vector v b) => (a -> b -> m a) -> a -> Vector v n b -> m a
 foldM' m z = VG.foldM' m z . fromSized
 {-# inline foldM' #-}
 
 -- | /O(n)/ Monadic fold with strict accumulator (action applied to each
--- element and its index)
+-- element and its index).
 ifoldM' :: (Monad m, VG.Vector v b)
         => (a -> Finite n -> b -> m a) -> a -> Vector v n b -> m a
 ifoldM' m z = VG.ifoldM' (\x -> m x . Finite . fromIntegral) z . fromSized
 {-# inline ifoldM' #-}
 
--- | /O(n)/ Monadic fold over non-empty vectors with strict accumulator
+-- | /O(n)/ Monadic fold over non-empty vectors with strict accumulator.
 fold1M' :: (Monad m, VG.Vector v a)
         => (a -> a -> m a) -> Vector v (n+1) a -> m a
 fold1M' m = VG.fold1M' m . fromSized
 {-# inline fold1M' #-}
 
--- | /O(n)/ Monadic fold that discards the result
+-- | /O(n)/ Monadic fold that discards the result.
 foldM_ :: (Monad m, VG.Vector v b)
        => (a -> b -> m a) -> a -> Vector v n b -> m ()
 foldM_ m z = VG.foldM_ m z . fromSized
 {-# inline foldM_ #-}
 
 -- | /O(n)/ Monadic fold that discards the result (action applied to
--- each element and its index)
+-- each element and its index).
 ifoldM_ :: (Monad m, VG.Vector v b)
         => (a -> Finite n -> b -> m a) -> a -> Vector v n b -> m ()
 ifoldM_ m z = VG.ifoldM_ (\x -> m x . Finite . fromIntegral)  z . fromSized
 {-# inline ifoldM_ #-}
 
--- | /O(n)/ Monadic fold over non-empty vectors that discards the result
+-- | /O(n)/ Monadic fold over non-empty vectors that discards the result.
 fold1M_ :: (Monad m, VG.Vector v a)
         => (a -> a -> m a) -> Vector v (n+1) a -> m ()
 fold1M_ m = VG.fold1M_ m . fromSized
 {-# inline fold1M_ #-}
 
--- | /O(n)/ Monadic fold with strict accumulator that discards the result
+-- | /O(n)/ Monadic fold with strict accumulator that discards the result.
 foldM'_ :: (Monad m, VG.Vector v b)
         => (a -> b -> m a) -> a -> Vector v n b -> m ()
 foldM'_ m z = VG.foldM'_ m z . fromSized
 {-# inline foldM'_ #-}
 
 -- | /O(n)/ Monadic fold with strict accumulator that discards the result
--- (action applied to each element and its index)
+-- (action applied to each element and its index).
 ifoldM'_ :: (Monad m, VG.Vector v b)
          => (a -> Finite n -> b -> m a) -> a -> Vector v n b -> m ()
 ifoldM'_ m z = VG.ifoldM'_ (\x -> m x . Finite . fromIntegral) z . fromSized
 {-# inline ifoldM'_ #-}
 
 -- | /O(n)/ Monad fold over non-empty vectors with strict accumulator
--- that discards the result
+-- that discards the result.
 fold1M'_ :: (Monad m, VG.Vector v a)
          => (a -> a -> m a) -> Vector v (n+1) a -> m ()
 fold1M'_ m = VG.fold1M'_ m . fromSized
@@ -1552,13 +1574,13 @@ fold1M'_ m = VG.fold1M'_ m . fromSized
 
 -- ** Monadic sequencing
 
--- | Evaluate each action and collect the results
+-- | Evaluate each action and collect the results.
 sequence :: (Monad m, VG.Vector v a, VG.Vector v (m a))
          => Vector v n (m a) -> m (Vector v n a)
 sequence (Vector v) = Vector <$> VG.sequence v
 {-# inline sequence #-}
 
--- | Evaluate each action and discard the results
+-- | Evaluate each action and discard the results.
 sequence_ :: (Monad m, VG.Vector v (m a)) => Vector v n (m a) -> m ()
 sequence_ (Vector v) = VG.sequence_ v
 {-# inline sequence_ #-}
@@ -1579,7 +1601,7 @@ prescanl :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n b
 prescanl f z = withVectorUnsafe (VG.prescanl f z )
 {-# inline prescanl #-}
 
--- | /O(n)/ Prescan with strict accumulator
+-- | /O(n)/ Prescan with strict accumulator.
 prescanl' :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n b -> Vector v n a
 prescanl' f z = withVectorUnsafe (VG.prescanl' f z )
 {-# inline prescanl' #-}
@@ -1589,68 +1611,68 @@ postscanl :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n 
 postscanl f z = withVectorUnsafe (VG.postscanl f z )
 {-# inline postscanl #-}
 
--- | /O(n)/ Scan with strict accumulator
+-- | /O(n)/ Scan with strict accumulator.
 postscanl' :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n b -> Vector v n a
 postscanl' f z = withVectorUnsafe (VG.postscanl' f z )
 {-# inline postscanl' #-}
 
--- | /O(n)/ Haskell-style scan
+-- | /O(n)/ Haskell-style scan.
 scanl :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n b -> Vector v n a
 scanl f z = withVectorUnsafe (VG.scanl f z )
 {-# inline scanl #-}
 
--- | /O(n)/ Haskell-style scan with strict accumulator
+-- | /O(n)/ Haskell-style scan with strict accumulator.
 scanl' :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n b -> Vector v n a
 scanl' f z = withVectorUnsafe (VG.scanl' f z )
 {-# inline scanl' #-}
 
--- | /O(n)/ Scan over a non-empty vector
+-- | /O(n)/ Scan over a non-empty vector.
 scanl1 :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> Vector v (n+1) a
 scanl1 f = withVectorUnsafe (VG.scanl1 f )
 {-# inline scanl1 #-}
 
--- | /O(n)/ Scan over a non-empty vector with a strict accumulator
+-- | /O(n)/ Scan over a non-empty vector with a strict accumulator.
 scanl1' :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> Vector v (n+1) a
 scanl1' f = withVectorUnsafe (VG.scanl1' f )
 {-# inline scanl1' #-}
 
--- | /O(n)/ Right-to-left prescan
+-- | /O(n)/ Right-to-left prescan.
 prescanr :: (VG.Vector v a, VG.Vector v b) => (a -> b -> b) -> b -> Vector v n a -> Vector v n b
 prescanr f z = withVectorUnsafe (VG.prescanr f z )
 {-# inline prescanr #-}
 
--- | /O(n)/ Right-to-left prescan with strict accumulator
+-- | /O(n)/ Right-to-left prescan with strict accumulator.
 prescanr' :: (VG.Vector v a, VG.Vector v b) => (a -> b -> b) -> b -> Vector v n a -> Vector v n b
 prescanr' f z = withVectorUnsafe (VG.prescanr' f z )
 {-# inline prescanr' #-}
 
--- | /O(n)/ Right-to-left scan
+-- | /O(n)/ Right-to-left scan.
 postscanr :: (VG.Vector v a, VG.Vector v b) => (a -> b -> b) -> b -> Vector v n a -> Vector v n b
 postscanr f z = withVectorUnsafe (VG.postscanr f z )
 {-# inline postscanr #-}
 
--- | /O(n)/ Right-to-left scan with strict accumulator
+-- | /O(n)/ Right-to-left scan with strict accumulator.
 postscanr' :: (VG.Vector v a, VG.Vector v b) => (a -> b -> b) -> b -> Vector v n a -> Vector v n b
 postscanr' f z = withVectorUnsafe (VG.postscanr' f z )
 {-# inline postscanr' #-}
 
--- | /O(n)/ Right-to-left Haskell-style scan
+-- | /O(n)/ Right-to-left Haskell-style scan.
 scanr :: (VG.Vector v a, VG.Vector v b) => (a -> b -> b) -> b -> Vector v n a -> Vector v n b
 scanr f z = withVectorUnsafe (VG.scanr f z )
 {-# inline scanr #-}
 
--- | /O(n)/ Right-to-left Haskell-style scan with strict accumulator
+-- | /O(n)/ Right-to-left Haskell-style scan with strict accumulator.
 scanr' :: (VG.Vector v a, VG.Vector v b) => (a -> b -> b) -> b -> Vector v n a -> Vector v n b
 scanr' f z = withVectorUnsafe (VG.scanr' f z )
 {-# inline scanr' #-}
 
--- | /O(n)/ Right-to-left scan over a non-empty vector
+-- | /O(n)/ Right-to-left scan over a non-empty vector.
 scanr1 :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> Vector v (n+1) a
 scanr1 f = withVectorUnsafe (VG.scanr1 f )
 {-# inline scanr1 #-}
 
 -- | /O(n)/ Right-to-left scan over a non-empty vector with a strict
--- accumulator
+-- accumulator.
 scanr1' :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> Vector v (n+1) a
 scanr1' f = withVectorUnsafe (VG.scanr1' f )
 {-# inline scanr1' #-}
@@ -1660,12 +1682,12 @@ scanr1' f = withVectorUnsafe (VG.scanr1' f )
 
 -- ** Lists
 
--- | /O(n)/ Convert a vector to a list
+-- | /O(n)/ Convert a vector to a list.
 toList :: VG.Vector v a => Vector v n a -> [a]
 toList = VG.toList . fromSized
 {-# inline toList #-}
 
--- | /O(n)/ Convert a list to a vector
+-- | /O(n)/ Convert a list to a vector.
 fromList :: (VG.Vector v a, KnownNat n) => [a] -> Maybe (Vector v n a)
 fromList = toSized . VG.fromList
 {-# inline fromList #-}
@@ -1698,7 +1720,7 @@ withSizedList xs = withSized (VG.fromList xs)
 
 -- ** Different Vector types
 
--- | /O(n)/ Convert different vector types
+-- | /O(n)/ Convert different vector types.
 convert :: (VG.Vector v a, VG.Vector w a) => Vector v n a -> Vector w n a
 convert = withVectorUnsafe VG.convert
 {-# inline convert #-}
