@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -8,7 +7,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -21,6 +19,8 @@
 {-# LANGUAGE NoStarIsType #-}
 #endif
 
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-noncanonical-monoid-instances #-} -- merits some discussion
 {-|
 This module reexports the functionality in 'Data.Vector.Generic' which maps well
 to explicity sized vectors.
@@ -255,24 +255,20 @@ import qualified Data.Vector.Unboxed as Unboxed
 import qualified Data.Vector.Storable as Storable
 import qualified Data.Vector.Generic.Mutable.Sized as SVGM
 import Data.Vector.Generic.Mutable.Sized.Internal
-import GHC.Generics (Generic)
 import GHC.TypeLits
 import Data.Bifunctor
 import Data.Finite
 import Data.Finite.Internal
 import Data.Proxy
-import Control.DeepSeq (NFData)
 import Control.Monad.Primitive
 import Foreign.Storable
 import Data.Data
-import Data.Functor.Classes
 import Control.Comonad
 import Foreign.Ptr (castPtr)
 import Data.Semigroup
 import Text.Read.Lex
 import Text.ParserCombinators.ReadPrec
 import GHC.Read
-import Data.Type.Equality
 import Unsafe.Coerce
 import qualified Data.Functor.Rep as Rep
 import Data.Distributive
@@ -291,7 +287,7 @@ instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
   readPrec = parens $ prec 10 $ do
       expectP (Ident "Vector")
       vec <- readPrec
-      if VG.length vec == (fromIntegral $ natVal (Proxy :: Proxy n)) then return $ Vector vec else pfail
+      if VG.length vec == fromIntegral (natVal (Proxy @n)) then return $ Vector vec else pfail
 
 type instance VG.Mutable (Vector v n) = MVector (VG.Mutable v) n
 
@@ -336,10 +332,10 @@ instance KnownNat n => Monad (Vector Boxed.Vector n) where
 -- @
 instance (KnownNat n, n ~ (1 + m)) => Comonad (Vector Boxed.Vector n) where
   extract = head
-  extend f r@(Vector v) = Vector $ VG.generate len (\i -> f (Vector (VG.slice i len v')))
+  extend f r@(Vector v) = Vector $ VG.generate l (\i -> f (Vector (VG.slice i l v')))
     where
       v' = v VG.++ VG.init v
-      len = length r
+      l = length r
 
 instance (KnownNat n, n ~ (1 + m)) => ComonadApply (Vector Boxed.Vector n) where
   (<@>) = (<*>)
@@ -458,7 +454,7 @@ _head f vector = (\x -> cons x $ tail vector) <$> f (head vector)
 -- | Lens to access (/O(1)/) and update (/O(n)/) the last element of a non-empty vector.
 _last :: forall v n a f. (VG.Vector v a, Functor f)
        => (a -> f a) -> Vector v (n+1) a -> f (Vector v (n+1) a)
-_last f vector = (\x -> snoc (init vector) x) <$> f (last vector)
+_last f vector = snoc (init vector) <$> f (last vector)
 {-# inline _last #-}
 
 -- | /O(1)/ Safe indexing in a monad. See the documentation for 'VG.indexM' for
@@ -1024,7 +1020,7 @@ mapM f (Vector v) = Vector <$> VG.mapM f v
 -- index, yielding a vector of results
 imapM :: (Monad m, VG.Vector v a, VG.Vector v b)
       => (Finite n -> a -> m b) -> Vector v n a -> m (Vector v n b)
-imapM f (Vector v) = Vector <$> (VG.imapM (f . Finite . fromIntegral) v)
+imapM f (Vector v) = Vector <$> VG.imapM (f . Finite . fromIntegral) v
 {-# inline imapM #-}
 
 -- | /O(n)/ Apply the monadic action to all elements of a vector and ignore the

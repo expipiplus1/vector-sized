@@ -52,9 +52,7 @@ instance (Ix a, Ord (v a), VG.Vector v a) => Ix (Vector v n a) where
    where
     f acc (index', rangeSize') = acc * rangeSize' + index'
     v = V.zipWith3 indexAndRangeSize lc uc ic
-    lc = VG.convert l
-    uc = VG.convert u
-    ic = VG.convert i
+    (lc, uc, ic) = convert3 l u i
     indexAndRangeSize l' u' i' = let b' = (l', u')
                                  in  (unsafeIndex b' i', unsafeRangeSize b')
 
@@ -63,6 +61,12 @@ instance (Ix a, Ord (v a), VG.Vector v a) => Ix (Vector v n a) where
   inRange (Vector l, Vector u) (Vector i) =
     V.and $ V.zipWith3 (curry inRange) lc uc ic
    where
-    lc = VG.convert l
-    uc = VG.convert u
-    ic = VG.convert i
+    (lc, uc, ic) = convert3 l u i
+
+-- Conversion helper
+convert3 :: (VG.Vector v1 a, VG.Vector w1 a,
+             VG.Vector v2 b, VG.Vector w2 b,
+             VG.Vector v3 c, VG.Vector w3 c) =>
+             v1 a -> v2 b -> v3 c -> (w1 a, w2 b, w3 c)
+convert3 v1 v2 v3 = (VG.convert v1, VG.convert v2, VG.convert v3)
+
