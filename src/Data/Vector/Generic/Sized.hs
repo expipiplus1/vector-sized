@@ -251,8 +251,8 @@ module Data.Vector.Generic.Sized
 import Data.Vector.Generic.Sized.Internal
 import qualified Data.Vector.Generic as VG
 import qualified Data.Vector as Boxed
-import qualified Data.Vector.Unboxed as Unboxed
 import qualified Data.Vector.Storable as Storable
+import qualified Data.Vector.Unboxed as Unboxed
 import qualified Data.Vector.Generic.Mutable.Sized as SVGM
 import Data.Vector.Generic.Mutable.Sized.Internal
 import GHC.TypeLits
@@ -281,7 +281,9 @@ import Prelude
 
 
 import Data.IndexedListLiterals hiding (toList, fromList)
+import Data.Hashable (Hashable(..))
 import qualified Data.IndexedListLiterals as ILL
+import Data.Vector.Unboxed (Unbox)
 
 instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
   readPrec = parens $ prec 10 $ do
@@ -373,6 +375,15 @@ instance KnownNat n => Rep.Representable (Vector Boxed.Vector n) where
   {-# inline tabulate #-}
   index = Data.Vector.Generic.Sized.index
   {-# inline index #-}
+
+instance (Eq a, Hashable a) => Hashable (Vector Boxed.Vector n a) where
+  hashWithSalt = foldl' hashWithSalt
+
+instance (Eq a, Hashable a, Storable a) => Hashable (Vector Storable.Vector n a) where
+  hashWithSalt = foldl' hashWithSalt
+
+instance (Eq a, Hashable a, Unbox a) => Hashable (Vector Unboxed.Vector n a) where
+  hashWithSalt = foldl' hashWithSalt
 
 -- | /O(1)/ Yield the length of the vector as an 'Int'. This is more like
 -- 'natVal' than 'Data.Vector.length', extracting the value from the 'KnownNat'
