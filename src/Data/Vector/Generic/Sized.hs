@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -12,6 +13,8 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE CPP #-}
 
 #if MIN_VERSION_base(4,12,0)
@@ -30,7 +33,7 @@ not exported.
 -}
 
 module Data.Vector.Generic.Sized
-  ( Vector
+  ( Vector(SomeSized)
   , MVector
    -- * Accessors
    -- ** Length information
@@ -248,6 +251,8 @@ module Data.Vector.Generic.Sized
 import Data.Vector.Generic.Sized.Internal
 import qualified Data.Vector.Generic as VG
 import qualified Data.Vector as Boxed
+import qualified Data.Vector.Unboxed as Unboxed
+import qualified Data.Vector.Storable as Storable
 import qualified Data.Vector.Generic.Mutable.Sized as SVGM
 import Data.Vector.Generic.Mutable.Sized.Internal
 import GHC.Generics (Generic)
@@ -1759,6 +1764,101 @@ fromSized (Vector v) = v
 withVectorUnsafe :: (v a -> w b) -> Vector v n a -> Vector w n b
 withVectorUnsafe f (Vector v) = Vector (f v)
 {-# inline withVectorUnsafe #-}
+
+-- | Internal existential wrapper used for implementing 'SomeSized'
+-- pattern synonym
+data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
+
+-- | Pattern synonym that lets you treat an unsized vector as if it
+-- "contained" a sized vector.  If you pattern match on an unsized vector,
+-- its contents will be the /sized/ vector counterpart.
+--
+-- @
+-- testFunc :: Unsized.Vector Int -> Int
+-- testFunc ('SomeSized' v) =
+--     'sum' ('zipWith' (+) v ('replicate' 1))
+--         -- ^ here, v is `Sized.Vector n Int`, and we have
+--                     `'KnownNat' n`
+-- @
+--
+-- The @n@ type variable will be properly instantiated to whatever the
+-- length of the vector is, and you will also have a @'KnownNat' n@
+-- instance available.  You can get @n@ in scope by turning on
+-- ScopedTypeVariables and matching on @'SomeSized' (v :: Sized.Vector
+-- n Int)@.
+--
+-- Without this, you would otherwise have to use 'withSized' to do the same
+-- thing:
+--
+-- @
+-- testFunc :: Unsized.Vector Int -> Int
+-- testFunc u = 'withSized' u $ \\v ->
+--     'sum' ('zipWith' (+) v ('replicate' 1))
+-- @
+--
+-- Remember that the type of final result of your function (the @Int@,
+-- here) must /not/ depend on @n@.  However, the types of the intermediate
+-- values are allowed to depend on @n@.
+--
+-- This is /especially/ useful in do blocks, where you can pattern match on
+-- the unsized results of actions, to use the sized vector in the rest of
+-- the do block.  You also get a @'KnownNat' n@ constraint for the
+-- remainder of the do block.
+--
+-- @
+-- -- If you had:
+-- getAVector :: IO (Unsized.Vector Int)
+--
+-- main :: IO ()
+-- main = do
+--     SomeSized v <- getAVector -- v is `Sized.Vector n Int`
+--     print v
+--
+--     -- alternatively, get n in scope
+--     SomeSized (v2 :: Sized.Vector n Int) <- getAVector
+--     print v2
+-- @
+--
+-- Remember that the final type of the result of the do block ('()', here)
+-- must not depend on @n@.  However, the 
+--
+-- Also useful in ghci, where you can pattern match to get sized vectors
+-- from unsized vectors.
+--
+-- @
+-- ghci> SomeSized v <- pure (myUnsizedVector :: Unsized.Vector Int)
+--              -- ^ v is `Sized.Vector n Int`
+-- @
+--
+-- This enables interactive exploration with sized vectors in ghci, and is
+-- useful for using with other libraries and functions that expect sized
+-- vectors in an interactive setting.
+--
+-- (Note that as of GHC 8.6, you cannot get the @n@ in scope in your ghci
+-- session using ScopedTypeVariables, like you can with do blocks)
+--
+-- You can also use this as a constructor, to take a sized vector and
+-- "hide" the size, to produce an unsized vector:
+--
+-- @
+-- SomeSized :: Sized.Vector n a -> Unsized.Vector a
+-- @
+--
+-- Note that due to quirks in GHC pattern synonym completeness checking,
+-- you will get incomplete pattern matches if you use this polymorphically
+-- over different vector types, or you use any vector type other than the
+-- three supported by this library (normal, storable, unboxed).
+pattern SomeSized
+    :: VG.Vector v a
+    => forall n. KnownNat n
+    => Vector v n a
+    -> v a
+pattern SomeSized v <- ((`withSized` SV_) -> SV_ v)
+  where
+    SomeSized v = fromSized v
+{-# complete SomeSized :: Boxed.Vector    #-}
+{-# complete SomeSized :: Unboxed.Vector  #-}
+{-# complete SomeSized :: Storable.Vector #-}
 
 instance (VG.Vector v a, Num a, KnownNat n) => Num (Vector v n a) where
     (+)         = zipWith (+)
