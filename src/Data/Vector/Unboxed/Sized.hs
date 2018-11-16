@@ -25,7 +25,7 @@ not exported.
 
 module Data.Vector.Unboxed.Sized
  ( Vector
-  , pattern SomeVector
+  , pattern SomeSized
   , VUM.MVector
    -- * Accessors
    -- ** Length information
@@ -1608,7 +1608,7 @@ withVectorUnsafe = V.withVectorUnsafe
 --
 -- @
 -- testFunc :: Unsized.Vector Int -> Int
--- testFunc ('SomeVector' v) =
+-- testFunc ('SomeSized' v) =
 --     'sum' ('zipWith' (+) v ('replicate' 1))
 --         -- ^ here, v is `Sized.Vector n Int`, and we have
 --                     `'KnownNat' n`
@@ -1617,7 +1617,7 @@ withVectorUnsafe = V.withVectorUnsafe
 -- The @n@ type variable will be properly instantiated to whatever the
 -- length of the vector is, and you will also have a @'KnownNat' n@
 -- instance available.  You can get @n@ in scope by turning on
--- ScopedTypeVariables and matching on @'SomeVector' (v :: Sized.Vector
+-- ScopedTypeVariables and matching on @'SomeSized' (v :: Sized.Vector
 -- n Int)@.
 --
 -- Without this, you would otherwise have to use 'withSized' to do the same
@@ -1644,9 +1644,9 @@ withVectorUnsafe = V.withVectorUnsafe
 --
 -- main :: IO ()
 -- main = do
---     SomeVector v <- getAVector -- v is `Sized.Vector n Int`
+--     SomeSized v <- getAVector -- v is `Sized.Vector n Int`
 --     -- get n in scope
---     SomeVector (v :: Sized.Vector n Int) <- getAVector
+--     SomeSized (v :: Sized.Vector n Int) <- getAVector
 --     print v
 -- @
 --
@@ -1657,7 +1657,7 @@ withVectorUnsafe = V.withVectorUnsafe
 -- from unsized vectors.
 --
 -- @
--- ghci> SomeVector v <- pure (myUnsizedVector :: Unsized.Vector Int)
+-- ghci> SomeSized v <- pure (myUnsizedVector :: Unsized.Vector Int)
 --              -- ^ v is `Sized.Vector n Int`
 -- @
 --
@@ -1672,8 +1672,8 @@ withVectorUnsafe = V.withVectorUnsafe
 -- "hide" the size, to produce an unsized vector:
 --
 -- @
--- SomeVector :: Sized.Vector n a -> Unsized.Vector a
+-- SomeSized :: Sized.Vector n a -> Unsized.Vector a
 -- @
-pattern SomeVector :: Unbox a => KnownNat n => Vector n a -> VU.Vector a
-pattern SomeVector v = V.SomeVector v
-{-# complete SomeVector #-}
+pattern SomeSized :: Unbox a => KnownNat n => Vector n a -> VU.Vector a
+pattern SomeSized v = V.SomeSized v
+{-# complete SomeSized #-}

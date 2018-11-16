@@ -33,7 +33,7 @@ not exported.
 -}
 
 module Data.Vector.Generic.Sized
-  ( Vector(SomeVector)
+  ( Vector(SomeSized)
   , MVector
    -- * Accessors
    -- ** Length information
@@ -1765,7 +1765,7 @@ withVectorUnsafe :: (v a -> w b) -> Vector v n a -> Vector w n b
 withVectorUnsafe f (Vector v) = Vector (f v)
 {-# inline withVectorUnsafe #-}
 
--- | Internal existential wrapper used for implementing 'SomeVector'
+-- | Internal existential wrapper used for implementing 'SomeSized'
 -- pattern synonym
 data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
 
@@ -1775,7 +1775,7 @@ data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
 --
 -- @
 -- testFunc :: Unsized.Vector Int -> Int
--- testFunc ('SomeVector' v) =
+-- testFunc ('SomeSized' v) =
 --     'sum' ('zipWith' (+) v ('replicate' 1))
 --         -- ^ here, v is `Sized.Vector n Int`, and we have
 --                     `'KnownNat' n`
@@ -1784,7 +1784,7 @@ data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
 -- The @n@ type variable will be properly instantiated to whatever the
 -- length of the vector is, and you will also have a @'KnownNat' n@
 -- instance available.  You can get @n@ in scope by turning on
--- ScopedTypeVariables and matching on @'SomeVector' (v :: Sized.Vector
+-- ScopedTypeVariables and matching on @'SomeSized' (v :: Sized.Vector
 -- n Int)@.
 --
 -- Without this, you would otherwise have to use 'withSized' to do the same
@@ -1811,11 +1811,11 @@ data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
 --
 -- main :: IO ()
 -- main = do
---     SomeVector v <- getAVector -- v is `Sized.Vector n Int`
+--     SomeSized v <- getAVector -- v is `Sized.Vector n Int`
 --     print v
 --
 --     -- alternatively, get n in scope
---     SomeVector (v2 :: Sized.Vector n Int) <- getAVector
+--     SomeSized (v2 :: Sized.Vector n Int) <- getAVector
 --     print v2
 -- @
 --
@@ -1826,7 +1826,7 @@ data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
 -- from unsized vectors.
 --
 -- @
--- ghci> SomeVector v <- pure (myUnsizedVector :: Unsized.Vector Int)
+-- ghci> SomeSized v <- pure (myUnsizedVector :: Unsized.Vector Int)
 --              -- ^ v is `Sized.Vector n Int`
 -- @
 --
@@ -1841,24 +1841,24 @@ data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
 -- "hide" the size, to produce an unsized vector:
 --
 -- @
--- SomeVector :: Sized.Vector n a -> Unsized.Vector a
+-- SomeSized :: Sized.Vector n a -> Unsized.Vector a
 -- @
 --
 -- Note that due to quirks in GHC pattern synonym completeness checking,
 -- you will get incomplete pattern matches if you use this polymorphically
 -- over different vector types, or you use any vector type other than the
 -- three supported by this library (normal, storable, unboxed).
-pattern SomeVector
+pattern SomeSized
     :: VG.Vector v a
     => forall n. KnownNat n
     => Vector v n a
     -> v a
-pattern SomeVector v <- ((`withSized` SV_) -> SV_ v)
+pattern SomeSized v <- ((`withSized` SV_) -> SV_ v)
   where
-    SomeVector v = fromSized v
-{-# complete SomeVector :: Boxed.Vector    #-}
-{-# complete SomeVector :: Unboxed.Vector  #-}
-{-# complete SomeVector :: Storable.Vector #-}
+    SomeSized v = fromSized v
+{-# complete SomeSized :: Boxed.Vector    #-}
+{-# complete SomeSized :: Unboxed.Vector  #-}
+{-# complete SomeSized :: Storable.Vector #-}
 
 instance (VG.Vector v a, Num a, KnownNat n) => Num (Vector v n a) where
     (+)         = zipWith (+)
