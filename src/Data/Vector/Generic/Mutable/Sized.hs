@@ -389,7 +389,7 @@ unsafeExchange (MVector v) = VGM.unsafeExchange v
 #if MIN_VERSION_vector(0,12,0)
 -- * Modifying vectors
 
--- | Compute the next permutation (in lexographic order) of a given vector
+-- | Compute the next permutation (in lexicographic order) of a given vector
 -- in-place.  Returns 'False' when the input is the last permutation.
 nextPermutation :: forall v n e m. (Ord e, PrimMonad m, VGM.MVector v e)
                 => MVector v n (PrimState m) e -> m Bool

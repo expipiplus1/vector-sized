@@ -6,12 +6,12 @@
 
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Mutable.Sized'
- specialized to 'Data.Vector.Unboxed.Mutable'
+ specialized to 'Data.Vector.Unboxed.Mutable'.
 
 Functions returning a vector determine the size from the type context unless
 they have a @'@ suffix in which case they take an explicit 'Proxy' argument.
 
-Functions where the resultant vector size is not know until compile time are
+Functions where the resulting vector size is not known until runtime are
 not exported.
 -}
 
@@ -94,7 +94,7 @@ import Prelude hiding ( length, null, replicate, init,
 
 
 -- | 'Data.Vector.Generic.Mutable.Sized.Vector' specialized to use
--- 'Data.Vector.Unbox.Mutable'
+-- 'Data.Vector.Unbox.Mutable'.
 type MVector = VGM.MVector VSM.MVector
 
 -- * Accessors
@@ -113,7 +113,7 @@ length' :: forall n s a. ()
 length' = VGM.length'
 {-# inline length' #-}
 
--- | /O(1)/ Check whether the mutable vector is empty
+-- | /O(1)/ Check whether the mutable vector is empty.
 null :: forall n s a. (KnownNat n)
        => MVector n s a -> Bool
 null = VGM.null
@@ -155,47 +155,47 @@ tail :: forall n s a. Unbox a
 tail = VGM.tail
 {-# inline tail #-}
 
--- | /O(1)/ Yield the first n elements. The resultant vector always contains
--- this many elements. The length of the resultant vector is inferred from the
+-- | /O(1)/ Yield the first @n@ elements. The resulting vector always contains
+-- this many elements. The length of the resulting vector is inferred from the
 -- type.
 take :: forall n k s a. (KnownNat n, Unbox a)
      => MVector (n+k) s a -> MVector n s a
 take = VGM.take
 {-# inline take #-}
 
--- | /O(1)/ Yield the first n elements. The resultant vector always contains
--- this many elements. The length of the resultant vector is given explicitly
+-- | /O(1)/ Yield the first @n@ elements. The resulting vector always contains
+-- this many elements. The length of the resulting vector is given explicitly
 -- as a 'Proxy' argument.
 take' :: forall n k s a p. (KnownNat n, Unbox a)
       => p n -> MVector (n+k) s a -> MVector n s a
 take' = VGM.take'
 {-# inline take' #-}
 
--- | /O(1)/ Yield all but the the first n elements. The given vector must
--- contain at least this many elements The length of the resultant vector is
+-- | /O(1)/ Yield all but the the first @n@ elements. The given vector must
+-- contain at least this many elements. The length of the resulting vector is
 -- inferred from the type.
 drop :: forall n k s a. (KnownNat n, Unbox a)
      => MVector (n+k) s a -> MVector k s a
 drop = VGM.drop
 {-# inline drop #-}
 
--- | /O(1)/ Yield all but the the first n elements. The given vector must
--- contain at least this many elements The length of the resultant vector is
+-- | /O(1)/ Yield all but the the first @n@ elements. The given vector must
+-- contain at least this many elements. The length of the resulting vector is
 -- givel explicitly as a 'Proxy' argument.
 drop' :: forall n k s a p. (KnownNat n, Unbox a)
       => p n -> MVector (n+k) s a -> MVector k s a
 drop' = VGM.drop'
 {-# inline drop' #-}
 
--- | /O(1)/ Yield the first n elements paired with the remainder without copying.
--- The lengths of the resultant vector are inferred from the type.
+-- | /O(1)/ Yield the first @n@ elements, paired with the rest, without copying.
+-- The lengths of the resulting vectors are inferred from the type.
 splitAt :: forall n m s a. (KnownNat n, Unbox a)
         => MVector (n+m) s a -> (MVector n s a, MVector m s a)
 splitAt = VGM.splitAt
 {-# inline splitAt #-}
 
--- | /O(1)/ Yield the first n elements paired with the remainder without
--- copying.  The length of the first resultant vector is passed explicitly as a
+-- | /O(1)/ Yield the first @n@ elements, paired with the rest, without
+-- copying.  The length of the first resulting vector is passed explicitly as a
 -- 'Proxy' argument.
 splitAt' :: forall n m s a p. (KnownNat n, Unbox a)
          => p n -> MVector (n+m) s a -> (MVector n s a, MVector m s a)
@@ -204,9 +204,7 @@ splitAt' = VGM.splitAt'
 
 -- ** Overlaps
 
--- | /O(1)/ Yield all but the the first n elements. The given vector must
--- contain at least this many elements The length of the resultant vector is
--- inferred from the type.
+-- | /O(1)/ Check if two vectors overlap. 
 overlaps :: forall n k s a. Unbox a
          => MVector n s a
          -> MVector k s a
@@ -349,13 +347,13 @@ unsafeModify :: forall n m a. (PrimMonad m, Unbox a)
 unsafeModify = VGM.unsafeModify
 {-# inline unsafeModify #-}
 
--- | /O(1)/ Swap the elements at a given type-safe position using 'Finite's.
+-- | /O(1)/ Swap the elements at the given type-safe positions using 'Finite's.
 swap :: forall n m a. (PrimMonad m, Unbox a)
      => MVector n (PrimState m) a -> Finite n -> Finite n -> m ()
 swap = VGM.swap
 {-# inline swap #-}
 
--- | /O(1)/ Swap the elements at a given 'Int' position without bounds
+-- | /O(1)/ Swap the elements at the given 'Int' positions without bounds
 -- checking.
 unsafeSwap :: forall n m a. (PrimMonad m, Unbox a)
            => MVector n (PrimState m) a -> Int -> Int -> m ()
@@ -386,7 +384,7 @@ unsafeExchange = VGM.unsafeExchange
 #if MIN_VERSION_vector(0,12,0)
 -- * Modifying vectors
 
--- | Compute the next (lexicographically) permutation of a given vector
+-- | Compute the next permutation (lexicographically) of a given vector
 -- in-place.  Returns 'False' when the input is the last permutation.
 nextPermutation :: forall n e m. (Ord e, PrimMonad m, Unbox e)
                 => MVector n (PrimState m) e -> m Bool
