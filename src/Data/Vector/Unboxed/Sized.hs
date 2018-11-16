@@ -5,6 +5,7 @@
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE PatternSynonyms    #-}
 {-# LANGUAGE CPP                 #-}
 
 #if MIN_VERSION_base(4,12,0)
@@ -24,6 +25,7 @@ not exported.
 
 module Data.Vector.Unboxed.Sized
  ( Vector
+  , pattern SomeVector
   , VUM.MVector
    -- * Accessors
    -- ** Length information
@@ -1600,3 +1602,71 @@ withVectorUnsafe :: forall a b (n :: Nat). ()
 withVectorUnsafe = V.withVectorUnsafe
 {-# inline withVectorUnsafe #-}
 
+-- | Pattern synonym that lets you treat an unsized vector as if it
+-- "contained" a sized vector.  If you pattern match on an unsized vector,
+-- its contents will be the /sized/ vector counterpart.
+--
+-- @
+-- testFunc :: Unsized.Vector Int -> Int
+-- testFunc ('SomeVector' v) =
+--     'sum' ('zipWith' (+) v ('replicate' 1))
+--         -- ^ here, v is `Sized.Vector n Int`, and we have
+--                     `'KnownNat' n`
+-- @
+--
+-- The @n@ type variable will be properly instantiated to whatever the
+-- length of the vector is, and you will also have a @'KnownNat' n@
+-- instance available.  You can get @n@ in scope by turning on
+-- ScopedTypeVariables and matching on @'SomeVector' (v :: Sized.Vector
+-- n Int)@.
+--
+-- Without this, you would otherwise have to use 'withSized' to do the same
+-- thing:
+--
+-- @
+-- testFunc :: Unsized.Vector Int -> Int
+-- testFunc u = 'withSized' u $ \\v ->
+--     'sum' ('zipWith' (+) v ('replicate' 1))
+-- @
+--
+-- Remember that the type of final result of your function (the @Int@,
+-- here) must /not/ depend on @n@.  However, the types of the intermediate
+-- values are allowed to depend on @n@.
+--
+-- This is /especially/ useful in do blocks, where you can pattern match on
+-- the unsized results of actions, to use the sized vector in the rest of
+-- the do block.  You also get a @'KnownNat' n@ constraint for the
+-- remainder of the do block.
+--
+-- @
+-- -- If you had:
+-- getAVector :: IO (Unsized.Vector Int)
+--
+-- main :: IO ()
+-- main = do
+--     SomeVector v <- getAVector -- v is `Sized.Vector n Int`
+--     -- get n in scope
+--     SomeVector (v :: Sized.Vector n Int) <- getAVector
+--     print v
+-- @
+--
+-- Remember that the final type of the result of the do block ('()', here)
+-- must not depend on @n@.  However, the 
+--
+-- Also useful in ghci, where you can pattern match to get sized vectors
+-- from unsized vectors.
+--
+-- @
+-- ghci> SomeVector v <- pure (myUnsizedVector :: Unsized.Vector Int)
+--              -- ^ v is `Sized.Vector n Int`
+-- @
+--
+-- This enables interactive exploration with sized vectors in ghci, and is
+-- useful for using with other libraries and functions that expect sized
+-- vectors in an interactive setting.
+--
+-- (Note that as of GHC 8.6, you cannot get the @n@ in scope in your ghci
+-- session using ScopedTypeVariables, like you can with do blocks)
+pattern SomeVector :: Unbox a => KnownNat n => Vector n a -> VU.Vector a
+pattern SomeVector v = V.SomeVector v
+{-# complete SomeVector #-}
