@@ -1837,6 +1837,13 @@ data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
 -- (Note that as of GHC 8.6, you cannot get the @n@ in scope in your ghci
 -- session using ScopedTypeVariables, like you can with do blocks)
 --
+-- You can also use this as a constructor, to take a sized vector and
+-- "hide" the size, to produce an unsized vector:
+--
+-- @
+-- SomeVector :: Sized.Vector n a -> Unsized.Vector a
+-- @
+--
 -- Note that due to quirks in GHC pattern synonym completeness checking,
 -- you will get incomplete pattern matches if you use this polymorphically
 -- over different vector types, or you use any vector type other than the

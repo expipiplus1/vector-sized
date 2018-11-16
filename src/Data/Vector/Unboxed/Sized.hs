@@ -1667,6 +1667,13 @@ withVectorUnsafe = V.withVectorUnsafe
 --
 -- (Note that as of GHC 8.6, you cannot get the @n@ in scope in your ghci
 -- session using ScopedTypeVariables, like you can with do blocks)
+--
+-- You can also use this as a constructor, to take a sized vector and
+-- "hide" the size, to produce an unsized vector:
+--
+-- @
+-- SomeVector :: Sized.Vector n a -> Unsized.Vector a
+-- @
 pattern SomeVector :: Unbox a => KnownNat n => Vector n a -> VU.Vector a
 pattern SomeVector v = V.SomeVector v
 {-# complete SomeVector #-}
