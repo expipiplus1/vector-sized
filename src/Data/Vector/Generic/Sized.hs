@@ -20,7 +20,6 @@
 #endif
 
 {-# OPTIONS_GHC -Wno-orphans #-}
-{-# OPTIONS_GHC -Wno-noncanonical-monoid-instances #-} -- merits some discussion
 {-|
 This module reexports the functionality in 'Data.Vector.Generic' which maps well
 to explicity sized vectors.
@@ -362,7 +361,11 @@ instance (Semigroup g, VG.Vector v g) => Semigroup (Vector v n g) where
 -- 'Monoid' will dodge the 'KnownNat' constraint.
 instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
   mempty = replicate mempty
+#if MIN_VERSION_base(4,11,0)
+  -- begone, non-canonical mappend!
+#else
   mappend = zipWith mappend
+#endif
   mconcat vs = generate $ mconcat . flip fmap vs . flip index
 
 instance KnownNat n => Distributive (Vector Boxed.Vector n) where
