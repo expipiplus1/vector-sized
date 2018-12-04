@@ -378,15 +378,15 @@ instance KnownNat n => Rep.Representable (Vector Boxed.Vector n) where
 
 instance (Eq a, Hashable a) => Hashable (Vector Boxed.Vector n a) where
   {-# INLINE hashWithSalt #-}
-  hashWithSalt = foldl' hashWithSalt
+  hashWithSalt salt = hashWithSalt salt . toList
 
 instance (Eq a, Hashable a, Storable a) => Hashable (Vector Storable.Vector n a) where
   {-# INLINE hashWithSalt #-}
-  hashWithSalt = foldl' hashWithSalt
+  hashWithSalt salt = hashWithSalt salt . toList
 
 instance (Eq a, Hashable a, Unbox a) => Hashable (Vector Unboxed.Vector n a) where
   {-# INLINE hashWithSalt #-}
-  hashWithSalt = foldl' hashWithSalt
+  hashWithSalt salt = hashWithSalt salt . toList
 
 -- | /O(1)/ Yield the length of the vector as an 'Int'. This is more like
 -- 'natVal' than 'Data.Vector.length', extracting the value from the 'KnownNat'
