@@ -1036,10 +1036,10 @@ imap f (Vector v) = Vector (VG.imap (f . Finite . fromIntegral) v)
 
 -- | /O(n*m)/ Map a function over a vector and concatenate the results. The
 -- function is required to always return a vector of the same length.
-concatMap :: (VG.Vector v a, VG.Vector v b)
-          => (a -> Vector v m b) -> Vector v n a -> Vector v (n*m) b
-concatMap f (Vector v) = Vector (VG.concatMap (fromSized . f) v)
-{-# inline concatMap #-}
+concatMap :: (VG.Vector v a, VG.Vector v' b) 
+          => (a -> Vector v' m b) -> Vector v n a -> Vector v' (n*m) b
+concatMap f (Vector v) = Vector . VG.concat . fmap (fromSized . f) . VG.toList $ v
+{-# inline concatMap #-}  
 
 --
 -- ** Monadic mapping
