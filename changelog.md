@@ -1,6 +1,6 @@
 # Change Log
 
-## [1.2.0.0] - 2018-11-15
+## [1.2.0.0] - 2018-12-05
 
 - Add ``Hashable`` instances
 - Generalize ``concatMap``
