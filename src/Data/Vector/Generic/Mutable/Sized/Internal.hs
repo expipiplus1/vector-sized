@@ -7,13 +7,14 @@
 
 module Data.Vector.Generic.Mutable.Sized.Internal
   ( MVector(..)
-  ) where
+  )
+where
 
-import GHC.Generics (Generic)
-import GHC.TypeLits
-import Control.DeepSeq (NFData)
-import Data.Data
-import Foreign.Storable
+import           GHC.Generics                   ( Generic )
+import           GHC.TypeLits
+import           Control.DeepSeq                ( NFData )
+import           Data.Data
+import           Foreign.Storable
 
 -- | A wrapper to tag mutable vectors with a type level length.
 --
