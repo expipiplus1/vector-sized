@@ -5,6 +5,7 @@
 - Add ``Hashable`` instances
 - Generalize ``concatMap``
 - Various code and documentation cleanup
+- Add ``SomeSized`` pattern
 
 ## [1.1.1.0] - 2018-11-13
 
