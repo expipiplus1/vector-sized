@@ -1,7 +1,7 @@
 # ``vector-sized`` [![Hackage][hackage-shield]][hackage]
 
 This package exports a newtype tagging the vectors from the [``vector``][1]
-package with a type-level natural representing their sized. It also exports
+package with a type-level natural representing their size. It also exports
 functions from ``vector`` whose size can be determined ahead of time,
 appropriately retyped.
 
