@@ -41,5 +41,5 @@ exceeds tens of elements.
 [5]: https://hackage.haskell.org/package/vector-0.12.0.1/docs/Data-Vector-Generic.html#t:Vector  
 [6]: https://hackage.haskell.org/package/fixed-vector
 [7]: https://github.com/expipiplus1/vulkan/pull/1
-[hackage-shield]: https://img.shields.io/badge/hackage-v1.1.10-blue.svg
+[hackage-shield]: https://img.shields.io/badge/hackage-v1.2.0.0-blue.svg 
 [hackage]: http://hackage.haskell.org/package/vector-sized
