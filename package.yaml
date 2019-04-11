@@ -1,0 +1,42 @@
+name: vector-sized
+version: '1.2.0.0'
+synopsis: Size tagged vectors
+description: Please see README.md
+category: Data
+author: Joe Hermaszewski
+maintainer: whats.our.vector.victor@monoid.al
+copyright: 2016 Joe Hermaszewski
+license: BSD3
+github: expipiplus1/vector-sized
+
+extra-source-files:
+  - readme.md
+  - changelog.md
+  - default.nix
+  - shell.nix
+
+dependencies:
+ - base >=4.9 && <5
+ - vector >=0.11 && <0.13
+ - deepseq >=1.1 && <1.5
+ - finite-typelits >=0.1
+ - primitive >=0.5 && <0.7
+ - indexed-list-literals >=0.2.0.0
+ - adjunctions >=4.3 && <4.5
+ - distributive >=0.5 && <0.7
+ - comonad >=4 && <6
+ - hashable >=1.2.4.0 && <1.3
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - Data.Vector.Sized
+    - Data.Vector.Generic.Sized
+    - Data.Vector.Generic.Sized.Internal
+    - Data.Vector.Storable.Sized
+    - Data.Vector.Mutable.Sized
+    - Data.Vector.Generic.Mutable.Sized
+    - Data.Vector.Storable.Mutable.Sized
+    - Data.Vector.Generic.Mutable.Sized.Internal
+    - Data.Vector.Unboxed.Sized
+    - Data.Vector.Unboxed.Mutable.Sized
