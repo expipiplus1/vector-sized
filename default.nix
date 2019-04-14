@@ -1,5 +1,6 @@
 { pkgs ? import <nixpkgs> {}
 , compiler ? "ghc864"
+, hoogle ? true
 }:
 
 let src = pkgs.nix-gitignore.gitignoreSource [] ./.;
@@ -8,6 +9,9 @@ let src = pkgs.nix-gitignore.gitignoreSource [] ./.;
     haskellPackages = with pkgs.haskell.lib;
       pkgs.haskell.packages.${compiler}.override {
       overrides = self: super: {
+      } // pkgs.lib.optionalAttrs hoogle {
+        ghc = super.ghc // { withPackages = super.ghc.withHoogle; };
+        ghcWithPackages = self.ghc.withPackages;
       };
     };
 
@@ -22,6 +26,10 @@ let src = pkgs.nix-gitignore.gitignoreSource [] ./.;
     # cabal2nix
     envWithExtras = pkgs.lib.overrideDerivation drv.env (attrs: {
       buildInputs = attrs.buildInputs ++ extraEnvPackages;
+    } // pkgs.lib.optionalAttrs hoogle {
+      shellHook   = attrs.shellHook + ''
+        export HIE_HOOGLE_DATABASE="$(cat $(which hoogle) | sed -n -e 's|.*--database \(.*\.hoo\).*|\1|p')"
+      '';
     });
 
 in
