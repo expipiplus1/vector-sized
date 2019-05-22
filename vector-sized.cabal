@@ -2,10 +2,10 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9bd3e344ed95be9e3519cde9a9a6de54ee969524b9403d2a9fb2af6893b506bd
+-- hash: 9e10d73204f28676f1b2ea3f9f268f3bc030536ef316caacf208ba554a7d0e14
 
 name:           vector-sized
-version:        1.2.0.0
+version:        1.2.0.1
 synopsis:       Size tagged vectors
 description:    Please see README.md
 category:       Data
