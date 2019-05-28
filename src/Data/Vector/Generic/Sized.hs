@@ -1620,23 +1620,23 @@ postscanl' f z = withVectorUnsafe (VG.postscanl' f z )
 {-# inline postscanl' #-}
 
 -- | /O(n)/ Haskell-style scan.
-scanl :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n b -> Vector v n a
-scanl f z = withVectorUnsafe (VG.scanl f z )
+scanl :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n b -> Vector v (1+n) a
+scanl f z (Vector v) = Vector (VG.scanl f z v)
 {-# inline scanl #-}
 
 -- | /O(n)/ Haskell-style scan with strict accumulator.
-scanl' :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n b -> Vector v n a
-scanl' f z = withVectorUnsafe (VG.scanl' f z )
+scanl' :: (VG.Vector v a, VG.Vector v b) => (a -> b -> a) -> a -> Vector v n b -> Vector v (1+n) a
+scanl' f z (Vector v) = Vector (VG.scanl' f z v)
 {-# inline scanl' #-}
 
 -- | /O(n)/ Scan over a non-empty vector.
-scanl1 :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> Vector v (n+1) a
-scanl1 f = withVectorUnsafe (VG.scanl1 f )
+scanl1 :: VG.Vector v a => (a -> a -> a) -> Vector v (1+n) a -> Vector v (2+n) a
+scanl1 f (Vector v) = Vector (VG.scanl1 f v)
 {-# inline scanl1 #-}
 
 -- | /O(n)/ Scan over a non-empty vector with a strict accumulator.
-scanl1' :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> Vector v (n+1) a
-scanl1' f = withVectorUnsafe (VG.scanl1' f )
+scanl1' :: VG.Vector v a => (a -> a -> a) -> Vector v (1+n) a -> Vector v (2+n) a
+scanl1' f (Vector v) = Vector (VG.scanl1' f v)
 {-# inline scanl1' #-}
 
 -- | /O(n)/ Right-to-left prescan.
@@ -1660,24 +1660,24 @@ postscanr' f z = withVectorUnsafe (VG.postscanr' f z )
 {-# inline postscanr' #-}
 
 -- | /O(n)/ Right-to-left Haskell-style scan.
-scanr :: (VG.Vector v a, VG.Vector v b) => (a -> b -> b) -> b -> Vector v n a -> Vector v n b
-scanr f z = withVectorUnsafe (VG.scanr f z )
+scanr :: (VG.Vector v a, VG.Vector v b) => (a -> b -> b) -> b -> Vector v n a -> Vector v (n+1) b
+scanr f z (Vector v) = Vector (VG.scanr f z v)
 {-# inline scanr #-}
 
 -- | /O(n)/ Right-to-left Haskell-style scan with strict accumulator.
-scanr' :: (VG.Vector v a, VG.Vector v b) => (a -> b -> b) -> b -> Vector v n a -> Vector v n b
-scanr' f z = withVectorUnsafe (VG.scanr' f z )
+scanr' :: (VG.Vector v a, VG.Vector v b) => (a -> b -> b) -> b -> Vector v n a -> Vector v (n+1) b
+scanr' f z (Vector v) = Vector (VG.scanr' f z v)
 {-# inline scanr' #-}
 
 -- | /O(n)/ Right-to-left scan over a non-empty vector.
-scanr1 :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> Vector v (n+1) a
-scanr1 f = withVectorUnsafe (VG.scanr1 f )
+scanr1 :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> Vector v (n+2) a
+scanr1 f (Vector v) = Vector (VG.scanr1 f v)
 {-# inline scanr1 #-}
 
 -- | /O(n)/ Right-to-left scan over a non-empty vector with a strict
 -- accumulator.
-scanr1' :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> Vector v (n+1) a
-scanr1' f = withVectorUnsafe (VG.scanr1' f )
+scanr1' :: VG.Vector v a => (a -> a -> a) -> Vector v (n+1) a -> Vector v (n+2) a
+scanr1' f (Vector v) = Vector (VG.scanr1' f v)
 {-# inline scanr1' #-}
 
 

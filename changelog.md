@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.3.0.0] - 2019-05-28
+
+- Correct type of accumulating fold functions
+
 ## [1.2.0.1] - 2019-05-22
 
 - Loosen upper bounds on dependencies

@@ -1,11 +1,13 @@
--- This file has been generated from package.yaml by hpack version 0.27.0.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9e10d73204f28676f1b2ea3f9f268f3bc030536ef316caacf208ba554a7d0e14
+-- hash: 3483611affb26857a9f5e7ee9523f53ff70513730627c9c20496950ee7902d8e
 
 name:           vector-sized
-version:        1.2.0.1
+version:        1.3.0.0
 synopsis:       Size tagged vectors
 description:    Please see README.md
 category:       Data
@@ -17,12 +19,10 @@ copyright:      2016 Joe Hermaszewski
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
-cabal-version:  >= 1.10
-
 extra-source-files:
+    readme.md
     changelog.md
     default.nix
-    readme.md
     shell.nix
 
 source-repository head
