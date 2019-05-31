@@ -1433,22 +1433,22 @@ postscanl' = V.postscanl'
 {-# inline postscanl' #-}
 
 -- | /O(n)/ Haskell-style scan.
-scanl :: (Unbox a, Unbox b) => (a -> b -> a) -> a -> Vector n b -> Vector n a
+scanl :: (Unbox a, Unbox b) => (a -> b -> a) -> a -> Vector n b -> Vector (1+n) a
 scanl = V.scanl
 {-# inline scanl #-}
 
 -- | /O(n)/ Haskell-style scan with strict accumulator.
-scanl' :: (Unbox a, Unbox b) => (a -> b -> a) -> a -> Vector n b -> Vector n a
+scanl' :: (Unbox a, Unbox b) => (a -> b -> a) -> a -> Vector n b -> Vector (1+n) a
 scanl' = V.scanl'
 {-# inline scanl' #-}
 
 -- | /O(n)/ Scan over a non-empty vector.
-scanl1 :: Unbox a => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
+scanl1 :: Unbox a => (a -> a -> a) -> Vector (1+n) a -> Vector (2+n) a
 scanl1 = V.scanl1
 {-# inline scanl1 #-}
 
 -- | /O(n)/ Scan over a non-empty vector with a strict accumulator.
-scanl1' :: Unbox a => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
+scanl1' :: Unbox a => (a -> a -> a) -> Vector (1+n) a -> Vector (2+n) a
 scanl1' = V.scanl1'
 {-# inline scanl1' #-}
 
@@ -1473,23 +1473,23 @@ postscanr' = V.postscanr'
 {-# inline postscanr' #-}
 
 -- | /O(n)/ Right-to-left Haskell-style scan.
-scanr :: (Unbox a, Unbox b) => (a -> b -> b) -> b -> Vector n a -> Vector n b
+scanr :: (Unbox a, Unbox b) => (a -> b -> b) -> b -> Vector n a -> Vector (n+1) b
 scanr = V.scanr
 {-# inline scanr #-}
 
 -- | /O(n)/ Right-to-left Haskell-style scan with strict accumulator.
-scanr' :: (Unbox a, Unbox b) => (a -> b -> b) -> b -> Vector n a -> Vector n b
+scanr' :: (Unbox a, Unbox b) => (a -> b -> b) -> b -> Vector n a -> Vector (n+1) b
 scanr' = V.scanr'
 {-# inline scanr' #-}
 
 -- | /O(n)/ Right-to-left scan over a non-empty vector.
-scanr1 :: Unbox a => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
+scanr1 :: Unbox a => (a -> a -> a) -> Vector (n+1) a -> Vector (n+2) a
 scanr1 = V.scanr1
 {-# inline scanr1 #-}
 
 -- | /O(n)/ Right-to-left scan over a non-empty vector with a strict
 -- accumulator.
-scanr1' :: Unbox a => (a -> a -> a) -> Vector (n+1) a -> Vector (n+1) a
+scanr1' :: Unbox a => (a -> a -> a) -> Vector (n+1) a -> Vector (n+2) a
 scanr1' = V.scanr1'
 {-# inline scanr1' #-}
 
