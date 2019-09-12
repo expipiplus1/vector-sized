@@ -1,5 +1,10 @@
 # Change Log
 
+## [1.4.0.0] - 2019-09-12
+
+- Remove Generic instance, see
+  https://github.com/expipiplus1/vector-sized/issues/79
+
 ## [1.3.0.0] - 2019-05-28
 
 - Correct type of accumulating fold functions

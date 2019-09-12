@@ -1,6 +1,5 @@
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveDataTypeable         #-}
-{-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE DeriveTraversable          #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -41,7 +40,6 @@ import           GHC.Arr                        ( Ix
                                                   , unsafeRangeSize
                                                   )
                                                 )
-import           GHC.Generics                   ( Generic )
 import           GHC.TypeLits                   ( Nat )
 
 -- | A wrapper to tag vectors with a type level length.
@@ -49,7 +47,7 @@ import           GHC.TypeLits                   ( Nat )
 -- Be careful when using the constructor here to not construct sized vectors
 -- which have a different length than that specified in the type parameter!
 newtype Vector v (n :: Nat) a = Vector (v a)
-  deriving ( Show, Eq, Ord, Functor, Foldable, Traversable, NFData, Generic
+  deriving ( Show, Eq, Ord, Functor, Foldable, Traversable, NFData
            , Show1, Eq1, Ord1
            , Data, Typeable
            )
