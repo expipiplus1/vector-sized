@@ -1928,8 +1928,5 @@ instance (VG.Vector v a, Floating a, KnownNat n) => Floating (Vector v n a) wher
     atanh   = map atanh
 
 instance (VG.Vector v a, Binary a, KnownNat n) => Binary (Vector v n a) where
-  get = do l <- Data.Binary.get @Integer
-           if l == natVal @n Proxy
-           then replicateM Data.Binary.get
-           else mzero 
-  put v = put (natVal @n Proxy) >> forM_ v put
+  get = replicateM Data.Binary.Get 
+  put v = mapM_ put
