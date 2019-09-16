@@ -1928,5 +1928,5 @@ instance (VG.Vector v a, Floating a, KnownNat n) => Floating (Vector v n a) wher
     atanh   = map atanh
 
 instance (VG.Vector v a, Binary a, KnownNat n) => Binary (Vector v n a) where
-  get = replicateM Data.Binary.Get 
-  put v = mapM_ put
+  get = replicateM Data.Binary.get 
+  put = mapM_ put
