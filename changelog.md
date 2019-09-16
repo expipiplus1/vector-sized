@@ -4,6 +4,8 @@
 
 - Remove Generic instance, see
   https://github.com/expipiplus1/vector-sized/issues/79
+- Add Binary instance
+- Loosen bounds on dependencies
 
 ## [1.3.0.0] - 2019-05-28
 
