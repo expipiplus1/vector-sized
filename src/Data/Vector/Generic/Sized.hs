@@ -254,11 +254,13 @@ import qualified Data.Vector.Storable as Storable
 import qualified Data.Vector.Unboxed as Unboxed
 import qualified Data.Vector.Generic.Mutable.Sized as SVGM
 import Data.Vector.Generic.Mutable.Sized.Internal
+import Data.Binary
 import GHC.TypeLits
 import Data.Bifunctor
 import Data.Finite
 import Data.Finite.Internal
 import Data.Proxy
+import Control.Monad (mzero)
 import Control.Monad.Primitive
 import Foreign.Storable
 import Data.Data
@@ -1928,3 +1930,10 @@ instance (VG.Vector v a, Floating a, KnownNat n) => Floating (Vector v n a) wher
     asinh   = map asinh
     acosh   = map acosh
     atanh   = map atanh
+
+instance (VG.Vector v a, Binary a, KnownNat n) => Binary (Vector v n a) where
+  get = do l <- Data.Binary.get @Integer
+           if l == natVal @n Proxy
+           then replicateM Data.Binary.get
+           else mzero 
+  put v = put (natVal @n Proxy) >> forM_ v put
