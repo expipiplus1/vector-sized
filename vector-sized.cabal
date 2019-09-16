@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bdf7ebc936f4763bb5467d99c9f591d7718dfc3de9eb9cca0a7441b13d66a6f7
+-- hash: a6e3b4ce977d92b06ce23ff21c540ce53032a023b9b0f55abcbefbe0e68786ac
 
 name:           vector-sized
 version:        1.4.0.0
@@ -53,7 +53,7 @@ library
     , deepseq >=1.1 && <1.5
     , distributive >=0.5 && <0.7
     , finite-typelits >=0.1
-    , hashable >=1.2.4.0 && <1.3
+    , hashable >=1.2.4.0
     , indexed-list-literals >=0.2.0.0
     , primitive >=0.5 && <0.8
     , vector >=0.11 && <0.13
