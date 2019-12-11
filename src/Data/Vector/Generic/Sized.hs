@@ -10,6 +10,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE TypeOperators #-}
 
 #if MIN_VERSION_base(4,12,0)
 {-# LANGUAGE NoStarIsType #-}
@@ -59,6 +60,12 @@ module Data.Vector.Generic.Sized
   , drop'
   , splitAt
   , splitAt'
+  , uncons
+  , unsnoc
+  -- ** Pattern synonyms
+  , pattern Empty
+  , pattern (:<|)
+  , pattern (:|>)
     -- * Construction
     -- ** Initialization
   , empty
@@ -256,6 +263,7 @@ import Data.Bifunctor
 import Data.Finite
 import Data.Finite.Internal
 import Data.Proxy
+import Control.Arrow ((&&&))
 import Control.Monad (mzero)
 import Control.Monad.Primitive
 import Foreign.Storable
@@ -614,6 +622,37 @@ splitAt' :: forall v n m a p. (KnownNat n, VG.Vector v a)
          => p n -> Vector v (n+m) a -> (Vector v n a, Vector v m a)
 splitAt' _ = splitAt
 {-# inline splitAt' #-}
+
+-- | /O(1)/ Yield the 'head' and 'tail' elements of a non-empty vector.
+uncons :: forall v n a. VG.Vector v a
+       => Vector v (1 + n) a -> (a, Vector v n a)
+uncons = head &&& tail
+
+-- | /O(1)/ Yield the 'init' and 'last' elements of a non-empty vector.
+unsnoc :: forall v n a. VG.Vector v a
+       => Vector v (n + 1) a -> (Vector v n a, a)
+unsnoc = init &&& last
+
+--------------------------------------------------------------------------------
+-- ** Pattern synonyms
+--------------------------------------------------------------------------------
+
+-- | /O(1)/ Pattern match on a vector of zero length.
+pattern Empty :: VG.Vector v a => Vector v 0 a
+pattern Empty <- _
+{-# COMPLETE Empty #-}
+
+infixr 5 :<|
+-- | /O(1)/ Pattern match on the 'head' and 'tail' elements of a non-empty vector.
+pattern (:<|) :: VG.Vector v a => a -> Vector v n a -> Vector v (1 + n) a
+pattern h :<| t <- (uncons -> (h, t))
+{-# COMPLETE (:<|) #-}
+
+infixl 5 :|>
+-- | /O(1)/ Pattern match on the 'init' and 'last' elements of a non-empty vector.
+pattern (:|>) :: VG.Vector v a => Vector v n a -> a -> Vector v (n + 1) a
+pattern i :|> l <- (unsnoc -> (i, l))
+{-# COMPLETE (:|>) #-}
 
 --------------------------------------------------------------------------------
 -- * Construction

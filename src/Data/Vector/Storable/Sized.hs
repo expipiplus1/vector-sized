@@ -56,6 +56,12 @@ module Data.Vector.Storable.Sized
   , drop'
   , splitAt
   , splitAt'
+  , uncons
+  , unsnoc
+  -- ** Pattern synonyms
+  , pattern Empty
+  , pattern (:<|)
+  , pattern (:|>)
     -- * Construction
     -- ** Initialization
   , empty
@@ -461,6 +467,37 @@ splitAt' :: forall n m a p. (KnownNat n, Storable a)
          => p n -> Vector (n+m) a -> (Vector n a, Vector m a)
 splitAt' = V.splitAt'
 {-# inline splitAt' #-}
+
+-- | /O(1)/ Yield the 'head' and 'tail' elements of a non-empty vector.
+uncons :: forall n a. Storable a
+       => Vector (1 + n) a -> (a, Vector n a)
+uncons = V.uncons
+
+-- | /O(1)/ Yield the 'init' and 'last' elements of a non-empty vector.
+unsnoc :: forall n a. Storable a
+       => Vector (n + 1) a -> (Vector n a, a)
+unsnoc = V.unsnoc
+
+--------------------------------------------------------------------------------
+-- ** Pattern synonyms
+--------------------------------------------------------------------------------
+
+-- | /O(1)/ Pattern match on a vector of zero length.
+pattern Empty :: Storable a => Vector 0 a
+pattern Empty <- _
+{-# COMPLETE Empty #-}
+
+infixr 5 :<|
+-- | /O(1)/ Pattern match on the 'head' and 'tail' elements of a non-empty vector.
+pattern (:<|) :: Storable a => a -> Vector n a -> Vector (1 + n) a
+pattern h :<| t <- h V.:<| t
+{-# COMPLETE (:<|) #-}
+
+infixl 5 :|>
+-- | /O(1)/ Pattern match on the 'init' and 'last' elements of a non-empty vector.
+pattern (:|>) :: Storable a => Vector n a -> a -> Vector (n + 1) a
+pattern i :|> l <- i V.:|> l
+{-# COMPLETE (:|>) #-}
 
 --------------------------------------------------------------------------------
 -- * Construction
