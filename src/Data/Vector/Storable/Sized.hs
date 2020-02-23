@@ -61,6 +61,7 @@ module Data.Vector.Storable.Sized
   , empty
   , singleton
   , fromTuple
+  , pattern Build
   , replicate
   , replicate'
   , generate
@@ -482,7 +483,7 @@ singleton :: forall a. (Storable a)
 singleton = V.singleton
 {-# inline singleton #-}
 
--- | /O(n)/ Construct a vector in a type safe manner
+-- | /O(n)/ Construct a vector in a type safe manner using a tuple.
 -- @
 --   fromTuple (1,2) :: Vector 2 Int
 --   fromTuple ("hey", "what's", "going", "on") :: Vector 4 String
@@ -492,6 +493,15 @@ fromTuple :: forall a input length.
           => input -> Vector length a
 fromTuple = V.fromTuple
 {-# inline fromTuple #-}
+
+-- | /O(n)/ Construct a vector in a type-safe manner using a sized linked list.
+-- @
+--   Build (1 :< 2 :< 3 :< Nil) :: Vector 3 Int
+--   Build ("not" :< "much" :< Nil) :: Vector 2 String
+-- @
+-- Can also be used as a pattern.
+pattern Build :: Storable a => V.BuildVector n a -> Vector n a
+pattern Build vec = V.Build vec
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.

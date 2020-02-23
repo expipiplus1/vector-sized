@@ -60,6 +60,8 @@ module Data.Vector.Sized
   , empty
   , singleton
   , fromTuple
+  , BuildVector(..)
+  , pattern Build
   , replicate
   , replicate'
   , generate
@@ -238,6 +240,7 @@ module Data.Vector.Sized
   ) where
 
 import qualified Data.Vector.Generic.Sized as V
+import Data.Vector.Generic.Sized ( BuildVector(..) )
 import qualified Data.Vector as VU
 import qualified Data.Vector.Mutable.Sized as VM
 import GHC.TypeLits
@@ -473,7 +476,7 @@ singleton :: forall a. a -> Vector 1 a
 singleton = V.singleton
 {-# inline singleton #-}
 
--- | /O(n)/ Construct a vector in a type safe manner.
+-- | /O(n)/ Construct a vector in a type safe manner using a tuple.
 -- @
 --   fromTuple (1,2) :: Vector 2 Int
 --   fromTuple ("hey", "what's", "going", "on") :: Vector 4 String
@@ -482,6 +485,15 @@ fromTuple :: forall input length ty.
              (IndexedListLiterals input length ty, KnownNat length)
           => input -> Vector length ty
 fromTuple = V.fromTuple
+
+-- | /O(n)/ Construct a vector in a type-safe manner using a sized linked list.
+-- @
+--   Build (1 :< 2 :< 3 :< Nil) :: Vector 3 Int
+--   Build ("not" :< "much" :< Nil) :: Vector 2 String
+-- @
+-- Can also be used as a pattern.
+pattern Build :: V.BuildVector n a -> Vector n a
+pattern Build build = V.Build build
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.
