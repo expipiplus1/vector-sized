@@ -10,6 +10,8 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 #if MIN_VERSION_base(4,12,0)
@@ -65,6 +67,8 @@ module Data.Vector.Generic.Sized
   , empty
   , singleton
   , fromTuple
+  , BuildVector(..)
+  , pattern Build
   , replicate
   , replicate'
   , generate
@@ -636,7 +640,7 @@ singleton :: forall v a. (VG.Vector v a)
 singleton a = Vector (VG.singleton a)
 {-# inline singleton #-}
 
--- | /O(n)/ Construct a vector in a type-safe manner.
+-- | /O(n)/ Construct a vector in a type-safe manner using a tuple.
 -- @
 --   fromTuple (1,2) :: Vector v 2 Int
 --   fromTuple ("hey", "what's", "going", "on") :: Vector v 4 String
@@ -645,6 +649,23 @@ fromTuple :: forall v a input length.
              (VG.Vector v a, IndexedListLiterals input length a, KnownNat length)
           => input -> Vector v length a
 fromTuple = Vector . VG.fromListN (fromIntegral $ natVal $ Proxy @length) . ILL.toList
+
+infixr 5 :<
+data BuildVector (n :: Nat) a where
+  Nil :: BuildVector 0 a
+  (:<) :: a -> BuildVector n a -> BuildVector (1 + n) a
+deriving instance Show a => Show (BuildVector n a)
+
+-- | /O(n)/ Construct a vector in a type-safe manner using a sized linked list.
+-- @
+--   Build (1 :< 2 :< 3 :< Nil) :: Vector v 3 Int
+--   Build ("not" :< "much" :< Nil) :: Vector v 2 String
+-- @
+-- Can also be used as a pattern.
+pattern Build :: VG.Vector v a => BuildVector n a -> Vector v n a
+pattern Build build <- ( ( \ ( Vector v ) -> unsafeCoerce $ VG.toList v ) -> build )
+  where
+    Build vec = Vector . VG.fromList . unsafeCoerce $ vec
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.
