@@ -1,5 +1,10 @@
 # Change Log
 
+## [1.5.0.0] - 2020-03-16
+
+- Add `Build`, `Nil` and `:>` patterns for safe constructors of Vectors
+  https://github.com/expipiplus1/vector-sized/pull/88
+
 ## [1.4.0.0] - 2019-09-12
 
 - Remove Generic instance, see
