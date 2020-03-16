@@ -651,9 +651,17 @@ fromTuple = Vector . VG.fromListN (fromIntegral $ natVal $ Proxy @length) . ILL.
 
 infixr 5 :<
 data BuildVector (n :: Nat) a where
+  -- Make sure the representation here matches [] as we unsafeCoerce from
+  -- one to the other in 'bvToList'.
   Nil :: BuildVector 0 a
   (:<) :: a -> BuildVector n a -> BuildVector (1 + n) a
 deriving instance Show a => Show (BuildVector n a)
+
+bvToList :: BuildVector n a -> [a]
+bvToList = unsafeCoerce
+
+bvFromList :: [a] -> BuildVector n a
+bvFromList = unsafeCoerce
 
 -- | /O(n)/ Construct a vector in a type-safe manner using a sized linked list.
 -- @
@@ -662,9 +670,9 @@ deriving instance Show a => Show (BuildVector n a)
 -- @
 -- Can also be used as a pattern.
 pattern Build :: VG.Vector v a => BuildVector n a -> Vector v n a
-pattern Build build <- ( ( \ ( Vector v ) -> unsafeCoerce $ VG.toList v ) -> build )
+pattern Build build <- ( ( \ ( Vector v ) -> bvFromList $ VG.toList v ) -> build )
   where
-    Build vec = Vector . VG.fromList . unsafeCoerce $ vec
+    Build vec = Vector . VG.fromList . bvToList $ vec
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.
