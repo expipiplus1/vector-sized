@@ -21,17 +21,21 @@ jobs:
         ghc-version: ${{ matrix.ghc }}
         cabal-version: ${{ matrix.cabal }}
 
-    - name: Cache
-      uses: actions/cache@v1
-      env:
-        cache-name: cache-cabal
+    - uses: actions/cache@v1
+      name: Cache ~/.cabal/packages
       with:
-        path: ~/.cabal
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.cabal') }}-${{ hashFiles('**/cabal.project') }}
-        restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
-          ${{ runner.os }}-
+        path: ~/.cabal/packages
+        key: ${{ runner.os }}-${{ matrix.ghc }}-cabal-packages
+    - uses: actions/cache@v1
+      name: Cache ~/.cabal/store
+      with:
+        path: ~/.cabal/store
+        key: ${{ runner.os }}-${{ matrix.ghc }}-cabal-store
+    - uses: actions/cache@v1
+      name: Cache dist-newstyle
+      with:
+        path: dist-newstyle
+        key: ${{ runner.os }}-${{ matrix.ghc }}-dist-newstyle
 
     - name: Install dependencies
       run: |
@@ -65,8 +69,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-stack-global-${{ matrix.stack-args }}
           ${{ runner.os }}-stack-global
-
-    # stack's local package dbs for the project and each package
     - name: Cache .stack-work
       id: stack-work
       uses: actions/cache@v1
