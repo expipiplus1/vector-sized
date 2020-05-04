@@ -1,5 +1,11 @@
 # Change Log
 
+## WIP
+
+## [1.4.1.0] - 2020-05-04
+
+- GHC 8.10 compatibility
+
 ## [1.4.0.0] - 2019-09-12
 
 - Remove Generic instance, see
