@@ -1,8 +1,13 @@
-{-# LANGUAGE CPP              #-}
-{-# LANGUAGE DataKinds        #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE RankNTypes       #-}
-{-# LANGUAGE TypeOperators    #-}
+{-# LANGUAGE CPP                   #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds             #-}
+{-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Mutable.Sized'
@@ -82,7 +87,12 @@ module Data.Vector.Unboxed.Mutable.Sized
   , Unbox
   ) where
 
+import Data.Vector.Generic.Sized.Internal (Vector(..))
+import qualified Data.Vector.Generic as V
+import qualified Data.Vector.Generic.Mutable as VM
+import qualified Data.Vector.Generic.Sized as VG
 import qualified Data.Vector.Generic.Mutable.Sized as VGM
+import qualified Data.Vector.Unboxed as VS
 import qualified Data.Vector.Unboxed.Mutable as VSM
 import Data.Vector.Unboxed (Unbox)
 import GHC.TypeLits
@@ -473,3 +483,51 @@ fromSized = VGM.fromSized
 {-# inline fromSized #-}
 
 
+instance (Unbox a, KnownNat n) => Unbox (VG.Vector VS.Vector n a)
+
+newtype instance VSM.MVector s (VG.Vector VS.Vector n a) = MV_Sized (VSM.MVector s a)
+newtype instance VS.Vector     (VG.Vector VS.Vector n a) = V_Sized  (VS.Vector     a)
+
+instance (Unbox a, KnownNat n) => VM.MVector VSM.MVector (VG.Vector VS.Vector n a) where
+  basicLength vs@(MV_Sized v) = VM.basicLength v `quot` intLenM vs
+  basicUnsafeSlice i n vs@(MV_Sized v) = MV_Sized (VM.basicUnsafeSlice (i * intLenM vs) (n * intLenM vs) v)
+  basicOverlaps (MV_Sized v1) (MV_Sized v2) = VM.basicOverlaps v1 v2
+  basicUnsafeNew n = MV_Sized <$> VM.basicUnsafeNew (n * fromIntegral (natVal (Proxy :: Proxy n)))
+  basicInitialize (MV_Sized v) = VM.basicInitialize v
+  basicClear (MV_Sized v) = VM.basicClear v
+  basicUnsafeCopy (MV_Sized v1) (MV_Sized v2) = VM.basicUnsafeCopy v1 v2
+  basicUnsafeMove (MV_Sized v1) (MV_Sized v2) = VM.basicUnsafeMove v1 v2
+  basicUnsafeGrow vs@(MV_Sized v) n = MV_Sized <$> VM.basicUnsafeGrow v (n * intLenM vs)
+  basicUnsafeRead vs@(MV_Sized v) i = Vector <$> V.freeze (VM.basicUnsafeSlice (i * intLenM vs) (intLenM vs) v)
+  basicUnsafeWrite vs@(MV_Sized v) i (Vector x) = V.basicUnsafeCopy (VM.basicUnsafeSlice (i * intLenM vs) (intLenM vs) v) x
+  {-# INLINE basicLength #-}
+  {-# INLINE basicUnsafeSlice #-}
+  {-# INLINE basicOverlaps #-}
+  {-# INLINE basicUnsafeNew #-}
+  {-# INLINE basicInitialize #-}
+  {-# INLINE basicUnsafeRead #-}
+  {-# INLINE basicUnsafeWrite #-}
+  {-# INLINE basicClear #-}
+  {-# INLINE basicUnsafeCopy #-}
+  {-# INLINE basicUnsafeGrow #-}
+
+intLenM :: forall s n a. KnownNat n => VSM.MVector s (VG.Vector VS.Vector n a) -> Int
+intLenM _ = fromIntegral (natVal (Proxy :: Proxy n))
+
+instance (Unbox a, KnownNat n) => V.Vector VS.Vector (VG.Vector VS.Vector n a) where
+  basicUnsafeFreeze (MV_Sized v) = V_Sized <$> V.basicUnsafeFreeze v
+  basicUnsafeThaw (V_Sized v) = MV_Sized <$> V.basicUnsafeThaw v
+  basicLength vs@(V_Sized v) = V.basicLength v `quot` intLen vs
+  basicUnsafeSlice i n vs@(V_Sized v) = V_Sized (V.basicUnsafeSlice (i * intLen vs) (n * intLen vs) v)
+  basicUnsafeCopy (MV_Sized mv) (V_Sized v) = V.basicUnsafeCopy mv v
+  elemseq _ = seq
+  basicUnsafeIndexM vs@(V_Sized v) i = pure $! Vector (V.basicUnsafeSlice (i * intLen vs) (intLen vs) v)
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicUnsafeThaw #-}
+  {-# INLINE basicLength #-}
+  {-# INLINE basicUnsafeSlice #-}
+  {-# INLINE basicUnsafeIndexM #-}
+  {-# INLINE elemseq #-}
+
+intLen :: forall n a. KnownNat n => VS.Vector (VG.Vector VS.Vector n a) -> Int
+intLen _ = fromIntegral (natVal (Proxy :: Proxy n))
