@@ -92,8 +92,8 @@ import qualified Data.Vector.Generic as V
 import qualified Data.Vector.Generic.Mutable as VM
 import qualified Data.Vector.Generic.Sized as VG
 import qualified Data.Vector.Generic.Mutable.Sized as VGM
-import qualified Data.Vector.Unboxed as VS
-import qualified Data.Vector.Unboxed.Mutable as VSM
+import qualified Data.Vector.Unboxed as VU
+import qualified Data.Vector.Unboxed.Mutable as VUM
 import Data.Vector.Unboxed (Unbox)
 import GHC.TypeLits
 import Data.Finite
@@ -105,7 +105,7 @@ import Prelude hiding ( length, null, replicate, init,
 
 -- | 'Data.Vector.Generic.Mutable.Sized.Vector' specialized to use
 -- 'Data.Vector.Unbox.Mutable'.
-type MVector = VGM.MVector VSM.MVector
+type MVector = VGM.MVector VUM.MVector
 
 -- * Accessors
 
@@ -449,7 +449,7 @@ move = VGM.move
 -- to it are also reflected in the given
 -- 'Data.Vector.Unbox.Mutable.MVector'.
 toSized :: forall n a s. (KnownNat n, Unbox a)
-        => VSM.MVector s a -> Maybe (MVector n s a)
+        => VUM.MVector s a -> Maybe (MVector n s a)
 toSized = VGM.toSized
 {-# inline toSized #-}
 
@@ -467,7 +467,7 @@ toSized = VGM.toSized
 -- to it are also reflected in the given
 -- 'Data.Vector.Unbox.Mutable.MVector'.
 withSized :: forall s a r. Unbox a
-          => VSM.MVector s a -> (forall n. KnownNat n => MVector n s a -> r) -> r
+          => VUM.MVector s a -> (forall n. KnownNat n => MVector n s a -> r) -> r
 withSized = VGM.withSized
 {-# inline withSized #-}
 
@@ -478,7 +478,7 @@ withSized = VGM.withSized
 -- 'Data.Vector.Unbox.Mutable.MVector' is a reference to the exact same
 -- vector in memory as the given one, and any modifications to it are also
 -- reflected in the given 'MVector'.
-fromSized :: MVector n s a -> VSM.MVector s a
+fromSized :: MVector n s a -> VUM.MVector s a
 fromSized = VGM.fromSized
 {-# inline fromSized #-}
 
@@ -486,12 +486,12 @@ fromSized = VGM.fromSized
 -- | This instance allows to define sized matrices and tensors
 -- backed by continuous memory segments, which reduces memory allocations
 -- and relaxes pressure on garbage collector.
-instance (Unbox a, KnownNat n) => Unbox (VG.Vector VS.Vector n a)
+instance (Unbox a, KnownNat n) => Unbox (VG.Vector VU.Vector n a)
 
-newtype instance VSM.MVector s (VG.Vector VS.Vector n a) = MV_Sized (VSM.MVector s a)
-newtype instance VS.Vector     (VG.Vector VS.Vector n a) = V_Sized  (VS.Vector     a)
+newtype instance VUM.MVector s (VG.Vector VU.Vector n a) = MV_Sized (VUM.MVector s a)
+newtype instance VU.Vector     (VG.Vector VU.Vector n a) = V_Sized  (VU.Vector     a)
 
-instance (Unbox a, KnownNat n) => VM.MVector VSM.MVector (VG.Vector VS.Vector n a) where
+instance (Unbox a, KnownNat n) => VM.MVector VUM.MVector (VG.Vector VU.Vector n a) where
   basicLength vs@(MV_Sized v) = VM.basicLength v `quot` intLenM vs
   {-# inline basicLength #-}
 
@@ -526,10 +526,10 @@ instance (Unbox a, KnownNat n) => VM.MVector VSM.MVector (VG.Vector VS.Vector n 
   {-# inline basicUnsafeWrite #-}
 
 
-intLenM :: forall s n a. KnownNat n => VSM.MVector s (VG.Vector VS.Vector n a) -> Int
+intLenM :: forall s n a. KnownNat n => VUM.MVector s (VG.Vector VU.Vector n a) -> Int
 intLenM _ = fromIntegral (natVal (Proxy :: Proxy n))
 
-instance (Unbox a, KnownNat n) => V.Vector VS.Vector (VG.Vector VS.Vector n a) where
+instance (Unbox a, KnownNat n) => V.Vector VU.Vector (VG.Vector VU.Vector n a) where
   basicUnsafeFreeze (MV_Sized v) = V_Sized <$> V.basicUnsafeFreeze v
   {-# inline basicUnsafeFreeze #-}
 
@@ -551,5 +551,5 @@ instance (Unbox a, KnownNat n) => V.Vector VS.Vector (VG.Vector VS.Vector n a) w
   basicUnsafeIndexM vs@(V_Sized v) i = pure $! Vector (V.basicUnsafeSlice (i * intLen vs) (intLen vs) v)
   {-# inline basicUnsafeIndexM #-}
 
-intLen :: forall n a. KnownNat n => VS.Vector (VG.Vector VS.Vector n a) -> Int
+intLen :: forall n a. KnownNat n => VU.Vector (VG.Vector VU.Vector n a) -> Int
 intLen _ = fromIntegral (natVal (Proxy :: Proxy n))

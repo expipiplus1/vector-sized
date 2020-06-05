@@ -2,6 +2,8 @@
 
 ## WIP
 
+- Add `instance Unbox a, KnownNat n) => Unbox (Vector n a)`
+
 ## [1.4.1.0] - 2020-05-04
 
 - GHC 8.10 compatibility
