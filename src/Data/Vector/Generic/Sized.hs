@@ -242,6 +242,7 @@ module Data.Vector.Generic.Sized
   , withSized
   , fromSized
   , withVectorUnsafe
+  , zipVectorUnsafe
   ) where
 
 import Data.Vector.Generic.Sized.Internal
@@ -473,7 +474,7 @@ _last :: forall v n a f. (VG.Vector v a, Functor f)
 _last f vector = snoc (init vector) <$> f (last vector)
 {-# inline _last #-}
 
--- | /O(1)/ Safe indexing in a monad. 
+-- | /O(1)/ Safe indexing in a monad.
 --
 -- The monad allows operations to be strict in the vector when necessary.
 -- Suppose vector copying is implemented like this:
@@ -1038,10 +1039,10 @@ imap f (Vector v) = Vector (VG.imap (f . Finite . fromIntegral) v)
 
 -- | /O(n*m)/ Map a function over a vector and concatenate the results. The
 -- function is required to always return a vector of the same length.
-concatMap :: (VG.Vector v a, VG.Vector v' b) 
+concatMap :: (VG.Vector v a, VG.Vector v' b)
           => (a -> Vector v' m b) -> Vector v n a -> Vector v' (n*m) b
 concatMap f (Vector v) = Vector . VG.concat . fmap (fromSized . f) . VG.toList $ v
-{-# inline concatMap #-}  
+{-# inline concatMap #-}
 
 --
 -- ** Monadic mapping
@@ -1799,6 +1800,12 @@ withVectorUnsafe :: (v a -> w b) -> Vector v n a -> Vector w n b
 withVectorUnsafe f (Vector v) = Vector (f v)
 {-# inline withVectorUnsafe #-}
 
+-- | Apply a function on two unsized vectors to sized vectors. The function must
+-- preserve the size of the vectors, this is not checked.
+zipVectorUnsafe :: (u a -> v b -> w c) -> Vector u n a -> Vector v n b -> Vector w n c
+zipVectorUnsafe f (Vector u) (Vector v) = Vector (f u v)
+{-# inline zipVectorUnsafe #-}
+
 -- | Internal existential wrapper used for implementing 'SomeSized'
 -- pattern synonym
 data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
@@ -1854,7 +1861,7 @@ data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
 -- @
 --
 -- Remember that the final type of the result of the do block ('()', here)
--- must not depend on @n@.  However, the 
+-- must not depend on @n@.  However, the
 --
 -- Also useful in ghci, where you can pattern match to get sized vectors
 -- from unsized vectors.
@@ -1929,5 +1936,5 @@ instance (VG.Vector v a, Floating a, KnownNat n) => Floating (Vector v n a) wher
     atanh   = map atanh
 
 instance (VG.Vector v a, Binary a, KnownNat n) => Binary (Vector v n a) where
-  get = replicateM Data.Binary.get 
+  get = replicateM Data.Binary.get
   put = mapM_ put
