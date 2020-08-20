@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 556e7c11321b9c778c723cb20757a86fc9f11c06d89cc2af90365b2a0dce55c0
+-- hash: ee1654a35ad22a0b6764be7fe44e3e0c7b29dbf714956529471c549c06bfa011
 
 name:           vector-sized
-version:        1.4.1.0
+version:        1.4.2
 synopsis:       Size tagged vectors
 description:    Please see README.md
 category:       Data

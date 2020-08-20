@@ -236,7 +236,7 @@ module Data.Vector.Unboxed.Sized
   , withSized
   , fromSized
   , withVectorUnsafe
-  , zipVectorUnsafe
+  , zipVectorsUnsafe
     -- ** Unbox
   , Unbox
   ) where
@@ -1606,9 +1606,9 @@ withVectorUnsafe = V.withVectorUnsafe
 
 -- | Apply a function on two unsized vectors to sized vectors. The function must
 -- preserve the size of the vectors, this is not checked.
-zipVectorUnsafe :: (VU.Vector a -> VU.Vector b -> VU.Vector c) -> Vector n a -> Vector n b -> Vector n c
-zipVectorUnsafe = V.zipVectorUnsafe
-{-# inline zipVectorUnsafe #-}
+zipVectorsUnsafe :: (VU.Vector a -> VU.Vector b -> VU.Vector c) -> Vector n a -> Vector n b -> Vector n c
+zipVectorsUnsafe = V.zipVectorsUnsafe
+{-# inline zipVectorsUnsafe #-}
 
 -- | Pattern synonym that lets you treat an unsized vector as if it
 -- "contained" a sized vector.  If you pattern match on an unsized vector,

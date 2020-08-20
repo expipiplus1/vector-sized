@@ -236,7 +236,7 @@ module Data.Vector.Storable.Sized
   , withSized
   , fromSized
   , withVectorUnsafe
-  , zipVectorUnsafe
+  , zipVectorsUnsafe
   ) where
 
 import qualified Data.Vector.Generic.Sized as V
@@ -1608,9 +1608,9 @@ withVectorUnsafe = V.withVectorUnsafe
 
 -- | Apply a function on two unsized vectors to sized vectors. The function must
 -- preserve the size of the vectors, this is not checked.
-zipVectorUnsafe :: (VS.Vector a -> VS.Vector b -> VS.Vector c) -> Vector n a -> Vector n b -> Vector n c
-zipVectorUnsafe = V.zipVectorUnsafe
-{-# inline zipVectorUnsafe #-}
+zipVectorsUnsafe :: (VS.Vector a -> VS.Vector b -> VS.Vector c) -> Vector n a -> Vector n b -> Vector n c
+zipVectorsUnsafe = V.zipVectorsUnsafe
+{-# inline zipVectorsUnsafe #-}
 
 -- | Pattern synonym that lets you treat an unsized vector as if it
 -- "contained" a sized vector.  If you pattern match on an unsized vector,
