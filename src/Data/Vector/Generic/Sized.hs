@@ -242,7 +242,7 @@ module Data.Vector.Generic.Sized
   , withSized
   , fromSized
   , withVectorUnsafe
-  , zipVectorUnsafe
+  , zipVectorsUnsafe
   ) where
 
 import Data.Vector.Generic.Sized.Internal
@@ -1802,9 +1802,9 @@ withVectorUnsafe f (Vector v) = Vector (f v)
 
 -- | Apply a function on two unsized vectors to sized vectors. The function must
 -- preserve the size of the vectors, this is not checked.
-zipVectorUnsafe :: (u a -> v b -> w c) -> Vector u n a -> Vector v n b -> Vector w n c
-zipVectorUnsafe f (Vector u) (Vector v) = Vector (f u v)
-{-# inline zipVectorUnsafe #-}
+zipVectorsUnsafe :: (u a -> v b -> w c) -> Vector u n a -> Vector v n b -> Vector w n c
+zipVectorsUnsafe f (Vector u) (Vector v) = Vector (f u v)
+{-# inline zipVectorsUnsafe #-}
 
 -- | Internal existential wrapper used for implementing 'SomeSized'
 -- pattern synonym
