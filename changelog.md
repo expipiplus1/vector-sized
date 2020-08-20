@@ -2,6 +2,8 @@
 
 ## WIP
 
+## [1.4.2] - 2020-08-20
+
 - Add `instance Unbox a, KnownNat n) => Unbox (Vector n a)`
 - Add `zipVectorUnsafe`
 
