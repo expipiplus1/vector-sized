@@ -253,13 +253,16 @@ import qualified Data.Vector.Unboxed as Unboxed
 import qualified Data.Vector.Generic.Mutable.Sized as SVGM
 import Data.Vector.Generic.Mutable.Sized.Internal
 import Data.Binary
-import GHC.TypeLits
+import Data.Bits
 import Data.Bifunctor
-import Data.Finite
+import Data.Foldable (for_)
+import Data.Coerce
+import Data.Finite hiding (shift)
 import Data.Finite.Internal
 import Data.Proxy
 import Control.Monad (mzero)
 import Control.Monad.Primitive
+import Control.Monad.ST
 import Foreign.Storable
 import Data.Data
 import Control.Comonad
@@ -268,6 +271,7 @@ import Data.Semigroup
 import Text.Read.Lex
 import Text.ParserCombinators.ReadPrec
 import GHC.Read
+import GHC.TypeLits
 import Unsafe.Coerce
 import qualified Data.Functor.Rep as Rep
 import Data.Distributive
@@ -1938,3 +1942,43 @@ instance (VG.Vector v a, Floating a, KnownNat n) => Floating (Vector v n a) wher
 instance (VG.Vector v a, Binary a, KnownNat n) => Binary (Vector v n a) where
   get = replicateM Data.Binary.get
   put = mapM_ put
+
+-- | Only usable if @v a@ is itself an instance of 'Bits', like in the case
+-- with the bitvec library @Bit@ type for unboxed vectors.
+instance (VG.Vector v a, Bits (v a), Bits a, KnownNat n) => Bits (Vector v n a) where
+    (.&.) = coerce ((.&.) @(v a))
+    (.|.) = coerce ((.|.) @(v a))
+    xor   = coerce (xor   @(v a))
+    complement = coerce (complement @(v a))
+    shiftL = coerce (shiftL @(v a))
+    unsafeShiftL = coerce (unsafeShiftL @(v a))
+    shiftR = coerce (shiftR @(v a))
+    unsafeShiftR = coerce (unsafeShiftR @(v a))
+    shift  = coerce (shift  @(v a))
+    rotate = coerce (rotate @(v a))
+    rotateL = coerce (rotateL @(v a))
+    rotateR = coerce (rotateR @(v a))
+    bitSize x = case bitSizeMaybe x of
+      Nothing -> error "Vector v n a: bitSize"
+      Just c  -> c
+    bitSizeMaybe _ = (* fromInteger (natVal (Proxy @n))) <$> bitSizeMaybe @a undefined
+    isSigned _ = False
+    testBit = coerce (testBit @(v a))
+    popCount = coerce (popCount @(v a))
+    setBit = coerce (setBit @(v a))
+    complementBit = coerce (complementBit @(v a))
+    -- need to do special stuff because they return a vector from scratch
+    bit n = runST $ do
+      v <- SVGM.replicate zeroBits
+      for_ (packFinite (fromIntegral n)) $ \i ->
+        SVGM.write v i (complement zeroBits)
+      freeze v
+    zeroBits = replicate zeroBits
+
+-- | Treats a bit vector as n times the size of the stored bits, reflecting
+-- the 'Bits' instance; does not necessarily reflect exact in-memory
+-- representation.  See 'Storable' instance to get information on the
+-- actual in-memry representation.
+instance (VG.Vector v a, Bits (v a), FiniteBits a, KnownNat n) => FiniteBits (Vector v n a) where
+    finiteBitSize _ = finiteBitSize @a undefined * fromIntegral (natVal (Proxy @n))
+
