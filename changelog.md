@@ -2,6 +2,10 @@
 
 ## WIP
 
+- Add `instance Bits (v a) => Bits (Vector v n a)`
+
+Thanks to @mstksg
+
 ## [1.4.2] - 2020-08-20
 
 - Add `instance Unbox a, KnownNat n) => Unbox (Vector n a)`
