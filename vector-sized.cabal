@@ -1,13 +1,11 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.2.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 556e7c11321b9c778c723cb20757a86fc9f11c06d89cc2af90365b2a0dce55c0
 
 name:           vector-sized
-version:        1.4.1.0
+version:        1.4.2
 synopsis:       Size tagged vectors
 description:    Please see README.md
 category:       Data
@@ -23,7 +21,6 @@ extra-source-files:
     readme.md
     changelog.md
     default.nix
-    shell.nix
 
 source-repository head
   type: git
@@ -31,18 +28,18 @@ source-repository head
 
 library
   exposed-modules:
-      Data.Vector.Sized
+      Data.Vector.Generic.Mutable.Sized
+      Data.Vector.Generic.Mutable.Sized.Internal
       Data.Vector.Generic.Sized
       Data.Vector.Generic.Sized.Internal
-      Data.Vector.Primitive.Sized
-      Data.Vector.Storable.Sized
       Data.Vector.Mutable.Sized
-      Data.Vector.Generic.Mutable.Sized
       Data.Vector.Primitive.Mutable.Sized
+      Data.Vector.Primitive.Sized
+      Data.Vector.Sized
       Data.Vector.Storable.Mutable.Sized
-      Data.Vector.Generic.Mutable.Sized.Internal
-      Data.Vector.Unboxed.Sized
+      Data.Vector.Storable.Sized
       Data.Vector.Unboxed.Mutable.Sized
+      Data.Vector.Unboxed.Sized
   other-modules:
       Paths_vector_sized
   hs-source-dirs:
