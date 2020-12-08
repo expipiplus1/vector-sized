@@ -33,6 +33,8 @@ library
       Data.Vector.Generic.Sized
       Data.Vector.Generic.Sized.Internal
       Data.Vector.Mutable.Sized
+      Data.Vector.Primitive.Mutable.Sized
+      Data.Vector.Primitive.Sized
       Data.Vector.Sized
       Data.Vector.Storable.Mutable.Sized
       Data.Vector.Storable.Sized
