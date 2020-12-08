@@ -99,3 +99,6 @@ jobs:
         nix_path: nixpkgs=channel:nixos-unstable
     - uses: actions/checkout@v2
     - run: nix-build
+    - run: nix-build release.nix -A tarball
+    - run: nix-build release.nix -A sdistTest
+    - run: nix-build release.nix -A docs

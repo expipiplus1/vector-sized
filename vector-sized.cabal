@@ -18,6 +18,7 @@ license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
+    package.yaml
     readme.md
     changelog.md
     default.nix
