@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ee1654a35ad22a0b6764be7fe44e3e0c7b29dbf714956529471c549c06bfa011
+-- hash: 216b1c833af0e6529870a146c703a39fd4e9b8fb80159af0334e4f6a380d9de8
 
 name:           vector-sized
 version:        1.4.2
@@ -23,7 +23,6 @@ extra-source-files:
     readme.md
     changelog.md
     default.nix
-    shell.nix
 
 source-repository head
   type: git
