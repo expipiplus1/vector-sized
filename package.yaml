@@ -10,6 +10,7 @@ license: BSD3
 github: expipiplus1/vector-sized
 
 extra-source-files:
+- package.yaml
 - readme.md
 - changelog.md
 - default.nix
