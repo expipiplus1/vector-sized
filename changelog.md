@@ -2,6 +2,8 @@
 
 ## WIP
 
+## [1.4.3] - 2020-12-08
+
 - Add Primitive flavour of sized vectors
 - Add `instance Bits (v a) => Bits (Vector v n a)`
 
