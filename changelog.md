@@ -2,6 +2,10 @@
 
 ## WIP
 
+## [1.4.3.1] - 2020-12-13
+
+- Fix Bits instance, shiftl and shiftr were incorrect
+
 ## [1.4.3] - 2020-12-08
 
 - Add Primitive flavour of sized vectors
