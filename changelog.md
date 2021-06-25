@@ -2,6 +2,10 @@
 
 ## WIP
 
+## [1.4.4] - 2021-06-26
+
+- Add `ix'`
+
 ## [1.4.3.1] - 2020-12-13
 
 - Fix Bits instance, shiftl and shiftr were incorrect

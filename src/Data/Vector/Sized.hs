@@ -5,6 +5,9 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE PatternSynonyms            #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE AllowAmbiguousTypes        #-}
 {-# LANGUAGE CPP                        #-}
 
 #if MIN_VERSION_base(4,12,0)
@@ -106,6 +109,7 @@ module Data.Vector.Sized
   , unsafeBackpermute
   -- * Lenses
   , ix
+  , ix'
   , _head
   , _last
     -- * Elementwise operations
@@ -330,6 +334,14 @@ ix :: forall n a f. Functor f
    => Finite n -> (a -> f a) -> Vector n a -> f (Vector n a)
 ix = V.ix
 {-# inline ix #-}
+
+-- | Type-safe lens to access (/O(1)/) and update (/O(n)/) an arbitrary element by its index
+-- which should be supplied via TypeApplications.
+ix' :: forall i n a f. (Functor f,
+  KnownNat i, KnownNat n, i+1 <= n)
+   => (a -> f a) -> Vector n a -> f (Vector n a)
+ix' = V.ix' @i
+{-# inline ix' #-}
 
 -- | Lens to access (/O(1)/) and update (/O(n)/) the first element of a non-empty vector.
 _head :: forall n a f. Functor f
