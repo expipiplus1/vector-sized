@@ -11,6 +11,7 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 
 #if MIN_VERSION_base(4,12,0)
 {-# LANGUAGE NoStarIsType #-}
@@ -111,6 +112,7 @@ module Data.Vector.Generic.Sized
   , unsafeBackpermute
     -- * Lenses
   , ix
+  , ix'
   , _head
   , _last
     -- * Elementwise operations
@@ -467,6 +469,14 @@ ix :: forall v n a f. (VG.Vector v a, Functor f)
    => Finite n -> (a -> f a) -> Vector v n a -> f (Vector v n a)
 ix n f vector = (\x -> vector // [(n, x)]) <$> f (index vector n)
 {-# inline ix #-}
+
+-- | Type-safe lens to access (/O(1)/) and update (/O(n)/) an arbitrary element by its index
+-- which should be supplied via TypeApplications.
+ix' :: forall i v n a f. (VG.Vector v a, Functor f,
+  KnownNat i, KnownNat n, i+1 <= n)
+   => (a -> f a) -> Vector v n a -> f (Vector v n a)
+ix' = ix (natToFinite (Proxy::Proxy i))
+{-# inline ix' #-}
 
 -- | Lens to access (/O(1)/) and update (/O(n)/) the first element of a non-empty vector.
 _head :: forall v n a f. (VG.Vector v a, Functor f)
