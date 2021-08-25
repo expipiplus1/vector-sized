@@ -762,7 +762,7 @@ unsafeUpdate_ = V.unsafeUpdate_
 accum :: Unbox a
       => (a -> b -> a) -- ^ accumulating function @f@
       -> Vector m a  -- ^ initial vector (of length @m@)
-      -> [(Int,b)]     -- ^ list of index/value pairs (of length @n@)
+      -> [(Finite m,b)]     -- ^ list of index/value pairs (of length @n@)
       -> Vector m a
 accum = V.accum
 {-# inline accum #-}

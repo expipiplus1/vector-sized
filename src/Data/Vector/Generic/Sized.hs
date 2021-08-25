@@ -927,9 +927,10 @@ unsafeUpdate_ (Vector v) (Vector is) (Vector w) =
 accum :: VG.Vector v a
       => (a -> b -> a) -- ^ accumulating function @f@
       -> Vector v m a  -- ^ initial vector (of length @m@)
-      -> [(Int,b)]     -- ^ list of index/value pairs (of length @n@)
+      -> [(Finite m,b)]     -- ^ list of index/value pairs (of length @n@)
       -> Vector v m a
-accum f (Vector v) us = Vector (VG.accum f v us)
+accum f (Vector v) us =
+  Vector (VG.accum f v $ (fmap . first) (fromIntegral . getFinite) us)
 {-# inline accum #-}
 
 -- | /O(m+n)/ For each pair @(i,b)@ from the vector of pairs, replace the vector
