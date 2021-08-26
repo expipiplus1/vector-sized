@@ -2,6 +2,10 @@
 
 ## WIP
 
+## [1.5.0] - 2021-08-25
+
+- Change indexes used by `accum` from `Int` to `Finite`.
+
 ## [1.4.4] - 2021-06-26
 
 - Add `ix'`

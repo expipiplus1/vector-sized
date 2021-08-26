@@ -741,7 +741,7 @@ unsafeUpdate_ = V.unsafeUpdate_
 -- > accum (+) <5,9,2> [(2,4),(1,6),(0,3),(1,7)] = <5+3, 9+6+7, 2+4>
 accum :: (a -> b -> a) -- ^ accumulating function @f@
       -> Vector m a  -- ^ initial vector (of length @m@)
-      -> [(Int,b)]     -- ^ list of index/value pairs (of length @n@)
+      -> [(Finite m,b)]     -- ^ list of index/value pairs (of length @n@)
       -> Vector m a
 accum = V.accum
 {-# inline accum #-}

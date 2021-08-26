@@ -1,13 +1,13 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e36af7d31e151c5e8d7ad5636dd5d31b47e82d6fe6384f8f76753ed0e17b61b1
+-- hash: 8cc33c7ff1b35236dcaed143ba951337eb4f12e3c53c616fa15ec2a073c0942b
 
 name:           vector-sized
-version:        1.4.4
+version:        1.5.0
 synopsis:       Size tagged vectors
 description:    Please see README.md
 category:       Data
