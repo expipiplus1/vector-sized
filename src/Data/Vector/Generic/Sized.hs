@@ -2027,9 +2027,9 @@ instance IFunctor.FunctorWithIndex (Finite n) (Vector Boxed.Vector n) where
 -- | @since 1.6.0
 instance IFoldable.FoldableWithIndex (Finite n) (Vector Boxed.Vector n) where
   {-# INLINEABLE ifoldMap #-}
-  ifoldMap f = ifoldl (\acc ix x -> acc <> f ix x) mempty
+  ifoldMap f = ifoldl (\acc ix x -> acc `mappend` f ix x) mempty
   {-# INLINEABLE ifoldMap' #-}
-  ifoldMap' f = ifoldl' (\acc ix x -> acc <> f ix x) mempty
+  ifoldMap' f = ifoldl' (\acc ix x -> acc `mappend` f ix x) mempty
   {-# INLINEABLE ifoldr #-}
   ifoldr = ifoldr
   {-# INLINEABLE ifoldl #-}
