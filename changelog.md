@@ -2,6 +2,11 @@
 
 ## WIP
 
+## [1.6.0] - 2022-01-19
+
+- Add instances of `FunctorWithIndex`, `FoldableWithIndex` and
+  `TraversableWithIndex` for `Vector n a`.
+
 ## [1.5.0] - 2021-08-25
 
 - Change indexes used by `accum` from `Int` to `Finite`.

@@ -12,6 +12,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 #if MIN_VERSION_base(4,12,0)
 {-# LANGUAGE NoStarIsType #-}
@@ -285,12 +286,13 @@ import Prelude
                zip3, unzip, unzip3, elem, notElem, foldl, foldl1, foldr, foldr1,
                all, any, and, or, sum, product, maximum, minimum, scanl, scanl1,
                scanr, scanr1, mapM, mapM_, sequence, sequence_)
-
-
 import Data.IndexedListLiterals hiding (toList, fromList)
 import Data.Hashable (Hashable(..))
 import qualified Data.IndexedListLiterals as ILL
 import Data.Vector.Unboxed (Unbox)
+import qualified Data.Traversable.WithIndex as ITraversable
+import qualified Data.Foldable.WithIndex as IFoldable
+import qualified Data.Functor.WithIndex as IFunctor
 
 instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
   readPrec = parens $ prec 10 $ do
@@ -2017,3 +2019,27 @@ instance (VG.Vector v a, Bits (v a), Bits a, KnownNat n) => Bits (Vector v n a) 
 instance (VG.Vector v a, Bits (v a), FiniteBits a, KnownNat n) => FiniteBits (Vector v n a) where
     finiteBitSize _ = finiteBitSize @a undefined * fromIntegral (natVal (Proxy @n))
 
+-- | @since 1.6.0
+instance IFunctor.FunctorWithIndex (Finite n) (Vector Boxed.Vector n) where
+  {-# INLINEABLE imap #-}
+  imap = imap
+
+-- | @since 1.6.0
+instance IFoldable.FoldableWithIndex (Finite n) (Vector Boxed.Vector n) where
+  {-# INLINEABLE ifoldMap #-}
+  ifoldMap f = ifoldl (\acc ix x -> acc <> f ix x) mempty
+  {-# INLINEABLE ifoldMap' #-}
+  ifoldMap' f = ifoldl' (\acc ix x -> acc <> f ix x) mempty
+  {-# INLINEABLE ifoldr #-}
+  ifoldr = ifoldr
+  {-# INLINEABLE ifoldl #-}
+  ifoldl f x = ifoldl (\acc ix -> f ix acc) x
+  {-# INLINEABLE ifoldr' #-}
+  ifoldr' = ifoldr'
+  {-# INLINEABLE ifoldl' #-}
+  ifoldl' f x = ifoldl' (\acc ix -> f ix acc) x
+
+-- | @since 1.6.0
+instance ITraversable.TraversableWithIndex (Finite n) (Vector Boxed.Vector n) where
+  {-# INLINEABLE itraverse #-}
+  itraverse f = traverse (uncurry f) . indexed

@@ -7,7 +7,7 @@ cabal-version: 1.12
 -- hash: 8cc33c7ff1b35236dcaed143ba951337eb4f12e3c53c616fa15ec2a073c0942b
 
 name:           vector-sized
-version:        1.5.0
+version:        1.6.0
 synopsis:       Size tagged vectors
 description:    Please see README.md
 category:       Data
@@ -59,4 +59,5 @@ library
     , indexed-list-literals >=0.2.0.0
     , primitive >=0.5 && <0.8
     , vector >=0.11 && <0.13
+    , indexed-traversable >=0.1.2 && <0.2
   default-language: Haskell2010
