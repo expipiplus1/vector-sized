@@ -326,9 +326,9 @@ instance KnownNat n => Applicative (Vector Boxed.Vector n) where
 -- @'join' :: Vector n (Vector n a) -> Vector n a@ gets the /diagonal/ from
 -- a square "matrix".
 instance KnownNat n => Monad (Vector Boxed.Vector n) where
-  return   = replicate
+  return   = pure
   xs >>= f = imap (\i x -> f x `index` i) xs
-  (>>)     = seq
+  (>>)     = (*>)
 
 -- | Non-empty sized vectors are lawful comonads.
 --
