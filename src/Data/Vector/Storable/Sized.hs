@@ -6,11 +6,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 {-# LANGUAGE PatternSynonyms     #-}
-{-# LANGUAGE CPP                 #-}
-
-#if MIN_VERSION_base(4,12,0)
+{-# LANGUAGE GADTs               #-}
+{-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE NoStarIsType #-}
-#endif
 
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Sized'
@@ -108,6 +107,7 @@ module Data.Vector.Storable.Sized
   , unsafeBackpermute
     -- * Lenses
   , ix
+  , ix'
   , _head
   , _last
     -- * Elementwise operations
@@ -237,6 +237,7 @@ module Data.Vector.Storable.Sized
   , withSized
   , fromSized
   , withVectorUnsafe
+  , zipVectorsUnsafe
   ) where
 
 import qualified Data.Vector.Generic.Sized as V
@@ -334,6 +335,14 @@ ix :: forall n a f. (Storable a, Functor f)
    => Finite n -> (a -> f a) -> Vector n a -> f (Vector n a)
 ix = V.ix
 {-# inline ix #-}
+
+-- | Type-safe lens to access (/O(1)/) and update (/O(n)/) an arbitrary element by its index
+-- which should be supplied via TypeApplications.
+ix' :: forall i n a f. (Storable a, Functor f,
+  KnownNat i, KnownNat n, i+1 <= n)
+   => (a -> f a) -> Vector n a -> f (Vector n a)
+ix' = V.ix' @i
+{-# inline ix' #-}
 
 -- | Lens to access (/O(1)/) and update (/O(n)/) the first element of a non-empty vector.
 _head :: forall n a f. (Storable a, Functor f)
@@ -758,7 +767,7 @@ unsafeUpdate_ = V.unsafeUpdate_
 accum :: Storable a
       => (a -> b -> a) -- ^ accumulating function @f@
       -> Vector m a  -- ^ initial vector (of length @m@)
-      -> [(Int,b)]     -- ^ list of index/value pairs (of length @n@)
+      -> [(Finite m,b)]     -- ^ list of index/value pairs (of length @n@)
       -> Vector m a
 accum = V.accum
 {-# inline accum #-}
@@ -1615,6 +1624,12 @@ withVectorUnsafe :: forall a b (n :: Nat). ()
 withVectorUnsafe = V.withVectorUnsafe
 {-# inline withVectorUnsafe #-}
 
+-- | Apply a function on two unsized vectors to sized vectors. The function must
+-- preserve the size of the vectors, this is not checked.
+zipVectorsUnsafe :: (VS.Vector a -> VS.Vector b -> VS.Vector c) -> Vector n a -> Vector n b -> Vector n c
+zipVectorsUnsafe = V.zipVectorsUnsafe
+{-# inline zipVectorsUnsafe #-}
+
 -- | Pattern synonym that lets you treat an unsized vector as if it
 -- "contained" a sized vector.  If you pattern match on an unsized vector,
 -- its contents will be the /sized/ vector counterpart.
@@ -1664,7 +1679,7 @@ withVectorUnsafe = V.withVectorUnsafe
 -- @
 --
 -- Remember that the final type of the result of the do block ('()', here)
--- must not depend on @n@.  However, the 
+-- must not depend on @n@.  However, the
 --
 -- Also useful in ghci, where you can pattern match to get sized vectors
 -- from unsized vectors.

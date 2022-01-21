@@ -9,14 +9,11 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE UndecidableInstances #-}
-
-#if MIN_VERSION_base(4,12,0)
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE NoStarIsType #-}
-#endif
 
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-|
@@ -115,6 +112,7 @@ module Data.Vector.Generic.Sized
   , unsafeBackpermute
     -- * Lenses
   , ix
+  , ix'
   , _head
   , _last
     -- * Elementwise operations
@@ -246,23 +244,29 @@ module Data.Vector.Generic.Sized
   , withSized
   , fromSized
   , withVectorUnsafe
+  , zipVectorsUnsafe
   ) where
 
 import Data.Vector.Generic.Sized.Internal
 import qualified Data.Vector.Generic as VG
+import qualified Data.Vector.Generic.Mutable as VGM
 import qualified Data.Vector as Boxed
 import qualified Data.Vector.Storable as Storable
 import qualified Data.Vector.Unboxed as Unboxed
 import qualified Data.Vector.Generic.Mutable.Sized as SVGM
 import Data.Vector.Generic.Mutable.Sized.Internal
 import Data.Binary
-import GHC.TypeLits
+import Data.Bits
 import Data.Bifunctor
-import Data.Finite
+import Data.Foldable (for_)
+import Data.Coerce
+import Data.Finite hiding (shift)
 import Data.Finite.Internal
 import Data.Proxy
+import qualified Control.Exception as Exception
 import Control.Monad (mzero)
 import Control.Monad.Primitive
+import Control.Monad.ST
 import Foreign.Storable
 import Data.Data
 import Control.Comonad
@@ -271,6 +275,7 @@ import Data.Semigroup
 import Text.Read.Lex
 import Text.ParserCombinators.ReadPrec
 import GHC.Read
+import GHC.TypeLits
 import Unsafe.Coerce
 import qualified Data.Functor.Rep as Rep
 import Data.Distributive
@@ -319,9 +324,7 @@ instance KnownNat n => Applicative (Vector Boxed.Vector n) where
 -- @'join' :: Vector n (Vector n a) -> Vector n a@ gets the /diagonal/ from
 -- a square "matrix".
 instance KnownNat n => Monad (Vector Boxed.Vector n) where
-  return   = replicate
   xs >>= f = imap (\i x -> f x `index` i) xs
-  (>>)     = seq
 
 -- | Non-empty sized vectors are lawful comonads.
 --
@@ -364,11 +367,6 @@ instance (Semigroup g, VG.Vector v g) => Semigroup (Vector v n g) where
 -- 'Monoid' will dodge the 'KnownNat' constraint.
 instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
   mempty = replicate mempty
-#if MIN_VERSION_base(4,11,0)
-  -- begone, non-canonical mappend!
-#else
-  mappend = zipWith mappend
-#endif
   mconcat vs = generate $ mconcat . flip fmap vs . flip index
 
 instance KnownNat n => Distributive (Vector Boxed.Vector n) where
@@ -465,6 +463,14 @@ ix :: forall v n a f. (VG.Vector v a, Functor f)
 ix n f vector = (\x -> vector // [(n, x)]) <$> f (index vector n)
 {-# inline ix #-}
 
+-- | Type-safe lens to access (/O(1)/) and update (/O(n)/) an arbitrary element by its index
+-- which should be supplied via TypeApplications.
+ix' :: forall i v n a f. (VG.Vector v a, Functor f,
+  KnownNat i, KnownNat n, i+1 <= n)
+   => (a -> f a) -> Vector v n a -> f (Vector v n a)
+ix' = ix (natToFinite (Proxy::Proxy i))
+{-# inline ix' #-}
+
 -- | Lens to access (/O(1)/) and update (/O(n)/) the first element of a non-empty vector.
 _head :: forall v n a f. (VG.Vector v a, Functor f)
       => (a -> f a) -> Vector v (1+n) a -> f (Vector v (1+n) a)
@@ -477,7 +483,7 @@ _last :: forall v n a f. (VG.Vector v a, Functor f)
 _last f vector = snoc (init vector) <$> f (last vector)
 {-# inline _last #-}
 
--- | /O(1)/ Safe indexing in a monad. 
+-- | /O(1)/ Safe indexing in a monad.
 --
 -- The monad allows operations to be strict in the vector when necessary.
 -- Suppose vector copying is implemented like this:
@@ -931,9 +937,10 @@ unsafeUpdate_ (Vector v) (Vector is) (Vector w) =
 accum :: VG.Vector v a
       => (a -> b -> a) -- ^ accumulating function @f@
       -> Vector v m a  -- ^ initial vector (of length @m@)
-      -> [(Int,b)]     -- ^ list of index/value pairs (of length @n@)
+      -> [(Finite m,b)]     -- ^ list of index/value pairs (of length @n@)
       -> Vector v m a
-accum f (Vector v) us = Vector (VG.accum f v us)
+accum f (Vector v) us =
+  Vector (VG.accum f v $ (fmap . first) (fromIntegral . getFinite) us)
 {-# inline accum #-}
 
 -- | /O(m+n)/ For each pair @(i,b)@ from the vector of pairs, replace the vector
@@ -1059,10 +1066,10 @@ imap f (Vector v) = Vector (VG.imap (f . Finite . fromIntegral) v)
 
 -- | /O(n*m)/ Map a function over a vector and concatenate the results. The
 -- function is required to always return a vector of the same length.
-concatMap :: (VG.Vector v a, VG.Vector v' b) 
+concatMap :: (VG.Vector v a, VG.Vector v' b)
           => (a -> Vector v' m b) -> Vector v n a -> Vector v' (n*m) b
 concatMap f (Vector v) = Vector . VG.concat . fmap (fromSized . f) . VG.toList $ v
-{-# inline concatMap #-}  
+{-# inline concatMap #-}
 
 --
 -- ** Monadic mapping
@@ -1820,6 +1827,12 @@ withVectorUnsafe :: (v a -> w b) -> Vector v n a -> Vector w n b
 withVectorUnsafe f (Vector v) = Vector (f v)
 {-# inline withVectorUnsafe #-}
 
+-- | Apply a function on two unsized vectors to sized vectors. The function must
+-- preserve the size of the vectors, this is not checked.
+zipVectorsUnsafe :: (u a -> v b -> w c) -> Vector u n a -> Vector v n b -> Vector w n c
+zipVectorsUnsafe f (Vector u) (Vector v) = Vector (f u v)
+{-# inline zipVectorsUnsafe #-}
+
 -- | Internal existential wrapper used for implementing 'SomeSized'
 -- pattern synonym
 data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
@@ -1875,7 +1888,7 @@ data SV_ v a = forall n. KnownNat n => SV_ (Vector v n a)
 -- @
 --
 -- Remember that the final type of the result of the do block ('()', here)
--- must not depend on @n@.  However, the 
+-- must not depend on @n@.  However, the
 --
 -- Also useful in ghci, where you can pattern match to get sized vectors
 -- from unsized vectors.
@@ -1950,5 +1963,67 @@ instance (VG.Vector v a, Floating a, KnownNat n) => Floating (Vector v n a) wher
     atanh   = map atanh
 
 instance (VG.Vector v a, Binary a, KnownNat n) => Binary (Vector v n a) where
-  get = replicateM Data.Binary.get 
+  get = replicateM Data.Binary.get
   put = mapM_ put
+
+-- | Only usable if @v a@ is itself an instance of 'Bits', like in the case
+-- with the bitvec library @Bit@ type for unboxed vectors.
+instance (VG.Vector v a, Bits (v a), Bits a, KnownNat n) => Bits (Vector v n a) where
+    (.&.) = coerce ((.&.) @(v a))
+    (.|.) = coerce ((.|.) @(v a))
+    xor   = coerce (xor   @(v a))
+    complement = coerce (complement @(v a))
+    rotate = coerce (rotate @(v a))
+    rotateL = coerce (rotateL @(v a))
+    rotateR = coerce (rotateR @(v a))
+    bitSize x = case bitSizeMaybe x of
+      Nothing -> error "Vector v n a: bitSize"
+      Just c  -> c
+    bitSizeMaybe _ = (* fromInteger (natVal (Proxy @n))) <$> bitSizeMaybe @a undefined
+    isSigned _ = False
+    testBit = coerce (testBit @(v a))
+    popCount = coerce (popCount @(v a))
+    setBit = coerce (setBit @(v a))
+    complementBit = coerce (complementBit @(v a))
+    -- need to do special stuff because they return a vector from scratch
+    bit n = runST $ do
+      v <- SVGM.replicate zeroBits
+      for_ (packFinite (fromIntegral n)) $ \i ->
+        SVGM.write v i (complement zeroBits)
+      freeze v
+    zeroBits = replicate zeroBits
+    -- need to do special stuff because they have to preserve vector size
+    shiftL xs i
+      | i < 0     = Exception.throw Exception.Overflow
+      | otherwise = unsafeShiftL xs i
+    unsafeShiftL (Vector xs) i
+        | i  == 0   = Vector xs
+        | i' == n   = replicate zeroBits
+        | otherwise = Vector $ runST $ do
+            u <- VGM.replicate n zeroBits
+            VG.unsafeCopy (VGM.unsafeDrop i' u) (VG.unsafeTake (n - i') xs)
+            VG.unsafeFreeze u
+      where
+        n   = fromInteger $ natVal (Proxy @n)
+        i' = min n i
+    shiftR xs i
+      | i < 0     = Exception.throw Exception.Overflow
+      | otherwise = unsafeShiftR xs i
+    unsafeShiftR (Vector xs) i
+        | i  == 0   = Vector xs
+        | i' == n   = replicate zeroBits
+        | otherwise = Vector $ runST $ do
+            u <- VGM.replicate n zeroBits
+            VG.unsafeCopy (VGM.unsafeTake (n - i') u) (VG.unsafeDrop i' xs)
+            VG.unsafeFreeze u
+      where
+        n  = fromInteger $ natVal (Proxy @n)
+        i' = min n i
+
+-- | Treats a bit vector as n times the size of the stored bits, reflecting
+-- the 'Bits' instance; does not necessarily reflect exact in-memory
+-- representation.  See 'Storable' instance to get information on the
+-- actual in-memry representation.
+instance (VG.Vector v a, Bits (v a), FiniteBits a, KnownNat n) => FiniteBits (Vector v n a) where
+    finiteBitSize _ = finiteBitSize @a undefined * fromIntegral (natVal (Proxy @n))
+

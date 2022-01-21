@@ -1,16 +1,11 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PolyKinds             #-}
-{-# LANGUAGE RankNTypes            #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE DataKinds        #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes       #-}
+{-# LANGUAGE TypeOperators    #-}
 
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Mutable.Sized'
- specialized to 'Data.Vector.Unboxed.Mutable'.
+ specialized to 'Data.Vector.Primitive.Mutable'.
 
 Functions returning a vector determine the size from the type context unless
 they have a @'@ suffix in which case they take an explicit 'Proxy' argument.
@@ -19,7 +14,7 @@ Functions where the resulting vector size is not known until runtime are
 not exported.
 -}
 
-module Data.Vector.Unboxed.Mutable.Sized
+module Data.Vector.Primitive.Mutable.Sized
  ( MVector
    -- * Accessors
    -- ** Length information
@@ -80,20 +75,13 @@ module Data.Vector.Unboxed.Mutable.Sized
   , toSized
   , withSized
   , fromSized
-    -- * Unbox
-  , Unbox
   ) where
 
-import Data.Vector.Generic.Sized.Internal (Vector(..))
-import qualified Data.Vector.Generic as V
-import qualified Data.Vector.Generic.Mutable as VM
-import qualified Data.Vector.Generic.Sized as VG
 import qualified Data.Vector.Generic.Mutable.Sized as VGM
-import qualified Data.Vector.Unboxed as VU
-import qualified Data.Vector.Unboxed.Mutable as VUM
-import Data.Vector.Unboxed (Unbox)
+import qualified Data.Vector.Primitive.Mutable as VSM
 import GHC.TypeLits
 import Data.Finite
+import Data.Primitive (Prim)
 import Data.Proxy
 import Control.Monad.Primitive
 import Prelude hiding ( length, null, replicate, init,
@@ -101,8 +89,8 @@ import Prelude hiding ( length, null, replicate, init,
 
 
 -- | 'Data.Vector.Generic.Mutable.Sized.Vector' specialized to use
--- 'Data.Vector.Unbox.Mutable'.
-type MVector = VGM.MVector VUM.MVector
+-- 'Data.Vector.Primitive.Mutable'.
+type MVector = VGM.MVector VSM.MVector
 
 -- * Accessors
 
@@ -130,7 +118,7 @@ null = VGM.null
 
 -- | /O(1)/ Yield a slice of the mutable vector without copying it with an
 -- inferred length argument.
-slice :: forall i n k s a p. (KnownNat i, KnownNat n, Unbox a)
+slice :: forall i n k s a p. (KnownNat i, KnownNat n, Prim a)
       => p i -- ^ starting index
       -> MVector (i+n+k) s a
       -> MVector n s a
@@ -140,7 +128,7 @@ slice = VGM.slice
 -- | /O(1)/ Yield a slice of the mutable vector without copying it with an
 -- explicit length argument.
 slice' :: forall i n k s a p
-        . (KnownNat i, KnownNat n, Unbox a)
+        . (KnownNat i, KnownNat n, Prim a)
        => p i -- ^ starting index
        -> p n -- ^ length
        -> MVector (i+n+k) s a
@@ -150,14 +138,14 @@ slice' = VGM.slice'
 
 -- | /O(1)/ Yield all but the last element of a non-empty mutable vector
 -- without copying.
-init :: forall n s a. Unbox a
+init :: forall n s a. Prim a
      => MVector (n+1) s a -> MVector n s a
 init = VGM.init
 {-# inline init #-}
 
 -- | /O(1)/ Yield all but the first element of a non-empty mutable vector
 -- without copying.
-tail :: forall n s a. Unbox a
+tail :: forall n s a. Prim a
      => MVector (1+n) s a -> MVector n s a
 tail = VGM.tail
 {-# inline tail #-}
@@ -165,7 +153,7 @@ tail = VGM.tail
 -- | /O(1)/ Yield the first @n@ elements. The resulting vector always contains
 -- this many elements. The length of the resulting vector is inferred from the
 -- type.
-take :: forall n k s a. (KnownNat n, Unbox a)
+take :: forall n k s a. (KnownNat n, Prim a)
      => MVector (n+k) s a -> MVector n s a
 take = VGM.take
 {-# inline take #-}
@@ -173,7 +161,7 @@ take = VGM.take
 -- | /O(1)/ Yield the first @n@ elements. The resulting vector always contains
 -- this many elements. The length of the resulting vector is given explicitly
 -- as a 'Proxy' argument.
-take' :: forall n k s a p. (KnownNat n, Unbox a)
+take' :: forall n k s a p. (KnownNat n, Prim a)
       => p n -> MVector (n+k) s a -> MVector n s a
 take' = VGM.take'
 {-# inline take' #-}
@@ -181,7 +169,7 @@ take' = VGM.take'
 -- | /O(1)/ Yield all but the the first @n@ elements. The given vector must
 -- contain at least this many elements. The length of the resulting vector is
 -- inferred from the type.
-drop :: forall n k s a. (KnownNat n, Unbox a)
+drop :: forall n k s a. (KnownNat n, Prim a)
      => MVector (n+k) s a -> MVector k s a
 drop = VGM.drop
 {-# inline drop #-}
@@ -189,14 +177,14 @@ drop = VGM.drop
 -- | /O(1)/ Yield all but the the first @n@ elements. The given vector must
 -- contain at least this many elements. The length of the resulting vector is
 -- givel explicitly as a 'Proxy' argument.
-drop' :: forall n k s a p. (KnownNat n, Unbox a)
+drop' :: forall n k s a p. (KnownNat n, Prim a)
       => p n -> MVector (n+k) s a -> MVector k s a
 drop' = VGM.drop'
 {-# inline drop' #-}
 
 -- | /O(1)/ Yield the first @n@ elements, paired with the rest, without copying.
 -- The lengths of the resulting vectors are inferred from the type.
-splitAt :: forall n m s a. (KnownNat n, Unbox a)
+splitAt :: forall n m s a. (KnownNat n, Prim a)
         => MVector (n+m) s a -> (MVector n s a, MVector m s a)
 splitAt = VGM.splitAt
 {-# inline splitAt #-}
@@ -204,15 +192,15 @@ splitAt = VGM.splitAt
 -- | /O(1)/ Yield the first @n@ elements, paired with the rest, without
 -- copying.  The length of the first resulting vector is passed explicitly as a
 -- 'Proxy' argument.
-splitAt' :: forall n m s a p. (KnownNat n, Unbox a)
+splitAt' :: forall n m s a p. (KnownNat n, Prim a)
          => p n -> MVector (n+m) s a -> (MVector n s a, MVector m s a)
 splitAt' = VGM.splitAt'
 {-# inline splitAt' #-}
 
 -- ** Overlaps
 
--- | /O(1)/ Check if two vectors overlap. 
-overlaps :: forall n k s a. Unbox a
+-- | /O(1)/ Check if two vectors overlap.
+overlaps :: forall n k s a. Prim a
          => MVector n s a
          -> MVector k s a
          -> Bool
@@ -224,35 +212,35 @@ overlaps = VGM.overlaps
 -- ** Initialisation
 
 -- | Create a mutable vector where the length is inferred from the type.
-new :: forall n m a. (KnownNat n, PrimMonad m, Unbox a)
+new :: forall n m a. (KnownNat n, PrimMonad m, Prim a)
     => m (MVector n (PrimState m) a)
 new = VGM.new
 {-# inline new #-}
 
 -- | Create a mutable vector where the length is inferred from the type.
 -- The memory is not initialized.
-unsafeNew :: forall n m a. (KnownNat n, PrimMonad m, Unbox a)
+unsafeNew :: forall n m a. (KnownNat n, PrimMonad m, Prim a)
           => m (MVector n (PrimState m) a)
 unsafeNew = VGM.unsafeNew
 {-# inline unsafeNew #-}
 
 -- | Create a mutable vector where the length is inferred from the type and
 -- fill it with an initial value.
-replicate :: forall n m a. (KnownNat n, PrimMonad m, Unbox a)
+replicate :: forall n m a. (KnownNat n, PrimMonad m, Prim a)
           => a -> m (MVector n (PrimState m) a)
 replicate = VGM.replicate
 {-# inline replicate #-}
 
 -- | Create a mutable vector where the length is given explicitly as
 -- a 'Proxy' argument and fill it with an initial value.
-replicate' :: forall n m a p. (KnownNat n, PrimMonad m, Unbox a)
+replicate' :: forall n m a p. (KnownNat n, PrimMonad m, Prim a)
            => p n -> a -> m (MVector n (PrimState m) a)
 replicate' = VGM.replicate'
 {-# inline replicate' #-}
 
 -- | Create a mutable vector where the length is inferred from the type and
 -- fill it with values produced by repeatedly executing the monadic action.
-replicateM :: forall n m a. (KnownNat n, PrimMonad m, Unbox a)
+replicateM :: forall n m a. (KnownNat n, PrimMonad m, Prim a)
            => m a -> m (MVector n (PrimState m) a)
 replicateM = VGM.replicateM
 {-# inline replicateM #-}
@@ -260,13 +248,13 @@ replicateM = VGM.replicateM
 -- | Create a mutable vector where the length is given explicitly as
 -- a 'Proxy' argument and fill it with values produced by repeatedly
 -- executing the monadic action.
-replicateM' :: forall n m a p. (KnownNat n, PrimMonad m, Unbox a)
+replicateM' :: forall n m a p. (KnownNat n, PrimMonad m, Prim a)
            => p n -> m a -> m (MVector n (PrimState m) a)
 replicateM' = VGM.replicateM'
 {-# inline replicateM' #-}
 
 -- | Create a copy of a mutable vector.
-clone :: forall n m a. (PrimMonad m, Unbox a)
+clone :: forall n m a. (PrimMonad m, Prim a)
       => MVector n (PrimState m) a -> m (MVector n (PrimState m) a)
 clone = VGM.clone
 {-# inline clone #-}
@@ -275,14 +263,14 @@ clone = VGM.clone
 
 -- | Grow a mutable vector by an amount given explicitly as a 'Proxy'
 -- argument.
-grow :: forall n k m a p. (KnownNat k, PrimMonad m, Unbox a)
+grow :: forall n k m a p. (KnownNat k, PrimMonad m, Prim a)
       => p k -> MVector n (PrimState m) a -> m (MVector (n + k) (PrimState m) a)
 grow = VGM.grow
 {-# inline grow #-}
 
 -- | Grow a mutable vector (from the front) by an amount given explicitly
 -- as a 'Proxy' argument.
-growFront :: forall n k m a p. (KnownNat k, PrimMonad m, Unbox a)
+growFront :: forall n k m a p. (KnownNat k, PrimMonad m, Prim a)
       => p k -> MVector n (PrimState m) a -> m (MVector (n + k) (PrimState m) a)
 growFront = VGM.growFront
 {-# inline growFront #-}
@@ -291,99 +279,99 @@ growFront = VGM.growFront
 
 -- | Reset all elements of the vector to some undefined value, clearing all
 -- references to external objects.
-clear :: (PrimMonad m, Unbox a) => MVector n (PrimState m) a -> m ()
+clear :: (PrimMonad m, Prim a) => MVector n (PrimState m) a -> m ()
 clear = VGM.clear
 {-# inline clear #-}
 
 -- * Accessing individual elements
 
 -- | /O(1)/ Yield the element at a given type-safe position using 'Finite'.
-read :: forall n m a. (PrimMonad m, Unbox a)
+read :: forall n m a. (PrimMonad m, Prim a)
       => MVector n (PrimState m) a -> Finite n -> m a
 read = VGM.read
 {-# inline read #-}
 
 -- | /O(1)/ Yield the element at a given type-safe position using 'Proxy'.
-read' :: forall n k a m p. (KnownNat k, PrimMonad m, Unbox a)
+read' :: forall n k a m p. (KnownNat k, PrimMonad m, Prim a)
        => MVector (n+k+1) (PrimState m) a -> p k -> m a
 read' = VGM.read'
 {-# inline read' #-}
 
 -- | /O(1)/ Yield the element at a given 'Int' position without bounds
 -- checking.
-unsafeRead :: forall n a m. (PrimMonad m, Unbox a)
+unsafeRead :: forall n a m. (PrimMonad m, Prim a)
            => MVector n (PrimState m) a -> Int -> m a
 unsafeRead = VGM.unsafeRead
 {-# inline unsafeRead #-}
 
 -- | /O(1)/ Replace the element at a given type-safe position using 'Finite'.
-write :: forall n m a. (PrimMonad m, Unbox a)
+write :: forall n m a. (PrimMonad m, Prim a)
       => MVector n (PrimState m) a -> Finite n -> a -> m ()
 write = VGM.write
 {-# inline write #-}
 
 -- | /O(1)/ Replace the element at a given type-safe position using 'Proxy'.
-write' :: forall n k a m p. (KnownNat k, PrimMonad m, Unbox a)
+write' :: forall n k a m p. (KnownNat k, PrimMonad m, Prim a)
        => MVector (n+k+1) (PrimState m) a -> p k -> a -> m ()
 write' = VGM.write'
 {-# inline write' #-}
 
 -- | /O(1)/ Replace the element at a given 'Int' position without bounds
 -- checking.
-unsafeWrite :: forall n m a. (PrimMonad m, Unbox a)
+unsafeWrite :: forall n m a. (PrimMonad m, Prim a)
       => MVector n (PrimState m) a -> Int -> a -> m ()
 unsafeWrite = VGM.unsafeWrite
 {-# inline unsafeWrite #-}
 
 -- | /O(1)/ Modify the element at a given type-safe position using 'Finite'.
-modify :: forall n m a. (PrimMonad m, Unbox a)
+modify :: forall n m a. (PrimMonad m, Prim a)
        => MVector n (PrimState m) a -> (a -> a) -> Finite n -> m ()
 modify = VGM.modify
 {-# inline modify #-}
 
 -- | /O(1)/ Modify the element at a given type-safe position using 'Proxy'.
-modify' :: forall n k a m p. (KnownNat k, PrimMonad m, Unbox a)
+modify' :: forall n k a m p. (KnownNat k, PrimMonad m, Prim a)
         => MVector (n+k+1) (PrimState m) a -> (a -> a) -> p k -> m ()
 modify' = VGM.modify'
 {-# inline modify' #-}
 
 -- | /O(1)/ Modify the element at a given 'Int' position without bounds
 -- checking.
-unsafeModify :: forall n m a. (PrimMonad m, Unbox a)
+unsafeModify :: forall n m a. (PrimMonad m, Prim a)
        => MVector n (PrimState m) a -> (a -> a) -> Int -> m ()
 unsafeModify = VGM.unsafeModify
 {-# inline unsafeModify #-}
 
 -- | /O(1)/ Swap the elements at the given type-safe positions using 'Finite's.
-swap :: forall n m a. (PrimMonad m, Unbox a)
+swap :: forall n m a. (PrimMonad m, Prim a)
      => MVector n (PrimState m) a -> Finite n -> Finite n -> m ()
 swap = VGM.swap
 {-# inline swap #-}
 
 -- | /O(1)/ Swap the elements at the given 'Int' positions without bounds
 -- checking.
-unsafeSwap :: forall n m a. (PrimMonad m, Unbox a)
+unsafeSwap :: forall n m a. (PrimMonad m, Prim a)
            => MVector n (PrimState m) a -> Int -> Int -> m ()
 unsafeSwap = VGM.unsafeSwap
 {-# inline unsafeSwap #-}
 
 -- | /O(1)/ Replace the element at a given type-safe position and return
 -- the old element, using 'Finite'.
-exchange :: forall n m a. (PrimMonad m, Unbox a)
+exchange :: forall n m a. (PrimMonad m, Prim a)
          => MVector n (PrimState m) a -> Finite n -> a -> m a
 exchange = VGM.exchange
 {-# inline exchange #-}
 
 -- | /O(1)/ Replace the element at a given type-safe position and return
 -- the old element, using 'Finite'.
-exchange' :: forall n k a m p. (KnownNat k, PrimMonad m, Unbox a)
+exchange' :: forall n k a m p. (KnownNat k, PrimMonad m, Prim a)
           => MVector (n+k+1) (PrimState m) a -> p k -> a -> m a
 exchange' = VGM.exchange'
 {-# inline exchange' #-}
 
 -- | /O(1)/ Replace the element at a given 'Int' position and return
 -- the old element. No bounds checks are performed.
-unsafeExchange :: forall n m a. (PrimMonad m, Unbox a)
+unsafeExchange :: forall n m a. (PrimMonad m, Prim a)
          => MVector n (PrimState m) a -> Int -> a -> m a
 unsafeExchange = VGM.unsafeExchange
 {-# inline unsafeExchange #-}
@@ -392,7 +380,7 @@ unsafeExchange = VGM.unsafeExchange
 
 -- | Compute the next permutation (lexicographically) of a given vector
 -- in-place.  Returns 'False' when the input is the last permutation.
-nextPermutation :: forall n e m. (Ord e, PrimMonad m, Unbox e)
+nextPermutation :: forall n e m. (Ord e, PrimMonad m, Prim e)
                 => MVector n (PrimState m) e -> m Bool
 nextPermutation = VGM.nextPermutation
 {-# inline nextPermutation #-}
@@ -400,12 +388,12 @@ nextPermutation = VGM.nextPermutation
 -- ** Filling and copying
 
 -- | Set all elements of the vector to the given value.
-set :: (PrimMonad m, Unbox a) => MVector n (PrimState m) a -> a -> m ()
+set :: (PrimMonad m, Prim a) => MVector n (PrimState m) a -> a -> m ()
 set = VGM.set
 {-# inline set #-}
 
 -- | Copy a vector. The two vectors may not overlap.
-copy :: (PrimMonad m, Unbox a)
+copy :: (PrimMonad m, Prim a)
      => MVector n (PrimState m) a       -- ^ target
      -> MVector n (PrimState m) a       -- ^ source
      -> m ()
@@ -417,7 +405,7 @@ copy = VGM.copy
 -- ** Unsized Mutable Vectors
 
 -- | Copy a vector. The two vectors may not overlap. This is not checked.
-unsafeCopy :: (PrimMonad m, Unbox a)
+unsafeCopy :: (PrimMonad m, Prim a)
            => MVector n (PrimState m) a       -- ^ target
            -> MVector n (PrimState m) a       -- ^ source
            -> m ()
@@ -428,123 +416,51 @@ unsafeCopy = VGM.unsafeCopy
 -- this is equivalent to 'copy'.  Otherwise, the copying is performed as if
 -- the source vector were copied to a temporary vector and then the
 -- temporary vector was copied to the target vector.
-move :: (PrimMonad m, Unbox a)
+move :: (PrimMonad m, Prim a)
      => MVector n (PrimState m) a       -- ^ target
      -> MVector n (PrimState m) a       -- ^ source
      -> m ()
 move = VGM.move
 {-# inline move #-}
 
--- | Convert a 'Data.Vector.Unbox.Mutable.MVector' into
--- a 'Data.Vector.Unbox.Mutable.Sized.MVector' if it has the correct
+-- | Convert a 'Data.Vector.Primitive.Mutable.MVector' into
+-- a 'Data.Vector.Primitive.Mutable.Sized.MVector' if it has the correct
 -- size, otherwise return Nothing.
 --
 -- Note that this does no copying; the returned 'MVector' is a reference to
 -- the exact same vector in memory as the given one, and any modifications
 -- to it are also reflected in the given
--- 'Data.Vector.Unbox.Mutable.MVector'.
-toSized :: forall n a s. (KnownNat n, Unbox a)
-        => VUM.MVector s a -> Maybe (MVector n s a)
+-- 'Data.Vector.Primitive.Mutable.MVector'.
+toSized :: forall n a s. (KnownNat n, Prim a)
+        => VSM.MVector s a -> Maybe (MVector n s a)
 toSized = VGM.toSized
 {-# inline toSized #-}
 
--- | Takes a 'Data.Vector.Unbox.Mutable.MVector' and returns
--- a continuation providing a 'Data.Vector.Unbox.Mutable.Sized.MVector'
+-- | Takes a 'Data.Vector.Primitive.Mutable.MVector' and returns
+-- a continuation providing a 'Data.Vector.Primitive.Mutable.Sized.MVector'
 -- with a size parameter @n@ that is determined at runtime based on the
 -- length of the input vector.
 --
--- Essentially converts a 'Data.Vector.Unbox.Mutable.MVector' into
--- a 'Data.Vector.Unbox.Sized.MVector' with the correct size parameter
+-- Essentially converts a 'Data.Vector.Primitive.Mutable.MVector' into
+-- a 'Data.Vector.Primitive.Sized.MVector' with the correct size parameter
 -- @n@.
 --
 -- Note that this does no copying; the returned 'MVector' is a reference to
 -- the exact same vector in memory as the given one, and any modifications
 -- to it are also reflected in the given
--- 'Data.Vector.Unbox.Mutable.MVector'.
-withSized :: forall s a r. Unbox a
-          => VUM.MVector s a -> (forall n. KnownNat n => MVector n s a -> r) -> r
+-- 'Data.Vector.Primitive.Mutable.MVector'.
+withSized :: forall s a r. Prim a
+          => VSM.MVector s a -> (forall n. KnownNat n => MVector n s a -> r) -> r
 withSized = VGM.withSized
 {-# inline withSized #-}
 
--- | Convert a 'Data.Vector.Unbox.Mutable.Sized.MVector' into a
--- 'Data.Vector.Unbox.Mutable.MVector'.
+-- | Convert a 'Data.Vector.Primitive.Mutable.Sized.MVector' into a
+-- 'Data.Vector.Primitive.Mutable.MVector'.
 --
 -- Note that this does no copying; the returned
--- 'Data.Vector.Unbox.Mutable.MVector' is a reference to the exact same
+-- 'Data.Vector.Primitive.Mutable.MVector' is a reference to the exact same
 -- vector in memory as the given one, and any modifications to it are also
 -- reflected in the given 'MVector'.
-fromSized :: MVector n s a -> VUM.MVector s a
+fromSized :: MVector n s a -> VSM.MVector s a
 fromSized = VGM.fromSized
 {-# inline fromSized #-}
-
-
--- | This instance allows to define sized matrices and tensors
--- backed by continuous memory segments, which reduces memory allocations
--- and relaxes pressure on garbage collector.
-instance (Unbox a, KnownNat n) => Unbox (VG.Vector VU.Vector n a)
-
-newtype instance VUM.MVector s (VG.Vector VU.Vector n a) = MV_Sized (VUM.MVector s a)
-newtype instance VU.Vector     (VG.Vector VU.Vector n a) = V_Sized  (VU.Vector     a)
-
-instance (Unbox a, KnownNat n) => VM.MVector VUM.MVector (VG.Vector VU.Vector n a) where
-  basicLength vs@(MV_Sized v) = VM.basicLength v `quot` intLenM vs
-  {-# inline basicLength #-}
-
-  basicUnsafeSlice i n vs@(MV_Sized v) = MV_Sized (VM.basicUnsafeSlice (i * intLenM vs) (n * intLenM vs) v)
-  {-# inline basicUnsafeSlice #-}
-
-  basicOverlaps (MV_Sized v1) (MV_Sized v2) = VM.basicOverlaps v1 v2
-  {-# inline basicOverlaps #-}
-
-  basicUnsafeNew n = MV_Sized <$> VM.basicUnsafeNew (n * fromIntegral (natVal (Proxy :: Proxy n)))
-  {-# inline basicUnsafeNew #-}
-
-  basicInitialize (MV_Sized v) = VM.basicInitialize v
-  {-# inline basicInitialize #-}
-
-  basicClear (MV_Sized v) = VM.basicClear v
-  {-# inline basicClear #-}
-
-  basicUnsafeCopy (MV_Sized v1) (MV_Sized v2) = VM.basicUnsafeCopy v1 v2
-  {-# inline basicUnsafeCopy #-}
-
-  basicUnsafeMove (MV_Sized v1) (MV_Sized v2) = VM.basicUnsafeMove v1 v2
-  {-# inline basicUnsafeMove #-}
-
-  basicUnsafeGrow vs@(MV_Sized v) n = MV_Sized <$> VM.basicUnsafeGrow v (n * intLenM vs)
-  {-# inline basicUnsafeGrow #-}
-
-  basicUnsafeRead vs@(MV_Sized v) i = Vector <$> V.freeze (VM.basicUnsafeSlice (i * intLenM vs) (intLenM vs) v)
-  {-# inline basicUnsafeRead #-}
-
-  basicUnsafeWrite vs@(MV_Sized v) i (Vector x) = V.basicUnsafeCopy (VM.basicUnsafeSlice (i * intLenM vs) (intLenM vs) v) x
-  {-# inline basicUnsafeWrite #-}
-
-
-intLenM :: forall s n a. KnownNat n => VUM.MVector s (VG.Vector VU.Vector n a) -> Int
-intLenM _ = fromIntegral (natVal (Proxy :: Proxy n))
-
-instance (Unbox a, KnownNat n) => V.Vector VU.Vector (VG.Vector VU.Vector n a) where
-  basicUnsafeFreeze (MV_Sized v) = V_Sized <$> V.basicUnsafeFreeze v
-  {-# inline basicUnsafeFreeze #-}
-
-  basicUnsafeThaw (V_Sized v) = MV_Sized <$> V.basicUnsafeThaw v
-  {-# inline basicUnsafeThaw #-}
-
-  basicLength vs@(V_Sized v) = V.basicLength v `quot` intLen vs
-  {-# inline basicLength #-}
-
-  basicUnsafeSlice i n vs@(V_Sized v) = V_Sized (V.basicUnsafeSlice (i * intLen vs) (n * intLen vs) v)
-  {-# inline basicUnsafeSlice #-}
-
-  basicUnsafeCopy (MV_Sized mv) (V_Sized v) = V.basicUnsafeCopy mv v
-  {-# inline basicUnsafeCopy #-}
-
-  elemseq _ = seq
-  {-# inline elemseq #-}
-
-  basicUnsafeIndexM vs@(V_Sized v) i = pure $! Vector (V.basicUnsafeSlice (i * intLen vs) (intLen vs) v)
-  {-# inline basicUnsafeIndexM #-}
-
-intLen :: forall n a. KnownNat n => VU.Vector (VG.Vector VU.Vector n a) -> Int
-intLen _ = fromIntegral (natVal (Proxy :: Proxy n))

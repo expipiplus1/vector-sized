@@ -1,8 +1,31 @@
 # Change Log
 
 ## WIP
+- Drop support for GHC older than 8.10
+
+## [1.5.0] - 2021-08-25
+
+- Change indexes used by `accum` from `Int` to `Finite`.
+
+## [1.4.4] - 2021-06-26
+
+- Add `ix'`
+
+## [1.4.3.1] - 2020-12-13
+
+- Fix Bits instance, shiftl and shiftr were incorrect
+
+## [1.4.3] - 2020-12-08
+
+- Add Primitive flavour of sized vectors
+- Add `instance Bits (v a) => Bits (Vector v n a)`
+
+Thanks to @Bodigrim and @mstksg
+
+## [1.4.2] - 2020-08-20
 
 - Add `instance Unbox a, KnownNat n) => Unbox (Vector n a)`
+- Add `zipVectorsUnsafe`
 
 ## [1.4.1.0] - 2020-05-04
 
