@@ -1,6 +1,7 @@
 # Change Log
 
 ## WIP
+- Drop support for GHC older than 8.10
 
 ## [1.5.0] - 2021-08-25
 
