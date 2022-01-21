@@ -8,11 +8,7 @@
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE AllowAmbiguousTypes        #-}
-{-# LANGUAGE CPP                        #-}
-
-#if MIN_VERSION_base(4,12,0)
 {-# LANGUAGE NoStarIsType #-}
-#endif
 
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Sized'

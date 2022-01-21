@@ -9,13 +9,9 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
-
-#if MIN_VERSION_base(4,12,0)
 {-# LANGUAGE NoStarIsType #-}
-#endif
 
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-|
@@ -324,9 +320,7 @@ instance KnownNat n => Applicative (Vector Boxed.Vector n) where
 -- @'join' :: Vector n (Vector n a) -> Vector n a@ gets the /diagonal/ from
 -- a square "matrix".
 instance KnownNat n => Monad (Vector Boxed.Vector n) where
-  return   = replicate
   xs >>= f = imap (\i x -> f x `index` i) xs
-  (>>)     = seq
 
 -- | Non-empty sized vectors are lawful comonads.
 --
@@ -369,11 +363,6 @@ instance (Semigroup g, VG.Vector v g) => Semigroup (Vector v n g) where
 -- 'Monoid' will dodge the 'KnownNat' constraint.
 instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
   mempty = replicate mempty
-#if MIN_VERSION_base(4,11,0)
-  -- begone, non-canonical mappend!
-#else
-  mappend = zipWith mappend
-#endif
   mconcat vs = generate $ mconcat . flip fmap vs . flip index
 
 instance KnownNat n => Distributive (Vector Boxed.Vector n) where

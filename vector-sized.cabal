@@ -13,14 +13,14 @@ description:    Please see README.md
 category:       Data
 homepage:       https://github.com/expipiplus1/vector-sized#readme
 bug-reports:    https://github.com/expipiplus1/vector-sized/issues
-author:         Joe Hermaszewski
+author:         Ellie Hermaszewska
 maintainer:     whats.our.vector.victor@monoid.al
-copyright:      2016 Joe Hermaszewski
+copyright:      2016 Ellie Hermaszewska
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
+tested-with:    GHC ==8.10.7 || ==9.0.1 || ==9.2.1
 extra-source-files:
-    package.yaml
     readme.md
     changelog.md
     default.nix
@@ -49,7 +49,7 @@ library
       src
   build-depends:
       adjunctions >=4.3 && <4.5
-    , base >=4.9 && <5
+    , base >=4.14 && <5
     , binary >=0.8.3.0
     , comonad >=4 && <6
     , deepseq >=1.1 && <1.5
@@ -58,5 +58,5 @@ library
     , hashable >=1.2.4.0
     , indexed-list-literals >=0.2.0.0
     , primitive >=0.5 && <0.8
-    , vector >=0.11 && <0.13
+    , vector >=0.12 && <0.13
   default-language: Haskell2010
