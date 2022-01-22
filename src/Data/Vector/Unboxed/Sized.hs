@@ -9,11 +9,7 @@
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE CPP                 #-}
-
-#if MIN_VERSION_base(4,12,0)
 {-# LANGUAGE NoStarIsType #-}
-#endif
 
 {-|
 This module re-exports the functionality in 'Data.Vector.Generic.Sized'
@@ -64,6 +60,7 @@ module Data.Vector.Unboxed.Sized
   , empty
   , singleton
   , fromTuple
+  , pattern Build
   , replicate
   , replicate'
   , generate
@@ -496,7 +493,7 @@ singleton :: forall a. (Unbox a)
 singleton = V.singleton
 {-# inline singleton #-}
 
--- | /O(n)/ Construct a vector in a type safe manner
+-- | /O(n)/ Construct a vector in a type safe manner using a tuple.
 -- @
 --   fromTuple (1,2) :: Vector 2 Int
 --   fromTuple ("hey", "what's", "going", "on") :: Vector 4 String
@@ -506,6 +503,15 @@ fromTuple :: forall a input length.
           => input -> Vector length a
 fromTuple = V.fromTuple
 {-# inline fromTuple #-}
+
+-- | /O(n)/ Construct a vector in a type-safe manner using a sized linked list.
+-- @
+--   Build (1 :< 2 :< 3 :< Nil) :: Vector 3 Int
+--   Build ("not" :< "much" :< Nil) :: Vector 2 String
+-- @
+-- Can also be used as a pattern.
+pattern Build :: Unbox a => V.BuildVector n a -> Vector n a
+pattern Build vec = V.Build vec
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.

@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP              #-}
 {-# LANGUAGE DataKinds        #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes       #-}
@@ -64,10 +63,8 @@ module Data.Vector.Primitive.Mutable.Sized
   , unsafeModify
   , unsafeSwap
   , unsafeExchange
-#if MIN_VERSION_vector(0,12,0)
   -- * Modifying vectors
   , nextPermutation
-#endif
   -- ** Filling and copying
   , set
   , copy
@@ -379,7 +376,6 @@ unsafeExchange :: forall n m a. (PrimMonad m, Prim a)
 unsafeExchange = VGM.unsafeExchange
 {-# inline unsafeExchange #-}
 
-#if MIN_VERSION_vector(0,12,0)
 -- * Modifying vectors
 
 -- | Compute the next permutation (lexicographically) of a given vector
@@ -388,7 +384,6 @@ nextPermutation :: forall n e m. (Ord e, PrimMonad m, Prim e)
                 => MVector n (PrimState m) e -> m Bool
 nextPermutation = VGM.nextPermutation
 {-# inline nextPermutation #-}
-#endif
 
 -- ** Filling and copying
 

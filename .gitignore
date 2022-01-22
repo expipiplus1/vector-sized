@@ -1,5 +1,5 @@
 .ghc.environment.*
-cabal.project.local
+cabal.project.local*
 dist
 dist-*
 cabal-dev
@@ -19,3 +19,4 @@ cabal.sandbox.config
 .stack-work/
 .nvimrc
 .vimrc
+

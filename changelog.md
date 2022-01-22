@@ -4,6 +4,11 @@
 
 - Add instances of `FunctorWithIndex`, `FoldableWithIndex` and
   `TraversableWithIndex` for `Vector n a`.
+- Drop support for GHC older than 8.10
+- Safe construction of vectors from linked lists
+  - https://github.com/expipiplus1/vector-sized/pull/88
+
+Thanks to @sheaf and @kozross
 
 ## [1.5.0] - 2021-08-25
 

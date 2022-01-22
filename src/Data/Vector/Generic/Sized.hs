@@ -9,14 +9,12 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-
-#if MIN_VERSION_base(4,12,0)
 {-# LANGUAGE NoStarIsType #-}
-#endif
 
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-|
@@ -67,6 +65,8 @@ module Data.Vector.Generic.Sized
   , empty
   , singleton
   , fromTuple
+  , BuildVector(..)
+  , pattern Build
   , replicate
   , replicate'
   , generate
@@ -326,9 +326,13 @@ instance KnownNat n => Applicative (Vector Boxed.Vector n) where
 -- @'join' :: Vector n (Vector n a) -> Vector n a@ gets the /diagonal/ from
 -- a square "matrix".
 instance KnownNat n => Monad (Vector Boxed.Vector n) where
+<<<<<<< HEAD
   return   = pure
   xs >>= f = imap (\i x -> f x `index` i) xs
   (>>)     = (*>)
+=======
+  xs >>= f = imap (\i x -> f x `index` i) xs
+>>>>>>> master
 
 -- | Non-empty sized vectors are lawful comonads.
 --
@@ -371,11 +375,6 @@ instance (Semigroup g, VG.Vector v g) => Semigroup (Vector v n g) where
 -- 'Monoid' will dodge the 'KnownNat' constraint.
 instance (Monoid m, VG.Vector v m, KnownNat n) => Monoid (Vector v n m) where
   mempty = replicate mempty
-#if MIN_VERSION_base(4,11,0)
-  -- begone, non-canonical mappend!
-#else
-  mappend = zipWith mappend
-#endif
   mconcat vs = generate $ mconcat . flip fmap vs . flip index
 
 instance KnownNat n => Distributive (Vector Boxed.Vector n) where
@@ -655,7 +654,7 @@ singleton :: forall v a. (VG.Vector v a)
 singleton a = Vector (VG.singleton a)
 {-# inline singleton #-}
 
--- | /O(n)/ Construct a vector in a type-safe manner.
+-- | /O(n)/ Construct a vector in a type-safe manner using a tuple.
 -- @
 --   fromTuple (1,2) :: Vector v 2 Int
 --   fromTuple ("hey", "what's", "going", "on") :: Vector v 4 String
@@ -664,6 +663,23 @@ fromTuple :: forall v a input length.
              (VG.Vector v a, IndexedListLiterals input length a, KnownNat length)
           => input -> Vector v length a
 fromTuple = Vector . VG.fromListN (fromIntegral $ natVal $ Proxy @length) . ILL.toList
+
+infixr 5 :<
+data BuildVector (n :: Nat) a where
+  Nil :: BuildVector 0 a
+  (:<) :: a -> BuildVector n a -> BuildVector (1 + n) a
+deriving instance Show a => Show (BuildVector n a)
+
+-- | /O(n)/ Construct a vector in a type-safe manner using a sized linked list.
+-- @
+--   Build (1 :< 2 :< 3 :< Nil) :: Vector v 3 Int
+--   Build ("not" :< "much" :< Nil) :: Vector v 2 String
+-- @
+-- Can also be used as a pattern.
+pattern Build :: VG.Vector v a => BuildVector n a -> Vector v n a
+pattern Build build <- ( ( \ ( Vector v ) -> unsafeCoerce $ VG.toList v ) -> build )
+  where
+    Build vec = Vector . VG.fromList . unsafeCoerce $ vec
 
 -- | /O(n)/ Construct a vector with the same element in each position where the
 -- length is inferred from the type.

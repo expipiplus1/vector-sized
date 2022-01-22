@@ -17,3 +17,5 @@ jobs:
         fetch-depth: 0 # Fetch everything
         ssh-key: ${{ secrets.DEPLOY_KEY }}
     - uses: expipiplus1/tag-latest-release/tag-latest-release@HEAD
+      with:
+        tagsAndFiles: v vector-sized.cabal
