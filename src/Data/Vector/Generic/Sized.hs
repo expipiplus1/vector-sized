@@ -13,6 +13,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoStarIsType #-}
 
 {-# OPTIONS_GHC -Wno-orphans #-}
@@ -285,12 +286,13 @@ import Prelude
                zip3, unzip, unzip3, elem, notElem, foldl, foldl1, foldr, foldr1,
                all, any, and, or, sum, product, maximum, minimum, scanl, scanl1,
                scanr, scanr1, mapM, mapM_, sequence, sequence_)
-
-
 import Data.IndexedListLiterals hiding (toList, fromList)
 import Data.Hashable (Hashable(..))
 import qualified Data.IndexedListLiterals as ILL
 import Data.Vector.Unboxed (Unbox)
+import qualified Data.Traversable.WithIndex as ITraversable
+import qualified Data.Foldable.WithIndex as IFoldable
+import qualified Data.Functor.WithIndex as IFunctor
 
 instance (KnownNat n, VG.Vector v a, Read (v a)) => Read (Vector v n a) where
   readPrec = parens $ prec 10 $ do
@@ -651,15 +653,23 @@ singleton a = Vector (VG.singleton a)
 --   fromTuple (1,2) :: Vector v 2 Int
 --   fromTuple ("hey", "what's", "going", "on") :: Vector v 4 String
 -- @
+--
+-- @since 1.6.0
 fromTuple :: forall v a input length.
              (VG.Vector v a, IndexedListLiterals input length a, KnownNat length)
           => input -> Vector v length a
 fromTuple = Vector . VG.fromListN (fromIntegral $ natVal $ Proxy @length) . ILL.toList
 
 infixr 5 :<
+
+-- | @since 1.6.0
 data BuildVector (n :: Nat) a where
+  -- | @since 1.6.0
   Nil :: BuildVector 0 a
+  -- | @since 1.6.0
   (:<) :: a -> BuildVector n a -> BuildVector (1 + n) a
+
+-- | @since 1.6.0
 deriving instance Show a => Show (BuildVector n a)
 
 -- | /O(n)/ Construct a vector in a type-safe manner using a sized linked list.
@@ -668,6 +678,8 @@ deriving instance Show a => Show (BuildVector n a)
 --   Build ("not" :< "much" :< Nil) :: Vector v 2 String
 -- @
 -- Can also be used as a pattern.
+--
+-- @since 1.6.0
 pattern Build :: VG.Vector v a => BuildVector n a -> Vector v n a
 pattern Build build <- ( ( \ ( Vector v ) -> unsafeCoerce $ VG.toList v ) -> build )
   where
@@ -2027,3 +2039,27 @@ instance (VG.Vector v a, Bits (v a), Bits a, KnownNat n) => Bits (Vector v n a) 
 instance (VG.Vector v a, Bits (v a), FiniteBits a, KnownNat n) => FiniteBits (Vector v n a) where
     finiteBitSize _ = finiteBitSize @a undefined * fromIntegral (natVal (Proxy @n))
 
+-- | @since 1.6.0
+instance IFunctor.FunctorWithIndex (Finite n) (Vector Boxed.Vector n) where
+  {-# INLINEABLE imap #-}
+  imap = imap
+
+-- | @since 1.6.0
+instance IFoldable.FoldableWithIndex (Finite n) (Vector Boxed.Vector n) where
+  {-# INLINEABLE ifoldMap #-}
+  ifoldMap f = ifoldl (\acc ix x -> acc `mappend` f ix x) mempty
+  {-# INLINEABLE ifoldMap' #-}
+  ifoldMap' f = ifoldl' (\acc ix x -> acc `mappend` f ix x) mempty
+  {-# INLINEABLE ifoldr #-}
+  ifoldr = ifoldr
+  {-# INLINEABLE ifoldl #-}
+  ifoldl f x = ifoldl (\acc ix -> f ix acc) x
+  {-# INLINEABLE ifoldr' #-}
+  ifoldr' = ifoldr'
+  {-# INLINEABLE ifoldl' #-}
+  ifoldl' f x = ifoldl' (\acc ix -> f ix acc) x
+
+-- | @since 1.6.0
+instance ITraversable.TraversableWithIndex (Finite n) (Vector Boxed.Vector n) where
+  {-# INLINEABLE itraverse #-}
+  itraverse f = traverse (uncurry f) . indexed

@@ -1,13 +1,6 @@
-cabal-version: 1.12
-
--- This file has been generated from package.yaml by hpack version 0.34.4.
---
--- see: https://github.com/sol/hpack
---
--- hash: 8cc33c7ff1b35236dcaed143ba951337eb4f12e3c53c616fa15ec2a073c0942b
-
+cabal-version: 3.0
 name:           vector-sized
-version:        1.5.0
+version:        1.6.0
 synopsis:       Size tagged vectors
 description:    Please see README.md
 category:       Data
@@ -16,7 +9,7 @@ bug-reports:    https://github.com/expipiplus1/vector-sized/issues
 author:         Ellie Hermaszewska
 maintainer:     whats.our.vector.victor@monoid.al
 copyright:      2016 Ellie Hermaszewska
-license:        BSD3
+license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
 tested-with:    GHC ==8.10.7 || ==9.0.1 || ==9.2.1
@@ -43,8 +36,6 @@ library
       Data.Vector.Storable.Sized
       Data.Vector.Unboxed.Mutable.Sized
       Data.Vector.Unboxed.Sized
-  other-modules:
-      Paths_vector_sized
   hs-source-dirs:
       src
   build-depends:
@@ -58,5 +49,6 @@ library
     , hashable >=1.2.4.0
     , indexed-list-literals >=0.2.0.0
     , primitive >=0.5 && <0.8
+    , indexed-traversable >=0.1.2 && <0.2
     , vector >=0.12 && <0.13
   default-language: Haskell2010
