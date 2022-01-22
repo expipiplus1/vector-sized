@@ -490,6 +490,8 @@ singleton = V.singleton
 --   fromTuple (1,2) :: Vector 2 Int
 --   fromTuple ("hey", "what's", "going", "on") :: Vector 4 String
 -- @
+--
+-- @since 1.6.0
 fromTuple :: forall input length ty.
              (IndexedListLiterals input length ty, KnownNat length)
           => input -> Vector length ty
@@ -501,6 +503,8 @@ fromTuple = V.fromTuple
 --   Build ("not" :< "much" :< Nil) :: Vector 2 String
 -- @
 -- Can also be used as a pattern.
+--
+-- @since 1.6.0
 pattern Build :: V.BuildVector n a -> Vector n a
 pattern Build build = V.Build build
 

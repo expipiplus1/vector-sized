@@ -326,13 +326,7 @@ instance KnownNat n => Applicative (Vector Boxed.Vector n) where
 -- @'join' :: Vector n (Vector n a) -> Vector n a@ gets the /diagonal/ from
 -- a square "matrix".
 instance KnownNat n => Monad (Vector Boxed.Vector n) where
-<<<<<<< HEAD
-  return   = pure
   xs >>= f = imap (\i x -> f x `index` i) xs
-  (>>)     = (*>)
-=======
-  xs >>= f = imap (\i x -> f x `index` i) xs
->>>>>>> master
 
 -- | Non-empty sized vectors are lawful comonads.
 --
@@ -659,15 +653,23 @@ singleton a = Vector (VG.singleton a)
 --   fromTuple (1,2) :: Vector v 2 Int
 --   fromTuple ("hey", "what's", "going", "on") :: Vector v 4 String
 -- @
+--
+-- @since 1.6.0
 fromTuple :: forall v a input length.
              (VG.Vector v a, IndexedListLiterals input length a, KnownNat length)
           => input -> Vector v length a
 fromTuple = Vector . VG.fromListN (fromIntegral $ natVal $ Proxy @length) . ILL.toList
 
 infixr 5 :<
+
+-- | @since 1.6.0
 data BuildVector (n :: Nat) a where
+  -- | @since 1.6.0
   Nil :: BuildVector 0 a
+  -- | @since 1.6.0
   (:<) :: a -> BuildVector n a -> BuildVector (1 + n) a
+
+-- | @since 1.6.0
 deriving instance Show a => Show (BuildVector n a)
 
 -- | /O(n)/ Construct a vector in a type-safe manner using a sized linked list.
@@ -676,6 +678,8 @@ deriving instance Show a => Show (BuildVector n a)
 --   Build ("not" :< "much" :< Nil) :: Vector v 2 String
 -- @
 -- Can also be used as a pattern.
+--
+-- @since 1.6.0
 pattern Build :: VG.Vector v a => BuildVector n a -> Vector v n a
 pattern Build build <- ( ( \ ( Vector v ) -> unsafeCoerce $ VG.toList v ) -> build )
   where
