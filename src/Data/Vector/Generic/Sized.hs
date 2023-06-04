@@ -281,10 +281,10 @@ import Unsafe.Coerce
 import qualified Data.Functor.Rep as Rep
 import Data.Distributive
 import Prelude
-       hiding (length, replicate, (++), head, last, init, tail, take,
+       hiding (Foldable(..), replicate, (++), head, last, init, tail, take,
                drop, splitAt, reverse, map, concatMap, zipWith, zipWith3, zip,
-               zip3, unzip, unzip3, elem, notElem, foldl, foldl1, foldr, foldr1,
-               all, any, and, or, sum, product, maximum, minimum, scanl, scanl1,
+               zip3, unzip, unzip3, notElem,
+               all, any, and, or, scanl, scanl1,
                scanr, scanr1, mapM, mapM_, sequence, sequence_)
 import Data.IndexedListLiterals hiding (toList, fromList)
 import Data.Hashable (Hashable(..))

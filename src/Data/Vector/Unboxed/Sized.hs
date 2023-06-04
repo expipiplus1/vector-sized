@@ -251,16 +251,15 @@ import Data.Finite
 import Data.Proxy
 import Control.Monad.Primitive
 import Data.Vector.Unboxed (Unbox)
-import Prelude hiding ( length, null,
+import Prelude hiding ( Foldable(..),
                         replicate, (++), concat,
                         head, last,
                         init, tail, take, drop, splitAt, reverse,
                         map, concat, concatMap,
                         zipWith, zipWith3, zip, zip3, unzip, unzip3,
                         filter, takeWhile, dropWhile, span, break,
-                        elem, notElem,
-                        foldl, foldl1, foldr, foldr1,
-                        all, any, and, or, sum, product, maximum, minimum,
+                        notElem,
+                        all, any, and, or,
                         scanl, scanl1, scanr, scanr1,
                         enumFromTo, enumFromThenTo,
                         mapM, mapM_, sequence, sequence_,
