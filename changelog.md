@@ -2,6 +2,8 @@
 
 ## WIP
 
+- Fix build against Stackage nightly for GHC 9.4.5
+
 ## [1.6.0] - 2022-01-22
 
 - Add instances of `FunctorWithIndex`, `FoldableWithIndex` and
