@@ -2,7 +2,10 @@
 
 ## WIP
 
+## [1.6.1]
+
 - Fix build against Stackage nightly for GHC 9.4.5
+- Future-proof against future Prelude `foldl'` (thanks Bodigrim!)
 
 ## [1.6.0] - 2022-01-22
 
