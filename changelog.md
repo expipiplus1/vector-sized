@@ -2,6 +2,9 @@
 
 ## WIP
 
+- Fix roles for `MVector` and `Vector` to no longer declare their sizes as
+  phantom
+
 ## [1.6.1]
 
 - Fix build against Stackage nightly for GHC 9.4.5

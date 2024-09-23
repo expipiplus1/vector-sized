@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveDataTypeable         #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures             #-}
+{-# LANGUAGE RoleAnnotations            #-}
 {-# OPTIONS_HADDOCK not-home            #-}
 
 module Data.Vector.Generic.Mutable.Sized.Internal
@@ -20,3 +21,5 @@ import           Foreign.Storable
 -- which have a different length than that specified in the type parameter!
 newtype MVector v (n :: Nat) s a = MVector (v s a)
   deriving ( Typeable, Data, Storable, NFData )
+
+type role MVector representational nominal nominal nominal

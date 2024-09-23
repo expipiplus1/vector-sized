@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures             #-}
+{-# LANGUAGE RoleAnnotations            #-}
 {-# OPTIONS_HADDOCK not-home            #-}
 
 module Data.Vector.Generic.Sized.Internal
@@ -51,6 +52,8 @@ newtype Vector v (n :: Nat) a = Vector (v a)
            , Show1, Eq1, Ord1
            , Data, Typeable
            )
+
+type role Vector representational nominal nominal
 
 instance (Ix a, Ord (v a), VG.Vector v a) => Ix (Vector v n a) where
 
