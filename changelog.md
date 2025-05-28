@@ -2,6 +2,8 @@
 
 ## WIP
 
+- Add `chunks`.
+
 ## [1.6.1]
 
 - Fix build against Stackage nightly for GHC 9.4.5

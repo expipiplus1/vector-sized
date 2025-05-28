@@ -60,6 +60,7 @@ module Data.Vector.Generic.Sized
   , drop'
   , splitAt
   , splitAt'
+  , chunks
     -- * Construction
     -- ** Initialization
   , empty
@@ -627,6 +628,15 @@ splitAt' :: forall v n m a p. (KnownNat n, VG.Vector v a)
          => p n -> Vector v (n+m) a -> (Vector v n a, Vector v m a)
 splitAt' _ = splitAt
 {-# inline splitAt' #-}
+
+-- | /O(n\/m)/ Split a vector into subvectors of equal length.
+chunks :: forall v n m a. (KnownNat n, KnownNat m, VG.Vector v a, VG.Vector v (Vector v m a))
+       => Vector v (n*m) a -> Vector v n (Vector v m a)
+chunks (Vector v) = unfoldrN (first Vector . VG.splitAt m) v
+  where
+    m :: Int
+    m = fromIntegral (natVal (Proxy :: Proxy m))
+{-# inline chunks #-}
 
 --------------------------------------------------------------------------------
 -- * Construction

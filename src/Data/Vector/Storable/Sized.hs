@@ -55,6 +55,7 @@ module Data.Vector.Storable.Sized
   , drop'
   , splitAt
   , splitAt'
+  , chunks
     -- * Construction
     -- ** Initialization
   , empty
@@ -470,6 +471,12 @@ splitAt' :: forall n m a p. (KnownNat n, Storable a)
          => p n -> Vector (n+m) a -> (Vector n a, Vector m a)
 splitAt' = V.splitAt'
 {-# inline splitAt' #-}
+
+-- | /O(n\/m)/ Split a vector into subvectors of equal length.
+chunks :: forall n m a. (KnownNat n, KnownNat m, Storable a)
+       => Vector (n*m) a -> Vector n (Vector m a)
+chunks = V.chunks
+{-# inline chunks #-}
 
 --------------------------------------------------------------------------------
 -- * Construction
